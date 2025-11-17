@@ -1,0 +1,13 @@
+
+.env*
+# FVM Version Cache
+.fvm/
+.dart_tool/
+.vscode
+build/
+coverage/
+# Flutter/IDE artifacts
+.idea/
+*.iml
+*.log
+node_modules/

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "→ Formatting (dart format)"
+fvm dart format --set-exit-if-changed .
+echo "→ Analyzing"
+fvm flutter analyze
+echo "→ Running unit tests (fast)"
+fvm flutter test -j 1

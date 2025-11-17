@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v npx >/dev/null 2>&1; then
+  echo "commitlint: npx not found; skipping Conventional Commit check."
+  exit 0
+fi
+
+npx --no-install commitlint --edit "$1"
