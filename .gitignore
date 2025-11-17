@@ -11,3 +11,8 @@ coverage/
 *.iml
 *.log
 node_modules/
+.flutter-plugins
+.flutter-plugins-dependencies
+ios/Flutter/GeneratedPluginRegistrant.*
+macos/Flutter/GeneratedPluginRegistrant.swift
+iOS/Flutter/GeneratedPluginRegistrant.*

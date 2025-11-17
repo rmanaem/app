@@ -1,6 +1,6 @@
 {
-  "name": "nutrain",
-  "version": "1.0.0",
+  "name": "flutter-template",
+  "version": "0.0.0",
   "description": "Flutter App Template starter for mobile apps with Flutter, Firebase (incl. Analytics), and RevenueCat.",
   "main": "index.js",
   "directories": {
@@ -9,13 +9,15 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "lefthook install"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
-    "@commitlint/config-conventional": "^20.0.0"
+    "@commitlint/config-conventional": "^20.0.0",
+    "lefthook": "^1.7.9"
   }
 }

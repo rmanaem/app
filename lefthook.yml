@@ -1,0 +1,14 @@
+pre-commit:
+  parallel: false
+  commands:
+    format:
+      run: fvm dart format --set-exit-if-changed .
+    analyze:
+      run: fvm flutter analyze
+    test:
+      run: fvm flutter test -j 1
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx --no-install commitlint --edit {1}

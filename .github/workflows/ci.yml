@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  analyze_and_test:
+  quality_checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,10 +16,14 @@ jobs:
           channel: stable
       - name: Pub get
         run: flutter pub get
+      - name: Format
+        run: dart format --set-exit-if-changed .
       - name: Analyze
         run: flutter analyze
       - name: Test
         run: flutter test --coverage
+      - name: Debug APK build
+        run: flutter build apk --debug
       - name: Upload coverage to artifact
         uses: actions/upload-artifact@v4
         with:

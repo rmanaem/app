@@ -33,6 +33,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_analytics: ^12.0.4
   firebase_core: ^4.2.1
+  firebase_crashlytics: ^5.0.4
   flutter:
     sdk: flutter
   flutter_dotenv: ^6.0.0
