@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_theme.dart';
+import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
+
 /// Root widget for the template application, wired with [GoRouter].
 class App extends StatelessWidget {
   /// Creates the template app for the provided [envName].
@@ -11,22 +15,21 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final router = GoRouter(
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => Scaffold(
-            appBar: AppBar(title: Text('Nutrition ($envName)')),
-            body: const Center(child: Text('Hello from template')),
-          ),
-        ),
-      ],
-    );
-
     return MaterialApp.router(
-      title: 'Nutrition',
-      routerConfig: router,
-      theme: ThemeData(useMaterial3: true),
+      title: 'App',
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => WelcomePage(
+              onGetStarted: () {},
+              onLogIn: () {},
+            ),
+          ),
+        ],
+      ),
+      theme: makeTheme(AppColors.light, dark: false),
+      darkTheme: makeTheme(AppColors.dark, dark: true),
     );
   }
 }
