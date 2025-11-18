@@ -31,14 +31,16 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          arch: x86_64
+          target: google_apis
+          arch: arm64-v8a
           profile: pixel_7
           script: flutter test integration_test/dev_smoke_test.dart --flavor dev -d emulator-5554
       - name: Prod integration test (Android emulator)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          arch: x86_64
+          target: google_apis
+          arch: arm64-v8a
           profile: pixel_7
           script: flutter test integration_test/prod_smoke_test.dart --flavor prod -d emulator-5554
       - name: Build dev debug APK
