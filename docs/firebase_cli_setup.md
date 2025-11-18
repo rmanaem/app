@@ -43,3 +43,41 @@ This generated the real `FirebaseOptions` for both Android and iOS and unblocked
 - The FlutterFire CLI shells out to the Flutter SDK; if Flutter lives outside the workspace, sandboxed shells must run with elevated permissions.
 - `sudo` changes PATH and user state. Preserve PATH explicitly and run `firebase login` for the sudo user before invoking `flutterfire`.
 - Once the environment is configured, future `flutterfire configure` runs can be done from a normal terminal with the same `sudo env …` wrapper whenever the sandbox is active.
+
+## Per-flavor Firebase configs
+
+We maintain one generated options file per flavor so dev/prod stay independent and we never hand-edit FlutterFire output:
+
+- `lib/firebase_options_dev.dart` → dev Android/iOS apps (`com.temp.placeholder.dev`)
+- `lib/firebase_options_prod.dart` → prod Android app (`com.temp.placeholder.prod`, iOS TBD)
+
+Bootstrap requires callers to pass the flavor-appropriate `FirebaseOptions`, and each entry point imports its matching file.
+
+### Regenerating configs
+
+From `/home/arman/Desktop/app`, run these commands whenever a Firebase app changes (e.g., new package/bundle ID, newly registered platform, regenerated credentials, or a different Firebase project). They overwrite the relevant file and keep configs in sync with the console.
+
+```bash
+# Dev flavor (Android + iOS)
+sudo env "PATH=/home/arman/fvm/versions/3.38.1/bin:/home/arman/.pub-cache/bin:$PATH" \
+  flutterfire configure \
+    --project=placeholder-76937 \
+    --out=lib/firebase_options_dev.dart \
+    --platforms=android,ios \
+    --android-package-name=com.temp.placeholder.dev \
+    --ios-bundle-id=com.temp.placeholder.dev \
+    --yes
+
+# Prod flavor (Android only for now)
+sudo env "PATH=/home/arman/fvm/versions/3.38.1/bin:/home/arman/.pub-cache/bin:$PATH" \
+  flutterfire configure \
+    --project=placeholder-76937 \
+    --out=lib/firebase_options_prod.dart \
+    --platforms=android \
+    --android-package-name=com.temp.placeholder.prod \
+    --yes
+```
+
+> Note: `sudo` is required because Flutter lives outside the repo. If the `home/` artifact shows up again after running these commands, delete it (it’s a root-owned copy produced by FlutterFire).
+
+CI builds should pass the correct flavor (`flutter build … --flavor dev|prod -t lib/main_<flavor>.dart`) so each variant loads its matching Firebase config.

@@ -22,8 +22,14 @@ jobs:
         run: flutter analyze
       - name: Test
         run: flutter test --coverage
-      - name: Debug APK build
-        run: flutter build apk --debug
+      - name: Dev integration test
+        run: flutter test integration_test/dev_smoke_test.dart --flavor dev
+      - name: Prod integration test
+        run: flutter test integration_test/prod_smoke_test.dart --flavor prod
+      - name: Build dev debug APK
+        run: flutter build apk --debug --flavor dev -t lib/main_dev.dart
+      - name: Build prod debug APK
+        run: flutter build apk --debug --flavor prod -t lib/main_prod.dart
       - name: Upload coverage to artifact
         uses: actions/upload-artifact@v4
         with:

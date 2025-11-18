@@ -2,7 +2,6 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:starter_app/firebase_options.dart';
 import 'package:starter_app/src/config/env.dart';
 
 /// Initializes Flutter bindings, Firebase, and RevenueCat before running
@@ -10,11 +9,12 @@ import 'package:starter_app/src/config/env.dart';
 Future<void> bootstrap(
   Future<Widget> Function() builder, {
   required Env env,
+  required FirebaseOptions firebaseOptions,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options: firebaseOptions,
   );
 
   await Purchases.configure(

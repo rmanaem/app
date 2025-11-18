@@ -25,7 +25,7 @@ android {
 
     defaultConfig {
         // Use the placeholder package until the template is rebranded.
-        applicationId = "com.temp.placeholder"
+        applicationId = "com.temp.placeholder.prod"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -47,11 +47,12 @@ android {
     productFlavors {
         create("dev") {
             dimension = "env"
-            applicationIdSuffix = ".dev"
+            applicationId = "com.temp.placeholder.dev"
             versionNameSuffix = "-dev"
         }
         create("prod") {
             dimension = "env"
+            applicationId = "com.temp.placeholder.prod"
         }
     }
 }
