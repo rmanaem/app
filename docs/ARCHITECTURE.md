@@ -30,7 +30,7 @@ lib/
    ├─ app/                 # App root: MaterialApp/router/theme and app-wide providers
    │  ├─ app.dart
    │  ├─ router.dart
-   │  └─ theme/
+   │  └─ design_system/
    ├─ bootstrap/           # Startup, env selection, third-party SDK init
    │  └─ bootstrap.dart
    ├─ config/              # Environment configuration
