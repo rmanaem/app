@@ -30,6 +30,7 @@ class App extends StatelessWidget {
       ),
       theme: makeTheme(AppColors.light, dark: false),
       darkTheme: makeTheme(AppColors.dark, dark: true),
+      themeMode: ThemeMode.dark,
     );
   }
 }

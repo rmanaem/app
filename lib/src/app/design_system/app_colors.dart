@@ -76,14 +76,14 @@ class AppColors extends ThemeExtension<AppColors> {
   // ---- DARK (strict black/white UI)
   /// Dark palette (white on black).
   static const AppColors dark = AppColors(
-    bg: Color(0xFF000000),
-    surface: Color(0xFF000000),
-    surface2: Color(0xFF0E0E0E),
+    bg: Color(0xFF111315), // charcoal
+    surface: Color(0xFF16181B),
+    surface2: Color(0xFF1F2124),
     ink: Color(0xFFFFFFFF),
     inkSubtle: Color(0xFFA1A1AA),
     accent: Color(0xFFFFFFFF), // CTAs = white on dark
     accentMuted: Color(0xFFE5E5E5),
-    ringTrack: Color(0xFF242426),
+    ringTrack: Color(0xFF2B2D30),
     ringActive: Color(0xFFFFFFFF), // charts draw in white
     success: Color(0xFFFFFFFF),
     warning: Color(0xFFFFFFFF),

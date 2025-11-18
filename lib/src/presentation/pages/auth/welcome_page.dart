@@ -46,49 +46,56 @@ class WelcomePage extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: s.gutter),
           child: Column(
             children: [
-              SizedBox(height: s.xl),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Placeholder brand mark
+                      const FlutterLogo(size: 96),
 
-              // Placeholder brand mark
-              const FlutterLogo(size: 96),
+                      SizedBox(height: s.lg),
 
-              SizedBox(height: s.lg),
+                      // Headline
+                      Text(
+                        'Welcome to $appName',
+                        textAlign: TextAlign.center,
+                        style: t.display,
+                      ),
 
-              // Headline
-              Text(
-                'Welcome to $appName',
-                textAlign: TextAlign.center,
-                style: t.display,
-              ),
+                      SizedBox(height: s.sm),
 
-              SizedBox(height: s.sm),
+                      // Tagline
+                      Text(
+                        tagline,
+                        textAlign: TextAlign.center,
+                        style: t.body.copyWith(color: c.inkSubtle),
+                      ),
 
-              // Tagline
-              Text(
-                tagline,
-                textAlign: TextAlign.center,
-                style: t.body.copyWith(color: c.inkSubtle),
-              ),
+                      SizedBox(height: s.xl),
 
-              const Spacer(),
+                      // Primary CTA
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: FilledButton(
+                          onPressed: onGetStarted,
+                          child: const Text('Get Started'),
+                        ),
+                      ),
+                      SizedBox(height: s.sm),
 
-              // Primary CTA
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton(
-                  onPressed: onGetStarted,
-                  child: const Text('Get Started'),
-                ),
-              ),
-              SizedBox(height: s.sm),
-
-              // Secondary CTA
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton(
-                  onPressed: onLogIn,
-                  child: const Text('Log In'),
+                      // Secondary CTA
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton(
+                          onPressed: onLogIn,
+                          child: const Text('Log In'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
