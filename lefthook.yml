@@ -2,11 +2,23 @@ pre-commit:
   parallel: false
   commands:
     format:
-      run: fvm dart format --set-exit-if-changed .
+      glob: "*.dart"
+      run: |
+        files="{staged_files}"
+        [ -z "$files" ] && exit 0
+        fvm dart format --set-exit-if-changed $files
     analyze:
-      run: fvm flutter analyze
+      glob: "*.dart"
+      run: |
+        files="{staged_files}"
+        [ -z "$files" ] && exit 0
+        fvm flutter analyze $files
     test:
-      run: fvm flutter test -j 1
+      glob: "test/**/*.dart integration_test/**/*.dart"
+      run: |
+        files="{staged_files}"
+        [ -z "$files" ] && exit 0
+        fvm flutter test -j 1 $files
 
 commit-msg:
   commands:
