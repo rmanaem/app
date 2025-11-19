@@ -9,6 +9,7 @@ import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/goal_card.dart';
+import 'package:starter_app/src/features/onboarding/presentation/widgets/step_progress_bar.dart';
 
 /// Page that lets the user choose their primary goal during onboarding.
 class OnboardingGoalPage extends StatefulWidget {
@@ -40,6 +41,13 @@ class _OnboardingGoalPageState extends State<OnboardingGoalPage> {
         surfaceTintColor: Colors.transparent,
         backgroundColor: colors.bg,
         elevation: 0,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(8),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: StepProgressBar(currentStep: 1, totalSteps: 4),
+          ),
+        ),
       ),
       body: AnimatedBuilder(
         animation: _vm,
