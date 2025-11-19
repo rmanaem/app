@@ -17,4 +17,4 @@ Template:
 
 **Implementation**
 
-> Follow the repository’s architecture and design principles from architecture.md, apply Flutter, mobile development, and general software design best practices, and ensure all code fully complies with very_good_analysis linting rules
+> Follow the repository’s architecture and design principles from architecture.md, apply Flutter, mobile development, and general software design best practices, and ensure all code fully complies with very_good_analysis linting rules. Keep implementation clean, simple, and maintainable and avoid coupling, complicating and over-engineering
