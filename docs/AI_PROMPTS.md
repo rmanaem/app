@@ -9,3 +9,12 @@ Template:
 > File: lib/src/presentation/atoms/app_button.dart
 > Task: Extend button to support loading state, disabled state, and semantic labels. Add widget tests.
 > Constraints: No third-party UI packages. Keep public API simple.
+
+**Conventional commit message**
+
+> Check the staged file(s) and generate the appropriate conventional commit message
+
+
+**Implementation**
+
+> Follow the repository’s architecture and design principles from architecture.md, apply Flutter, mobile development, and general software design best practices, and ensure all code fully complies with very_good_analysis linting rules
