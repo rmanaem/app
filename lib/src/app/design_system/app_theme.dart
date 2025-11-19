@@ -16,6 +16,10 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
       (dark ? const ColorScheme.dark() : const ColorScheme.light()).copyWith(
         primary: tokens.accent,
         onPrimary: dark ? Colors.black : Colors.white,
+        secondary: tokens.accent,
+        onSecondary: dark ? Colors.black : Colors.white,
+        secondaryContainer: tokens.accent,
+        onSecondaryContainer: dark ? Colors.black : Colors.white,
         surface: tokens.surface,
         surfaceTint: Colors.transparent,
         onSurface: tokens.ink,

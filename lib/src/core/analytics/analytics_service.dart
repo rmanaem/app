@@ -8,4 +8,16 @@ abstract class AnalyticsService {
 
   /// Logs that the user tapped the next CTA from the goal step.
   Future<void> onboardingGoalNext(String goal);
+
+  /// Logs an impression for the onboarding stats screen.
+  Future<void> onboardingStatsImpression();
+
+  /// Logs when the user switches unit systems on the stats screen.
+  Future<void> onboardingStatsUnitChanged(String unitSystem);
+
+  /// Logs when the user proceeds from the stats screen.
+  Future<void> onboardingStatsNext({
+    required String unitSystem,
+    required String activity,
+  });
 }

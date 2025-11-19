@@ -30,4 +30,31 @@ class FirebaseAnalyticsService implements AnalyticsService {
       parameters: {'goal': goal},
     );
   }
+
+  @override
+  Future<void> onboardingStatsImpression() {
+    return _analytics.logEvent(name: 'onboarding_stats_impression');
+  }
+
+  @override
+  Future<void> onboardingStatsNext({
+    required String unitSystem,
+    required String activity,
+  }) {
+    return _analytics.logEvent(
+      name: 'onboarding_stats_next',
+      parameters: {
+        'unit_system': unitSystem,
+        'activity': activity,
+      },
+    );
+  }
+
+  @override
+  Future<void> onboardingStatsUnitChanged(String unitSystem) {
+    return _analytics.logEvent(
+      name: 'onboarding_stats_unit_changed',
+      parameters: {'unit_system': unitSystem},
+    );
+  }
 }

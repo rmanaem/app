@@ -6,7 +6,9 @@ import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_goal_page.dart';
+import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
 import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
 
 /// Root widget for the template application, wired with [GoRouter].
@@ -34,14 +36,25 @@ class App extends StatelessWidget {
         ),
         GoRoute(
           path: '/onboarding/stats',
-          builder: (context, state) => Scaffold(
-            body: Center(
-              child: Text(
-                'Onboarding stats placeholder',
-                style: Theme.of(context).textTheme.headlineSmall,
+          builder: (context, state) {
+            final goal = state.extra is Goal ? state.extra! as Goal : null;
+            return OnboardingStatsPage(initialGoal: goal);
+          },
+        ),
+        GoRoute(
+          path: '/onboarding/preview',
+          builder: (context, state) {
+            final payload = state.extra;
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  'Preview placeholder\\n$payload',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );
