@@ -1,8 +1,12 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
+import 'package:starter_app/src/core/analytics/analytics_service.dart';
+import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
+import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_goal_page.dart';
 import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
 
 /// Root widget for the template application, wired with [GoRouter].
@@ -15,22 +19,42 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'App',
-      routerConfig: GoRouter(
-        routes: [
-          GoRoute(
-            path: '/',
-            builder: (context, state) => WelcomePage(
-              onGetStarted: () {},
-              onLogIn: () {},
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => WelcomePage(
+            onGetStarted: () => context.push('/onboarding/goal'),
+            onLogIn: () {},
+          ),
+        ),
+        GoRoute(
+          path: '/onboarding/goal',
+          builder: (context, state) => const OnboardingGoalPage(),
+        ),
+        GoRoute(
+          path: '/onboarding/stats',
+          builder: (context, state) => Scaffold(
+            body: Center(
+              child: Text(
+                'Onboarding stats placeholder',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+
+    return Provider<AnalyticsService>(
+      create: (_) => FirebaseAnalyticsService(FirebaseAnalytics.instance),
+      child: MaterialApp.router(
+        title: 'App',
+        routerConfig: router,
+        theme: makeTheme(AppColors.light, dark: false),
+        darkTheme: makeTheme(AppColors.dark, dark: true),
+        themeMode: ThemeMode.dark,
       ),
-      theme: makeTheme(AppColors.light, dark: false),
-      darkTheme: makeTheme(AppColors.dark, dark: true),
-      themeMode: ThemeMode.dark,
     );
   }
 }
