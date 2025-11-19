@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -31,20 +32,53 @@ class _FakeAnalyticsService implements AnalyticsService {
 
 void main() {
   testWidgets(
-      'stats page renders with empty activity selection', (tester) async {
-    await tester.pumpWidget(
-      Provider<AnalyticsService>.value(
-        value: _FakeAnalyticsService(),
-        child: MaterialApp(
-          theme: makeTheme(AppColors.light, dark: false),
-          home: const OnboardingStatsPage(),
+    'stats page renders with default values',
+    (tester) async {
+      await tester.pumpWidget(
+        Provider<AnalyticsService>.value(
+          value: _FakeAnalyticsService(),
+          child: MaterialApp(
+            theme: makeTheme(AppColors.light, dark: false),
+            home: const OnboardingStatsPage(),
+          ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Activity Level'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('About you'), findsOneWidget);
+      expect(find.text('Date of birth'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'height picker opens and interacts without exceptions',
+    (tester) async {
+      await tester.pumpWidget(
+        Provider<AnalyticsService>.value(
+          value: _FakeAnalyticsService(),
+          child: MaterialApp(
+            theme: makeTheme(AppColors.light, dark: false),
+            home: const OnboardingStatsPage(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Height'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Height'), findsNWidgets(2)); // card + sheet title
+      expect(
+        () => tester.drag(
+          find.byType(CupertinoPicker).first,
+          const Offset(0, -50),
+        ),
+        returnsNormally,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
