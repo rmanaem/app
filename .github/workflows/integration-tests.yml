@@ -1,24 +1,20 @@
 name: Android Integration Tests
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
 
 jobs:
   integration_tests:
     name: Android integration tests
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          # Use the same commit that triggered the CI workflow
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
