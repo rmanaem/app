@@ -18,6 +18,10 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.success,
     required this.warning,
     required this.danger,
+    required this.heroPositive,
+    required this.heroNeutral,
+    required this.heroChip,
+    required this.gaugeAccent,
   });
 
   /// Page background.
@@ -56,6 +60,18 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Danger color slot (neutral by default).
   final Color danger;
 
+  /// Hero/card background emphasizing positive stats.
+  final Color heroPositive;
+
+  /// Hero/card background for neutral stats.
+  final Color heroNeutral;
+
+  /// Chip background used for pace indicators.
+  final Color heroChip;
+
+  /// Accent line/fill color for gauges.
+  final Color gaugeAccent;
+
   // ---- LIGHT (strict black/white UI)
   /// Light palette (black on white).
   static const AppColors light = AppColors(
@@ -71,6 +87,10 @@ class AppColors extends ThemeExtension<AppColors> {
     success: Color(0xFF000000), // reserved (kept neutral)
     warning: Color(0xFF000000),
     danger: Color(0xFF000000),
+    heroPositive: Color(0xFFE3F2FF),
+    heroNeutral: Color(0xFFF2F2F2),
+    heroChip: Color(0xFFE3F2FF),
+    gaugeAccent: Color(0xFF3B82F6),
   );
 
   // ---- DARK (strict black/white UI)
@@ -88,6 +108,10 @@ class AppColors extends ThemeExtension<AppColors> {
     success: Color(0xFFFFFFFF),
     warning: Color(0xFFFFFFFF),
     danger: Color(0xFFFFFFFF),
+    heroPositive: Color(0xFF103654),
+    heroNeutral: Color(0xFF1F2023),
+    heroChip: Color(0xFF103654),
+    gaugeAccent: Color(0xFF3B82F6),
   );
 
   @override
@@ -104,6 +128,10 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? success,
     Color? warning,
     Color? danger,
+    Color? heroPositive,
+    Color? heroNeutral,
+    Color? heroChip,
+    Color? gaugeAccent,
   }) {
     return AppColors(
       bg: bg ?? this.bg,
@@ -118,6 +146,10 @@ class AppColors extends ThemeExtension<AppColors> {
       success: success ?? this.success,
       warning: warning ?? this.warning,
       danger: danger ?? this.danger,
+      heroPositive: heroPositive ?? this.heroPositive,
+      heroNeutral: heroNeutral ?? this.heroNeutral,
+      heroChip: heroChip ?? this.heroChip,
+      gaugeAccent: gaugeAccent ?? this.gaugeAccent,
     );
   }
 
@@ -138,6 +170,10 @@ class AppColors extends ThemeExtension<AppColors> {
       success: lerpColor(success, other.success),
       warning: lerpColor(warning, other.warning),
       danger: lerpColor(danger, other.danger),
+      heroPositive: lerpColor(heroPositive, other.heroPositive),
+      heroNeutral: lerpColor(heroNeutral, other.heroNeutral),
+      heroChip: lerpColor(heroChip, other.heroChip),
+      gaugeAccent: lerpColor(gaugeAccent, other.gaugeAccent),
     );
   }
 }

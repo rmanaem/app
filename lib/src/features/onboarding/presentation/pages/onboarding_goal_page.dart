@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:starter_app/src/app/design_system/app_colors.dart';
-import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/goal_card.dart';
@@ -22,18 +21,21 @@ class OnboardingGoalPage extends StatefulWidget {
 
 /// Internal state that owns the [OnboardingVm].
 class _OnboardingGoalPageState extends State<OnboardingGoalPage> {
-  late final OnboardingVm _vm;
-
   @override
   void initState() {
     super.initState();
-    _vm = OnboardingVm(context.read<AnalyticsService>());
-    unawaited(_vm.logGoalScreenViewed());
+    final onboardingVm = context.read<OnboardingVm>();
+    unawaited(
+      Future<void>.microtask(
+        onboardingVm.logGoalScreenViewed,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final vm = context.watch<OnboardingVm>();
     return Scaffold(
       backgroundColor: colors.bg,
       appBar: AppBar(
@@ -49,83 +51,66 @@ class _OnboardingGoalPageState extends State<OnboardingGoalPage> {
           ),
         ),
       ),
-      body: AnimatedBuilder(
-        animation: _vm,
-        builder: (context, _) {
-          final state = _vm.goalState;
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    "What's your primary goal?",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineSmall?.copyWith(color: colors.ink),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'You can fine-tune details later.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: colors.inkSubtle),
-                  ),
-                  const SizedBox(height: 16),
-                  GoalCard(
-                    goal: Goal.lose,
-                    selected: state.selected == Goal.lose,
-                    onTap: () => _vm.selectGoal(Goal.lose),
-                  ),
-                  const SizedBox(height: 12),
-                  GoalCard(
-                    goal: Goal.maintain,
-                    selected: state.selected == Goal.maintain,
-                    onTap: () => _vm.selectGoal(Goal.maintain),
-                  ),
-                  const SizedBox(height: 12),
-                  GoalCard(
-                    goal: Goal.gain,
-                    selected: state.selected == Goal.gain,
-                    onTap: () => _vm.selectGoal(Goal.gain),
-                  ),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: state.canContinue
-                        ? () async {
-                            final selectedGoal = state.selected;
-                            if (selectedGoal == null) return;
-                            final router = GoRouter.of(context);
-                            await _vm.logGoalNext();
-                            await router.push(
-                              '/onboarding/stats',
-                              extra: selectedGoal,
-                            );
-                          }
-                        : null,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colors.accent,
-                      foregroundColor: colors.bg,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text('Next'),
-                  ),
-                ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                "What's your primary goal?",
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineSmall?.copyWith(color: colors.ink),
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 8),
+              Text(
+                'You can fine-tune details later.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: colors.inkSubtle),
+              ),
+              const SizedBox(height: 16),
+              GoalCard(
+                goal: Goal.lose,
+                selected: vm.goalState.selected == Goal.lose,
+                onTap: () => vm.selectGoal(Goal.lose),
+              ),
+              const SizedBox(height: 12),
+              GoalCard(
+                goal: Goal.maintain,
+                selected: vm.goalState.selected == Goal.maintain,
+                onTap: () => vm.selectGoal(Goal.maintain),
+              ),
+              const SizedBox(height: 12),
+              GoalCard(
+                goal: Goal.gain,
+                selected: vm.goalState.selected == Goal.gain,
+                onTap: () => vm.selectGoal(Goal.gain),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: vm.goalState.canContinue
+                    ? () async {
+                        final router = GoRouter.of(context);
+                        await vm.logGoalNext();
+                        await router.push('/onboarding/stats');
+                      }
+                    : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.accent,
+                  foregroundColor: colors.bg,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text('Next'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _vm.dispose();
-    super.dispose();
   }
 }

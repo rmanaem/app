@@ -6,6 +6,7 @@ import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
+import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 
 class _FakeAnalyticsService implements AnalyticsService {
   @override
@@ -34,9 +35,15 @@ void main() {
   testWidgets(
     'stats page renders with default values',
     (tester) async {
+      final analytics = _FakeAnalyticsService();
       await tester.pumpWidget(
-        Provider<AnalyticsService>.value(
-          value: _FakeAnalyticsService(),
+        MultiProvider(
+          providers: [
+            Provider<AnalyticsService>.value(value: analytics),
+            ChangeNotifierProvider(
+              create: (_) => OnboardingVm(analytics),
+            ),
+          ],
           child: MaterialApp(
             theme: makeTheme(AppColors.light, dark: false),
             home: const OnboardingStatsPage(),
@@ -55,9 +62,15 @@ void main() {
   testWidgets(
     'height picker opens and interacts without exceptions',
     (tester) async {
+      final analytics = _FakeAnalyticsService();
       await tester.pumpWidget(
-        Provider<AnalyticsService>.value(
-          value: _FakeAnalyticsService(),
+        MultiProvider(
+          providers: [
+            Provider<AnalyticsService>.value(value: analytics),
+            ChangeNotifierProvider(
+              create: (_) => OnboardingVm(analytics),
+            ),
+          ],
           child: MaterialApp(
             theme: makeTheme(AppColors.light, dark: false),
             home: const OnboardingStatsPage(),

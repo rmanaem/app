@@ -48,9 +48,14 @@ class OnboardingVm extends ChangeNotifier {
 
   // --- Stats step state & intents ---
   OnboardingStatsViewState _statsState;
+  GoalConfigurationState _goalConfigurationState =
+      const GoalConfigurationState();
 
   /// Latest stats state for the units/details screen.
   OnboardingStatsViewState get statsState => _statsState;
+
+  /// Cached goal configuration selections shown on the summary screen.
+  GoalConfigurationState get goalConfigurationState => _goalConfigurationState;
 
   /// Toggle the unit system.
   void setUnitSystem(UnitSystem system) {
@@ -115,6 +120,53 @@ class OnboardingVm extends ChangeNotifier {
     return _analytics.onboardingStatsNext(
       unitSystem: _statsState.unitSystem.analyticsName,
       activity: _statsState.activity!.analyticsName,
+    );
+  }
+
+  /// Persists goal configuration choices so the summary screen can render
+  /// without recompute.
+  void setGoalConfigurationChoice({
+    required double targetWeightKg,
+    required double weeklyRateKg,
+    required double dailyBudgetKcal,
+  }) {
+    _goalConfigurationState = _goalConfigurationState.copyWith(
+      targetWeightKg: targetWeightKg,
+      weeklyRateKg: weeklyRateKg,
+      dailyBudgetKcal: dailyBudgetKcal,
+    );
+    notifyListeners();
+  }
+}
+
+/// Immutable state storing goal configuration selections produced on step 3.
+class GoalConfigurationState {
+  /// Creates an immutable configuration state snapshot.
+  const GoalConfigurationState({
+    this.targetWeightKg,
+    this.weeklyRateKg,
+    this.dailyBudgetKcal,
+  });
+
+  /// Stored target weight in kilograms.
+  final double? targetWeightKg;
+
+  /// Stored weekly rate (kg/week).
+  final double? weeklyRateKg;
+
+  /// Stored daily calorie budget.
+  final double? dailyBudgetKcal;
+
+  /// Returns a copy with the provided fields replaced.
+  GoalConfigurationState copyWith({
+    double? targetWeightKg,
+    double? weeklyRateKg,
+    double? dailyBudgetKcal,
+  }) {
+    return GoalConfigurationState(
+      targetWeightKg: targetWeightKg ?? this.targetWeightKg,
+      weeklyRateKg: weeklyRateKg ?? this.weeklyRateKg,
+      dailyBudgetKcal: dailyBudgetKcal ?? this.dailyBudgetKcal,
     );
   }
 }

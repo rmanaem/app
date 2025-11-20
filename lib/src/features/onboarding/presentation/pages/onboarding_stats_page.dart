@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
-import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
@@ -30,27 +29,23 @@ class OnboardingStatsPage extends StatefulWidget {
 }
 
 class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
-  late final OnboardingVm _vm;
-
   @override
   void initState() {
     super.initState();
-    _vm = OnboardingVm(
-      context.read<AnalyticsService>(),
-      initialGoal: widget.initialGoal,
+    final vm = context.read<OnboardingVm>();
+    if (widget.initialGoal != null) {
+      vm.selectGoal(widget.initialGoal!);
+    }
+    unawaited(
+      Future<void>.microtask(vm.logStatsScreenViewed),
     );
-    unawaited(_vm.logStatsScreenViewed());
-  }
-
-  @override
-  void dispose() {
-    _vm.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final vm = context.watch<OnboardingVm>();
+    final state = vm.statsState;
     return Scaffold(
       backgroundColor: colors.bg,
       appBar: AppBar(
@@ -65,117 +60,101 @@ class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
           ),
         ),
       ),
-      body: AnimatedBuilder(
-        animation: _vm,
-        builder: (context, _) {
-          final state = _vm.statsState;
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    "We'll use this to tailor calorie targets and tips.",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: colors.inkSubtle),
-                  ),
-                  const SizedBox(height: 16),
-                  StatFieldCard(
-                    label: 'Date of birth',
-                    valueText: _formatDob(state.dob),
-                    onTap: () async {
-                      final picked = await showDobPickerSheet(
-                        context: context,
-                        initial: state.dob,
-                      );
-                      if (picked != null) {
-                        _vm.setDob(picked);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  StatFieldCard(
-                    label: 'Height',
-                    valueText: _formatHeight(state.height, state.unitSystem),
-                    onTap: () async {
-                      final result = await showHeightPickerSheet(
-                        context: context,
-                        unit: state.unitSystem,
-                        current: state.height,
-                      );
-                      if (result == null) return;
-                      if (result.unit != state.unitSystem) {
-                        _vm.setUnitSystem(result.unit);
-                      }
-                      _vm.setHeightCm(result.stature.cm);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  StatFieldCard(
-                    label: 'Weight',
-                    valueText: _formatWeight(state.weight, state.unitSystem),
-                    onTap: () async {
-                      final result = await showWeightPickerSheet(
-                        context: context,
-                        unit: state.unitSystem,
-                        current: state.weight,
-                      );
-                      if (result == null) return;
-                      if (result.unit != state.unitSystem) {
-                        _vm.setUnitSystem(result.unit);
-                      }
-                      if (result.unit == UnitSystem.metric) {
-                        _vm.setWeightKg(result.weight.kg);
-                      } else {
-                        _vm.setWeightLb(result.weight.lb);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  StatFieldCard(
-                    label: 'Activity level',
-                    valueText: _formatActivity(state.activity),
-                    onTap: () async {
-                      final selection = await showActivityLevelSheet(
-                        context: context,
-                        current: state.activity,
-                      );
-                      if (selection != null) {
-                        _vm.setActivityLevel(selection);
-                      }
-                    },
-                  ),
-                  const Spacer(),
-                  SafeArea(
-                    top: false,
-                    child: FilledButton(
-                      onPressed: state.isValid
-                          ? () async {
-                              final router = GoRouter.of(context);
-                              await _vm.logStatsNext();
-                              await router.push(
-                                '/onboarding/preview',
-                                extra: {
-                                  'goal': _vm.goalState.selected,
-                                  'dob': state.dob,
-                                  'heightCm': state.height!.cm,
-                                  'weightKg': state.weight!.kg,
-                                  'activity': state.activity,
-                                  'unitSystem': state.unitSystem,
-                                },
-                              );
-                            }
-                          : null,
-                      child: const Text('Next'),
-                    ),
-                  ),
-                ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                "We'll use this to tailor calorie targets and tips.",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.inkSubtle),
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 16),
+              StatFieldCard(
+                label: 'Date of birth',
+                valueText: _formatDob(state.dob),
+                onTap: () async {
+                  final picked = await showDobPickerSheet(
+                    context: context,
+                    initial: state.dob,
+                  );
+                  if (picked != null) {
+                    vm.setDob(picked);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              StatFieldCard(
+                label: 'Height',
+                valueText: _formatHeight(state.height, state.unitSystem),
+                onTap: () async {
+                  final result = await showHeightPickerSheet(
+                    context: context,
+                    unit: state.unitSystem,
+                    current: state.height,
+                  );
+                  if (result == null) return;
+                  if (result.unit != state.unitSystem) {
+                    vm.setUnitSystem(result.unit);
+                  }
+                  vm.setHeightCm(result.stature.cm);
+                },
+              ),
+              const SizedBox(height: 12),
+              StatFieldCard(
+                label: 'Weight',
+                valueText: _formatWeight(state.weight, state.unitSystem),
+                onTap: () async {
+                  final result = await showWeightPickerSheet(
+                    context: context,
+                    unit: state.unitSystem,
+                    current: state.weight,
+                  );
+                  if (result == null) return;
+                  if (result.unit != state.unitSystem) {
+                    vm.setUnitSystem(result.unit);
+                  }
+                  if (result.unit == UnitSystem.metric) {
+                    vm.setWeightKg(result.weight.kg);
+                  } else {
+                    vm.setWeightLb(result.weight.lb);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              StatFieldCard(
+                label: 'Activity level',
+                valueText: _formatActivity(state.activity),
+                onTap: () async {
+                  final selection = await showActivityLevelSheet(
+                    context: context,
+                    current: state.activity,
+                  );
+                  if (selection != null) {
+                    vm.setActivityLevel(selection);
+                  }
+                },
+              ),
+              const Spacer(),
+              SafeArea(
+                top: false,
+                child: FilledButton(
+                  onPressed: state.isValid
+                      ? () async {
+                          final router = GoRouter.of(context);
+                          await vm.logStatsNext();
+                          await router.push('/onboarding/goal-configuration');
+                        }
+                      : null,
+                  child: const Text('Next'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
