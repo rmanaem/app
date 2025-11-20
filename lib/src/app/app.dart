@@ -6,10 +6,14 @@ import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
+import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
+import 'package:starter_app/src/features/onboarding/infrastructure/memory_plan_repository.dart';
+import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/goal_configuration_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_goal_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
+import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_summary_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
 
@@ -47,6 +51,18 @@ class App extends StatelessWidget {
           path: '/onboarding/goal-configuration',
           builder: (context, state) => const GoalConfigurationPage(),
         ),
+        GoRoute(
+          path: '/onboarding/summary',
+          builder: (context, state) {
+            final extra = state.extra;
+            if (extra is! OnboardingSummaryArguments) {
+              throw StateError(
+                'OnboardingSummaryPage requires OnboardingSummaryArguments.',
+              );
+            }
+            return OnboardingSummaryPage(args: extra);
+          },
+        ),
       ],
     );
 
@@ -54,6 +70,9 @@ class App extends StatelessWidget {
       providers: [
         Provider<AnalyticsService>(
           create: (_) => FirebaseAnalyticsService(FirebaseAnalytics.instance),
+        ),
+        Provider<PlanRepository>(
+          create: (_) => const MemoryPlanRepository(),
         ),
         ChangeNotifierProvider(
           create: (context) => OnboardingVm(context.read<AnalyticsService>()),
