@@ -17,4 +17,12 @@ Template:
 
 **Implementation**
 
-> Follow the repository’s architecture and design principles from architecture.md, apply Flutter, mobile development, and general software design best practices, and ensure all code fully complies with very_good_analysis linting rules. Keep implementation clean, simple, and maintainable and avoid coupling, complicating and over-engineering
+> Follow (and does not bypass) the repository’s architecture and design principles including atomic design and mvvm pattern and other principles from architecture.md, apply Flutter, mobile development, and general software design best practices, and ensure all code fully complies with very_good_analysis linting rules (do not by pass or ignore the rules). Do not hard code colors and design tokens, instead use design tokens in the design system. Keep implementation clean, simple, and maintainable and avoid coupling, complicating and over-engineering.
+
+> I have the following files that contain features and design changes from what we have in the repo. Thoroughly analyze these files compare them to what we currently have in the repo and give me a report on what the differences are and I'll instruct you about the changes that need to be made
+
+> Do not run flutter commands (like format or run) as you can't access flutter from the sandbox.
+
+
+**Design**
+> You are senior designer expert in designing and optimizing mobile apps for UX to captivate users. What would you use here to elevate the design?
