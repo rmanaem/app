@@ -27,3 +27,8 @@ Template:
 
 **Design**
 > You are senior designer expert in designing and optimizing mobile apps for UX to captivate users. What would you use here to elevate the design?
+
+
+**Testing**
+> make sure tests are high‑signal across unit, widget/UI, integration, and e2e levels verify observable behavior and public contracts (not implementation details); keep them fast, deterministic, and independent using Arrange–Act–Assert, clear naming, and mocks/fakes for I/O, time, and external services. For widgets/UI, use keys/semantics and pump/pumpAndSettle to check state, interactions, and accessibility; for integration/e2e, cover critical user journeys with realistic stubs; for golden tests, snapshot only stable surfaces with fixed fonts/locale/theme and review changes intentionally. Follow Flutter + mobile best practices (simple, clean, readable, maintainable), avoid trivial or redundant assertions, structure under `test/` and `integration_test/`, and ensure coverage meaningfully tests functionality.
+
