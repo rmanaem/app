@@ -8,7 +8,6 @@ import 'package:starter_app/src/app/shell/presentation/pages/app_shell_page.dart
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
 import 'package:starter_app/src/features/nutrition/presentation/pages/nutrition_page.dart';
-import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/infrastructure/memory_plan_repository.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
@@ -17,8 +16,12 @@ import 'package:starter_app/src/features/onboarding/presentation/pages/onboardin
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_summary_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
+import 'package:starter_app/src/features/plan/domain/repositories/plan_repository.dart';
 import 'package:starter_app/src/features/settings/presentation/pages/settings_page.dart';
+import 'package:starter_app/src/features/today/data/repositories_impl/plan_repository_fake.dart';
+import 'package:starter_app/src/features/today/domain/usecases/get_current_plan.dart';
 import 'package:starter_app/src/features/today/presentation/pages/today_page.dart';
+import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
 import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
 
@@ -78,7 +81,14 @@ class App extends StatelessWidget {
               routes: [
                 GoRoute(
                   path: '/today',
-                  builder: (context, state) => const TodayPage(),
+                  builder: (context, state) {
+                    return ChangeNotifierProvider(
+                      create: (context) => TodayViewModel(
+                        getCurrentPlan: context.read<GetCurrentPlan>(),
+                      ),
+                      child: const TodayPage(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -118,6 +128,9 @@ class App extends StatelessWidget {
         ),
         Provider<PlanRepository>(
           create: (_) => const MemoryPlanRepository(),
+        ),
+        Provider<GetCurrentPlan>(
+          create: (_) => const GetCurrentPlan(PlanRepositoryFake()),
         ),
         ChangeNotifierProvider(
           create: (context) => OnboardingVm(context.read<AnalyticsService>()),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
-import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
+import 'package:starter_app/src/features/onboarding/domain/usecases/save_user_plan.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_summary_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/onboarding_progress_bar.dart';
@@ -29,7 +29,7 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
     if (existingVm != null) {
       _vm = existingVm;
     } else {
-      final repo = context.read<PlanRepository?>();
+      final saveUserPlan = context.read<SaveUserPlan?>();
       _vm = OnboardingSummaryVm(
         goal: widget.args.goal,
         dob: widget.args.dob,
@@ -38,10 +38,10 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
         activity: widget.args.activity,
         targetWeightKg: widget.args.targetWeightKg,
         weeklyRateKg: widget.args.weeklyRateKg,
-        dailyCalories: widget.args.dailyCalories,
+        dailyCalories: widget.args.dailyCalories.toDouble(),
         projectedEndDate: widget.args.projectedEnd,
         createdAt: DateTime.now(),
-        repository: repo,
+        saveUserPlan: saveUserPlan,
       );
     }
   }
@@ -178,7 +178,7 @@ class _NutritionCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: _CalorieTile(kcal: state.dailyCalories),
+            child: _CalorieTile(kcal: state.dailyCalories.round()),
           ),
           ...vm.macroBreakdown.map(
             (macro) => Expanded(

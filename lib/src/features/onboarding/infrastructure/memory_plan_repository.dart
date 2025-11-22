@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:starter_app/src/features/onboarding/domain/entities/user_plan.dart';
-import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
+import 'package:starter_app/src/features/plan/domain/entities/user_plan.dart';
+import 'package:starter_app/src/features/plan/domain/repositories/plan_repository.dart';
 
 /// Temporary in-memory repository to keep onboarding unblocked.
 class MemoryPlanRepository implements PlanRepository {
@@ -17,7 +17,8 @@ class MemoryPlanRepository implements PlanRepository {
   }
 
   @override
-  Future<List<UserPlan>> getAll() async {
-    return [];
+  Future<UserPlan?> getCurrentPlan() async {
+    // No plan stored in memory
+    return null;
   }
 }

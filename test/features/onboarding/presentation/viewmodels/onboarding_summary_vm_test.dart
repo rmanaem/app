@@ -1,22 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:starter_app/src/features/onboarding/domain/entities/user_plan.dart';
-import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
+import 'package:starter_app/src/features/onboarding/domain/usecases/save_user_plan.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_summary_vm.dart';
 
-class MockPlanRepository extends Mock implements PlanRepository {}
+class MockSaveUserPlan extends Mock implements SaveUserPlan {}
 
 void main() {
   group('OnboardingSummaryVm', () {
-    late PlanRepository mockRepo;
+    late SaveUserPlan mockSaveUserPlan;
     late OnboardingSummaryVm vm;
     late OnboardingSummaryArguments args;
 
     setUp(() {
-      mockRepo = MockPlanRepository();
+      mockSaveUserPlan = MockSaveUserPlan();
       args = OnboardingSummaryArguments(
         goal: Goal.lose,
         dob: DateTime(1990),
@@ -29,7 +29,7 @@ void main() {
         projectedEnd: DateTime.now().add(const Duration(days: 30)),
       );
       vm = OnboardingSummaryVm(
-        repository: mockRepo,
+        saveUserPlan: mockSaveUserPlan,
         goal: args.goal,
         dob: args.dob,
         heightCm: args.heightCm,
@@ -37,7 +37,7 @@ void main() {
         activity: args.activity,
         targetWeightKg: args.targetWeightKg,
         weeklyRateKg: args.weeklyRateKg,
-        dailyCalories: args.dailyCalories,
+        dailyCalories: args.dailyCalories.toDouble(),
         projectedEndDate: args.projectedEnd,
         createdAt: DateTime.now(),
       );
@@ -52,7 +52,10 @@ void main() {
           targetWeightKg: 75,
           weeklyRateKg: -0.5,
           dailyCalories: 2000,
-          projectedEndDate: DateTime.now(),
+          proteinGrams: 150,
+          fatGrams: 70,
+          carbGrams: 200,
+          projectedEndDate: DateTime(2024, 6),
           createdAt: DateTime.now(),
         ),
       );
@@ -64,17 +67,17 @@ void main() {
       expect(vm.state.dailyCalories, args.dailyCalories);
     });
 
-    test('savePlan calls repository and returns ID', () async {
-      when(() => mockRepo.save(any())).thenAnswer((_) async => 'plan_123');
+    test('savePlan calls use case and returns ID', () async {
+      when(() => mockSaveUserPlan(any())).thenAnswer((_) async => 'plan_123');
 
       final id = await vm.savePlan();
 
       expect(id, 'plan_123');
-      verify(() => mockRepo.save(any())).called(1);
+      verify(() => mockSaveUserPlan(any())).called(1);
     });
 
     test('savePlan sets isSaving state', () async {
-      when(() => mockRepo.save(any())).thenAnswer((_) async {
+      when(() => mockSaveUserPlan(any())).thenAnswer((_) async {
         expect(vm.state.isSaving, isTrue);
         return 'plan_123';
       });

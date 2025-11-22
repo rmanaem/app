@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
 import 'package:starter_app/src/features/onboarding/domain/entities/user_plan.dart';
-import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
+import 'package:starter_app/src/features/onboarding/domain/usecases/save_user_plan.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
@@ -13,13 +13,13 @@ import 'package:starter_app/src/features/onboarding/presentation/pages/onboardin
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_summary_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/onboarding_progress_bar.dart';
 
-class MockPlanRepository extends Mock implements PlanRepository {}
+class MockSaveUserPlan extends Mock implements SaveUserPlan {}
 
 class FakeUserPlan extends Fake implements UserPlan {}
 
 void main() {
   group('OnboardingSummaryPage', () {
-    late PlanRepository mockRepo;
+    late SaveUserPlan mockSaveUserPlan;
     late OnboardingSummaryVm vm;
 
     setUpAll(() {
@@ -27,8 +27,8 @@ void main() {
     });
 
     setUp(() {
-      mockRepo = MockPlanRepository();
-      when(() => mockRepo.save(any())).thenAnswer((_) async => 'planId');
+      mockSaveUserPlan = MockSaveUserPlan();
+      when(() => mockSaveUserPlan(any())).thenAnswer((_) async => 'planId');
 
       vm = OnboardingSummaryVm(
         goal: Goal.lose,
@@ -41,14 +41,14 @@ void main() {
         dailyCalories: 2000,
         projectedEndDate: DateTime(2024, 12, 31),
         createdAt: DateTime.now(),
-        repository: mockRepo,
+        saveUserPlan: mockSaveUserPlan,
       );
     });
 
     Widget createWidgetUnderTest() {
       return MultiProvider(
         providers: [
-          Provider<PlanRepository>.value(value: mockRepo),
+          Provider<SaveUserPlan>.value(value: mockSaveUserPlan),
           ChangeNotifierProvider<OnboardingSummaryVm>.value(value: vm),
         ],
         child: MaterialApp(
@@ -105,7 +105,7 @@ void main() {
       await tester.tap(button);
       await tester.pump(); // Start saving
 
-      verify(() => mockRepo.save(any())).called(1);
+      verify(() => mockSaveUserPlan(any())).called(1);
     });
   });
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:starter_app/src/features/onboarding/domain/entities/user_plan.dart';
-import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
+import 'package:starter_app/src/features/onboarding/domain/usecases/save_user_plan.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
+import 'package:starter_app/src/features/plan/domain/entities/user_plan.dart';
 
 /// Immutable snapshot rendered on the summary page.
 @immutable
@@ -17,6 +17,9 @@ class OnboardingSummaryState {
     required this.targetWeightKg,
     required this.weeklyRateKg,
     required this.dailyCalories,
+    required this.proteinGrams,
+    required this.fatGrams,
+    required this.carbGrams,
     required this.projectedEndDate,
     this.planId,
     this.isSaving = false,
@@ -44,7 +47,16 @@ class OnboardingSummaryState {
   final double weeklyRateKg;
 
   /// Daily calorie budget.
-  final int dailyCalories;
+  final double dailyCalories;
+
+  /// Daily protein target in grams.
+  final int proteinGrams;
+
+  /// Daily fat target in grams.
+  final int fatGrams;
+
+  /// Daily carbohydrate target in grams.
+  final int carbGrams;
 
   /// Projected end date.
   final DateTime projectedEndDate;
@@ -59,17 +71,32 @@ class OnboardingSummaryState {
   OnboardingSummaryState copyWith({
     bool? isSaving,
     String? planId,
+    double? dailyCalories,
+    int? proteinGrams,
+    int? fatGrams,
+    int? carbGrams,
+    Goal? goal,
+    DateTime? dob,
+    double? heightCm,
+    double? currentWeightKg,
+    ActivityLevel? activity,
+    double? targetWeightKg,
+    double? weeklyRateKg,
+    DateTime? projectedEndDate,
   }) {
     return OnboardingSummaryState(
-      goal: goal,
-      dob: dob,
-      heightCm: heightCm,
-      currentWeightKg: currentWeightKg,
-      activity: activity,
-      targetWeightKg: targetWeightKg,
-      weeklyRateKg: weeklyRateKg,
-      dailyCalories: dailyCalories,
-      projectedEndDate: projectedEndDate,
+      goal: goal ?? this.goal,
+      dob: dob ?? this.dob,
+      heightCm: heightCm ?? this.heightCm,
+      currentWeightKg: currentWeightKg ?? this.currentWeightKg,
+      activity: activity ?? this.activity,
+      targetWeightKg: targetWeightKg ?? this.targetWeightKg,
+      weeklyRateKg: weeklyRateKg ?? this.weeklyRateKg,
+      dailyCalories: dailyCalories ?? this.dailyCalories,
+      proteinGrams: proteinGrams ?? this.proteinGrams,
+      fatGrams: fatGrams ?? this.fatGrams,
+      carbGrams: carbGrams ?? this.carbGrams,
+      projectedEndDate: projectedEndDate ?? this.projectedEndDate,
       isSaving: isSaving ?? this.isSaving,
       planId: planId ?? this.planId,
     );
@@ -136,12 +163,15 @@ class OnboardingSummaryVm extends ChangeNotifier {
     required double currentWeightKg,
     required ActivityLevel activity,
     required double targetWeightKg,
-    required double weeklyRateKg,
-    required int dailyCalories,
-    required DateTime projectedEndDate,
     required DateTime createdAt,
-    PlanRepository? repository,
-  }) : _repo = repository,
+    double? weeklyRateKg,
+    double? dailyCalories,
+    int? proteinGrams,
+    int? fatGrams,
+    int? carbGrams,
+    DateTime? projectedEndDate,
+    SaveUserPlan? saveUserPlan,
+  }) : _saveUserPlan = saveUserPlan,
        _createdAt = createdAt {
     _state = OnboardingSummaryState(
       goal: goal,
@@ -150,13 +180,16 @@ class OnboardingSummaryVm extends ChangeNotifier {
       currentWeightKg: currentWeightKg,
       activity: activity,
       targetWeightKg: targetWeightKg,
-      weeklyRateKg: weeklyRateKg,
-      dailyCalories: dailyCalories,
-      projectedEndDate: projectedEndDate,
+      weeklyRateKg: weeklyRateKg ?? 0,
+      dailyCalories: dailyCalories ?? 0,
+      proteinGrams: proteinGrams ?? 0,
+      fatGrams: fatGrams ?? 0,
+      carbGrams: carbGrams ?? 0,
+      projectedEndDate: projectedEndDate ?? DateTime.now(),
     );
   }
 
-  final PlanRepository? _repo;
+  final SaveUserPlan? _saveUserPlan;
   final DateTime _createdAt;
 
   late OnboardingSummaryState _state;
@@ -228,9 +261,9 @@ class OnboardingSummaryVm extends ChangeNotifier {
     Goal.gain => 'Gain weight',
   };
 
-  /// Persists the plan using the injected repository.
+  /// Persists the plan using the injected use case.
   Future<String> savePlan() async {
-    if (_repo == null) {
+    if (_saveUserPlan == null) {
       return 'plan_local_preview';
     }
     if (_state.isSaving) {
@@ -238,12 +271,15 @@ class OnboardingSummaryVm extends ChangeNotifier {
     }
     _updateState(_state.copyWith(isSaving: true));
     try {
-      final id = await _repo.save(
+      final id = await _saveUserPlan(
         UserPlan(
           goal: state.goal,
           targetWeightKg: state.targetWeightKg,
           weeklyRateKg: state.weeklyRateKg,
           dailyCalories: state.dailyCalories,
+          proteinGrams: state.proteinGrams,
+          fatGrams: state.fatGrams,
+          carbGrams: state.carbGrams,
           projectedEndDate: state.projectedEndDate,
           currentWeightKg: state.currentWeightKg,
           heightCm: state.heightCm,
@@ -254,7 +290,7 @@ class OnboardingSummaryVm extends ChangeNotifier {
       );
       _updateState(_state.copyWith(isSaving: false, planId: id));
       return id;
-    } catch (error) {
+    } on Exception catch (_) {
       _updateState(_state.copyWith(isSaving: false));
       rethrow;
     }
