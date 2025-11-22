@@ -24,7 +24,7 @@ class GoalConfigurationVm extends ChangeNotifier {
        _activity = activity,
        _targetWeightKg = initialTargetWeightKg,
        _weeklyRateKg = initialWeeklyRateKg,
-       _estimator = estimator ?? const SimplePreviewEstimator().call {
+       _estimator = estimator ?? const SimplePreviewEstimator() {
     _recompute();
   }
 
@@ -111,16 +111,16 @@ class GoalConfigurationVm extends ChangeNotifier {
   }
 
   void _recompute() {
-    final input = PreviewInput(
+    final output = _estimator.estimate(
       goal: _goal,
-      height: _height,
-      currentWeight: _currentWeight,
-      ageYears: _ageYears,
-      activity: _activity,
-      targetWeight: BodyWeight.fromKg(_targetWeightKg),
+      heightCm: _height.cm,
+      currentWeightKg: _currentWeight.kg,
+      age: _ageYears,
+      activityLevel: _activity,
+      targetWeightKg: _targetWeightKg,
       weeklyRateKg: _weeklyRateKg,
+      isMale: true,
     );
-    final output = _estimator(input);
     _dailyKcal = output.dailyKcal;
     _projectedEnd = output.projectedEndDate;
     notifyListeners();

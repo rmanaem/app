@@ -25,20 +25,25 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
   @override
   void initState() {
     super.initState();
-    final repo = context.read<PlanRepository?>();
-    _vm = OnboardingSummaryVm(
-      goal: widget.args.goal,
-      dob: widget.args.dob,
-      heightCm: widget.args.heightCm,
-      currentWeightKg: widget.args.weightKg,
-      activity: widget.args.activity,
-      targetWeightKg: widget.args.targetWeightKg,
-      weeklyRateKg: widget.args.weeklyRateKg,
-      dailyCalories: widget.args.dailyCalories,
-      projectedEndDate: widget.args.projectedEnd,
-      createdAt: DateTime.now(),
-      repository: repo,
-    );
+    final existingVm = context.read<OnboardingSummaryVm?>();
+    if (existingVm != null) {
+      _vm = existingVm;
+    } else {
+      final repo = context.read<PlanRepository?>();
+      _vm = OnboardingSummaryVm(
+        goal: widget.args.goal,
+        dob: widget.args.dob,
+        heightCm: widget.args.heightCm,
+        currentWeightKg: widget.args.weightKg,
+        activity: widget.args.activity,
+        targetWeightKg: widget.args.targetWeightKg,
+        weeklyRateKg: widget.args.weeklyRateKg,
+        dailyCalories: widget.args.dailyCalories,
+        projectedEndDate: widget.args.projectedEnd,
+        createdAt: DateTime.now(),
+        repository: repo,
+      );
+    }
   }
 
   @override

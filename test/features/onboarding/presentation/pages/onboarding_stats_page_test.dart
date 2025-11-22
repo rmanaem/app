@@ -1,97 +1,74 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
-import 'package:starter_app/src/core/analytics/analytics_service.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
+import 'package:starter_app/src/features/onboarding/presentation/viewstate/onboarding_stats_view_state.dart';
 
-class _FakeAnalyticsService implements AnalyticsService {
-  @override
-  Future<void> onboardingGoalImpression() async {}
-
-  @override
-  Future<void> onboardingGoalNext(String goal) async {}
-
-  @override
-  Future<void> onboardingGoalSelected(String goal) async {}
-
-  @override
-  Future<void> onboardingStatsImpression() async {}
-
-  @override
-  Future<void> onboardingStatsNext({
-    required String unitSystem,
-    required String activity,
-  }) async {}
-
-  @override
-  Future<void> onboardingStatsUnitChanged(String unitSystem) async {}
-}
+class MockOnboardingVm extends Mock implements OnboardingVm {}
 
 void main() {
-  testWidgets(
-    'stats page renders with default values',
-    (tester) async {
-      final analytics = _FakeAnalyticsService();
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            Provider<AnalyticsService>.value(value: analytics),
-            ChangeNotifierProvider(
-              create: (_) => OnboardingVm(analytics),
-            ),
-          ],
-          child: MaterialApp(
-            theme: makeTheme(AppColors.light, dark: false),
-            home: const OnboardingStatsPage(),
-          ),
+  group('OnboardingStatsPage', () {
+    late OnboardingVm mockVm;
+
+    setUp(() {
+      mockVm = MockOnboardingVm();
+      when(() => mockVm.statsState).thenReturn(
+        const OnboardingStatsViewState(unitSystem: UnitSystem.metric),
+      );
+      when(() => mockVm.logStatsScreenViewed()).thenAnswer((_) async {});
+      when(() => mockVm.setHeightCm(any())).thenAnswer((_) async {});
+    });
+
+    Widget createWidgetUnderTest() {
+      return ChangeNotifierProvider<OnboardingVm>.value(
+        value: mockVm,
+        child: MaterialApp(
+          theme: makeTheme(AppColors.light, dark: false),
+          home: const OnboardingStatsPage(),
         ),
       );
+    }
 
-      await tester.pumpAndSettle();
+    testWidgets('renders title and fields', (tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
 
       expect(find.text('About you'), findsOneWidget);
       expect(find.text('Date of birth'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+      expect(find.text('Height'), findsOneWidget);
+      expect(find.text('Weight'), findsOneWidget);
+      expect(find.text('Activity level'), findsOneWidget);
+    });
 
-  testWidgets(
-    'height picker opens and interacts without exceptions',
-    (tester) async {
-      final analytics = _FakeAnalyticsService();
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            Provider<AnalyticsService>.value(value: analytics),
-            ChangeNotifierProvider(
-              create: (_) => OnboardingVm(analytics),
-            ),
-          ],
-          child: MaterialApp(
-            theme: makeTheme(AppColors.light, dark: false),
-            home: const OnboardingStatsPage(),
-          ),
+    testWidgets('Next button is disabled initially', (tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+
+      final nextButton = find.widgetWithText(FilledButton, 'Next');
+      expect(tester.widget<FilledButton>(nextButton).onPressed, isNull);
+    });
+
+    testWidgets('Next button is enabled when stats are valid', (
+      tester,
+    ) async {
+      when(() => mockVm.statsState).thenReturn(
+        OnboardingStatsViewState(
+          unitSystem: UnitSystem.metric,
+          dob: DateTime(1990),
+          height: Stature.fromCm(180),
+          weight: BodyWeight.fromKg(80),
+          activity: ActivityLevel.moderate,
         ),
       );
+      await tester.pumpWidget(createWidgetUnderTest());
 
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Height'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Height'), findsNWidgets(2)); // card + sheet title
-      expect(
-        () => tester.drag(
-          find.byType(CupertinoPicker).first,
-          const Offset(0, -50),
-        ),
-        returnsNormally,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+      final nextButton = find.widgetWithText(FilledButton, 'Next');
+      expect(tester.widget<FilledButton>(nextButton).onPressed, isNotNull);
+    });
+  });
 }

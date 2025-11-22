@@ -1,42 +1,49 @@
 import 'package:meta/meta.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
-import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
 
-/// Snapshot of user inputs required to compute a preview estimate.
-@immutable
-class PreviewInput {
-  /// Creates an immutable input bundle for a preview estimator.
-  const PreviewInput({
-    required this.goal,
-    required this.height,
-    required this.currentWeight,
-    required this.ageYears,
-    required this.activity,
-    required this.targetWeight,
-    required this.weeklyRateKg,
+/// Interface for pluggable preview estimators.
+abstract class PreviewEstimator {
+  /// Computes the preview output based on the provided inputs.
+  PreviewOutput estimate({
+    required Goal goal,
+    required double currentWeightKg,
+    required double targetWeightKg,
+    required double weeklyRateKg,
+    required ActivityLevel activityLevel,
+    required double heightCm,
+    required int age,
+    required bool isMale,
   });
 
-  /// Goal selected during the onboarding flow.
-  final Goal goal;
+  /// Computes safe bounds for target weight and weekly rate.
+  PreviewBounds getBounds({
+    required Goal goal,
+    required double currentWeightKg,
+  });
+}
 
-  /// User height measured as a [Stature].
-  final Stature height;
+/// Bounds for target weight and weekly rate.
+class PreviewBounds {
+  /// Creates immutable bounds.
+  const PreviewBounds({
+    required this.minTargetKg,
+    required this.maxTargetKg,
+    required this.minWeeklyRateKg,
+    required this.maxWeeklyRateKg,
+  });
 
-  /// Current body weight baseline.
-  final BodyWeight currentWeight;
+  /// Minimum allowed target weight in kg.
+  final double minTargetKg;
 
-  /// User age expressed in years.
-  final int ageYears;
+  /// Maximum allowed target weight in kg.
+  final double maxTargetKg;
 
-  /// Activity level used to scale energy expenditure.
-  final ActivityLevel activity;
+  /// Minimum allowed weekly rate in kg (negative for loss).
+  final double minWeeklyRateKg;
 
-  /// Target body weight the user wants to hit.
-  final BodyWeight targetWeight;
-
-  /// Weekly change rate (kg/week) where the sign indicates gain or loss.
-  final double weeklyRateKg;
+  /// Maximum allowed weekly rate in kg.
+  final double maxWeeklyRateKg;
 }
 
 /// Result produced by a preview estimator.
@@ -46,14 +53,23 @@ class PreviewOutput {
   const PreviewOutput({
     required this.dailyKcal,
     required this.projectedEndDate,
+    this.proteinGrams = 0,
+    this.carbsGrams = 0,
+    this.fatGrams = 0,
   });
 
   /// Daily calorie budget suggested by the estimator.
   final double dailyKcal;
 
   /// Estimated completion date for the phase, if measurable.
-  final DateTime? projectedEndDate;
-}
+  final DateTime projectedEndDate;
 
-/// Signature for pluggable preview estimators.
-typedef PreviewEstimator = PreviewOutput Function(PreviewInput input);
+  /// Protein target in grams.
+  final int proteinGrams;
+
+  /// Carbs target in grams.
+  final int carbsGrams;
+
+  /// Fat target in grams.
+  final int fatGrams;
+}
