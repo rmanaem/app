@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
+import 'package:starter_app/src/app/shell/presentation/pages/app_shell_page.dart';
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
+import 'package:starter_app/src/features/nutrition/presentation/pages/nutrition_page.dart';
 import 'package:starter_app/src/features/onboarding/domain/repositories/plan_repository.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/infrastructure/memory_plan_repository.dart';
@@ -15,6 +17,9 @@ import 'package:starter_app/src/features/onboarding/presentation/pages/onboardin
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_summary_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
+import 'package:starter_app/src/features/settings/presentation/pages/settings_page.dart';
+import 'package:starter_app/src/features/today/presentation/pages/today_page.dart';
+import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
 import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
 
 /// Root widget for the template application, wired with [GoRouter].
@@ -28,6 +33,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final router = GoRouter(
+      initialLocation: '/',
       routes: [
         GoRoute(
           path: '/',
@@ -62,6 +68,45 @@ class App extends StatelessWidget {
             }
             return OnboardingSummaryPage(args: extra);
           },
+        ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return AppShellPage(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/today',
+                  builder: (context, state) => const TodayPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/nutrition',
+                  builder: (context, state) => const NutritionPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/training',
+                  builder: (context, state) => const TrainingPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/settings',
+                  builder: (context, state) => const SettingsPage(),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     );

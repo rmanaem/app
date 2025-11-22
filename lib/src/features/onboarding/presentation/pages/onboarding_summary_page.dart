@@ -89,7 +89,7 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
     try {
       final planId = await _vm.savePlan();
       if (!mounted) return;
-      context.go('/', extra: {'planId': planId});
+      context.go('/today', extra: {'planId': planId});
     } on Object catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
