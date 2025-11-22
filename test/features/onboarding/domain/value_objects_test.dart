@@ -13,7 +13,10 @@ void main() {
 
     group('ActivityLevel', () {
       test('values are distinct', () {
-        expect(ActivityLevel.low, isNot(equals(ActivityLevel.high)));
+        expect(
+          ActivityLevel.sedentary,
+          isNot(equals(ActivityLevel.veryActive)),
+        );
       });
     });
 

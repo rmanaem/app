@@ -185,12 +185,16 @@ class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
 
   String? _formatActivity(ActivityLevel? level) {
     switch (level) {
-      case ActivityLevel.low:
+      case ActivityLevel.sedentary:
         return 'Mostly sedentary';
-      case ActivityLevel.moderate:
+      case ActivityLevel.lightlyActive:
+        return 'Lightly active';
+      case ActivityLevel.moderatelyActive:
         return 'Moderately active';
-      case ActivityLevel.high:
-        return 'Highly active';
+      case ActivityLevel.veryActive:
+        return 'Very active';
+      case ActivityLevel.extremelyActive:
+        return 'Extremely active';
       case null:
         return null;
     }

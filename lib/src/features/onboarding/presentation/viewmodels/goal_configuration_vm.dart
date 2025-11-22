@@ -3,7 +3,7 @@ import 'package:starter_app/src/features/onboarding/domain/preview_estimator.dar
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
-import 'package:starter_app/src/features/onboarding/infrastructure/simple_preview_estimator.dart';
+import 'package:starter_app/src/features/onboarding/infrastructure/standard_preview_estimator.dart';
 
 /// ViewModel powering the goal configuration sliders and metrics.
 class GoalConfigurationVm extends ChangeNotifier {
@@ -24,7 +24,7 @@ class GoalConfigurationVm extends ChangeNotifier {
        _activity = activity,
        _targetWeightKg = initialTargetWeightKg,
        _weeklyRateKg = initialWeeklyRateKg,
-       _estimator = estimator ?? const SimplePreviewEstimator() {
+       _estimator = estimator ?? const StandardPreviewEstimator() {
     _recompute();
   }
 
@@ -41,6 +41,11 @@ class GoalConfigurationVm extends ChangeNotifier {
   double _dailyKcal = 0;
   DateTime? _projectedEnd;
 
+  // Safety override state
+  bool _allowBelowMinimum = false;
+  bool _isBelowSafeMinimum = false;
+  double? _safeMinimumKcal;
+
   /// Current slider value for the target weight (kg).
   double get targetWeightKg => _targetWeightKg;
 
@@ -52,6 +57,19 @@ class GoalConfigurationVm extends ChangeNotifier {
 
   /// Projected end date for the selected target/rate combo.
   DateTime? get endDate => _projectedEnd;
+
+  /// Whether user has acknowledged safety warning and allowed below minimum.
+  bool get allowBelowMinimum => _allowBelowMinimum;
+
+  /// Whether current configuration would result in calories below safe minimum.
+  bool get isBelowSafeMinimum => _isBelowSafeMinimum;
+
+  /// The safe minimum calorie value (gender-specific), or null if above
+  /// minimum.
+  double? get safeMinimumKcal => _safeMinimumKcal;
+
+  /// Whether to show the safety warning banner.
+  bool get showingSafetyWarning => _isBelowSafeMinimum && !_allowBelowMinimum;
 
   /// Absolute weekly mass delta ignoring sign.
   double get weeklyDeltaAbs => _weeklyRateKg.abs();
@@ -110,6 +128,52 @@ class GoalConfigurationVm extends ChangeNotifier {
     _recompute();
   }
 
+  /// User acknowledges safety warning and allows going below minimum.
+  void acknowledgeSafetyWarning() {
+    _allowBelowMinimum = true;
+    _recompute(); // Recalculate with override
+  }
+
+  /// Reset safety override (return to safe defaults).
+  void resetSafetyOverride() {
+    _allowBelowMinimum = false;
+    _recompute();
+  }
+
+  /// Adjusts the weekly rate to the maximum safe deficit.
+  ///
+  /// Calculates the rate that would result in exactly the minimum safe
+  /// calorie intake (1800/1200 kcal) and updates the slider.
+  void adjustToSafeRate() {
+    // 1. Get TDEE by estimating at maintenance (0 kg/week)
+    final maintenanceOutput = _estimator.estimate(
+      goal: _goal,
+      heightCm: _height.cm,
+      currentWeightKg: _currentWeight.kg,
+      age: _ageYears,
+      activityLevel: _activity,
+      targetWeightKg: _targetWeightKg,
+      weeklyRateKg: 0,
+      isMale: true,
+    );
+
+    final tdee = maintenanceOutput.dailyKcal;
+    const minSafe =
+        1800.0; // Hardcoded for male for now, should match estimator
+
+    // 2. Calculate safe rate: Rate = (MinSafe - TDEE) / 1100
+    // 1100 = 7700 kcal/kg / 7 days
+    var safeRate = (minSafe - tdee) / 1100;
+
+    // 3. Clamp to allowed rate bounds
+    safeRate = safeRate.clamp(minRateKg, maxRateKg);
+
+    // 4. Apply
+    _weeklyRateKg = safeRate;
+    _allowBelowMinimum = false;
+    _recompute();
+  }
+
   void _recompute() {
     final output = _estimator.estimate(
       goal: _goal,
@@ -120,9 +184,12 @@ class GoalConfigurationVm extends ChangeNotifier {
       targetWeightKg: _targetWeightKg,
       weeklyRateKg: _weeklyRateKg,
       isMale: true,
+      allowBelowMinimum: _allowBelowMinimum, // NEW
     );
     _dailyKcal = output.dailyKcal;
     _projectedEnd = output.projectedEndDate;
+    _isBelowSafeMinimum = output.isBelowSafeMinimum; // NEW
+    _safeMinimumKcal = output.safeMinimumKcal; // NEW
     notifyListeners();
   }
 }

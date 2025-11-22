@@ -62,7 +62,7 @@ void main() {
           dob: DateTime(1990),
           height: Stature.fromCm(180),
           weight: BodyWeight.fromKg(80),
-          activity: ActivityLevel.moderate,
+          activity: ActivityLevel.moderatelyActive,
         ),
       );
       await tester.pumpWidget(createWidgetUnderTest());

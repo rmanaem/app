@@ -11,23 +11,15 @@ Future<ActivityLevel?> showActivityLevelSheet({
   required ActivityLevel? current,
 }) {
   final colors = Theme.of(context).extension<AppColors>()!;
-  final items = <_ActivityRow>[
-    const _ActivityRow(
-      level: ActivityLevel.low,
-      title: 'Mostly sedentary',
-      subtitle: 'Commonly < 5,000 steps/day',
-    ),
-    const _ActivityRow(
-      level: ActivityLevel.moderate,
-      title: 'Moderately active',
-      subtitle: 'Commonly 5,000 – 15,000 steps/day',
-    ),
-    const _ActivityRow(
-      level: ActivityLevel.high,
-      title: 'Highly active',
-      subtitle: 'Commonly > 15,000 steps/day',
-    ),
-  ];
+
+  // Use all 5 activity levels dynamically
+  final items = ActivityLevel.values.map((level) {
+    return _ActivityRow(
+      level: level,
+      title: level.label,
+      subtitle: level.description,
+    );
+  }).toList();
 
   return showModalBottomSheet<ActivityLevel>(
     context: context,

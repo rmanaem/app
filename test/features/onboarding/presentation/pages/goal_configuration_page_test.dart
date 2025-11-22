@@ -29,7 +29,7 @@ void main() {
           dob: DateTime(1990),
           height: Stature.fromCm(180),
           weight: BodyWeight.fromKg(80),
-          activity: ActivityLevel.moderate,
+          activity: ActivityLevel.moderatelyActive,
           unitSystem: UnitSystem.metric,
         ),
       );
@@ -67,6 +67,49 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);
+    });
+
+    testWidgets('Adjust Goal button fixes unsafe rate', (tester) async {
+      // Setup: Force unsafe condition via stats (Small Male)
+      // BMR ~1517.
+      // Sedentary (1.2) -> TDEE 1821. Min loss (-0.2) -> 1601 (Still Unsafe!)
+      // Lightly Active (1.375) -> TDEE 2086.
+      // Default Rate -0.5 -> 1536 (Unsafe)
+      // Safe Rate exists: (1800 - 2086)/1100 = -0.26 kg/week.
+
+      when(() => mockVm.goalState).thenReturn(
+        const OnboardingGoalViewState(
+          selected: Goal.lose,
+        ),
+      );
+
+      when(() => mockVm.statsState).thenReturn(
+        OnboardingStatsViewState(
+          dob: DateTime(1990),
+          height: Stature.fromCm(170),
+          weight: BodyWeight.fromKg(60),
+          activity: ActivityLevel.lightlyActive, // Changed from sedentary
+          unitSystem: UnitSystem.metric,
+        ),
+      );
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      // 1. Verify Warning Banner is present
+      expect(find.text('Below Safe Minimum'), findsOneWidget);
+      expect(find.text('Adjust Goal'), findsOneWidget);
+
+      // 2. Tap "Adjust Goal"
+      await tester.tap(find.text('Adjust Goal'));
+      await tester.pumpAndSettle();
+
+      // 3. Verify Warning Banner is GONE
+      expect(find.text('Below Safe Minimum'), findsNothing);
+
+      // 4. Verify slider moved (optional, but good check)
+      // Since we can't easily read slider value, we rely on banner
+      // disappearance which confirms the VM updated the state to a safe value.
     });
   });
 }

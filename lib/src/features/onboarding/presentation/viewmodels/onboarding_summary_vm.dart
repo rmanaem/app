@@ -190,7 +190,7 @@ class OnboardingSummaryVm extends ChangeNotifier {
     return [
       'Reach $weight kg by $date.',
       'Daily budget of ${state.dailyCalories} kcal keeps you on pace.',
-      'Tailored to your ${_activityLabel(state.activity)} lifestyle.',
+      'Tailored to your ${_formatActivityLabel(state.activity)} lifestyle.',
     ];
   }
 
@@ -271,9 +271,11 @@ class OnboardingSummaryVm extends ChangeNotifier {
     return '${date.year}-$mm-$dd';
   }
 
-  String _activityLabel(ActivityLevel level) => switch (level) {
-    ActivityLevel.low => 'mostly sedentary',
-    ActivityLevel.moderate => 'moderately active',
-    ActivityLevel.high => 'highly active',
+  String _formatActivityLabel(ActivityLevel level) => switch (level) {
+    ActivityLevel.sedentary => 'mostly sedentary',
+    ActivityLevel.lightlyActive => 'lightly active',
+    ActivityLevel.moderatelyActive => 'moderately active',
+    ActivityLevel.veryActive => 'very active',
+    ActivityLevel.extremelyActive => 'extremely active',
   };
 }

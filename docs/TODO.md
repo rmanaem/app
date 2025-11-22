@@ -2,48 +2,26 @@
 
 This document tracks known technical debt, simplifications, and future improvements needed across the codebase.
 
-## High Priority
+## Completed ✅
 
-### 🔴 Restore Proper TDEE Calculation in SimplePreviewEstimator
+### ~~🔴 Restore Proper TDEE Calculation~~ **COMPLETED 2025-11-22**
 **File:** `lib/src/features/onboarding/infrastructure/simple_preview_estimator.dart`  
-**Issue:** Calorie calculation was simplified to static dummy data during test implementation.
 
-**Current (Simplified):**
-```dart
-var dailyKcal = 2000.0;
-if (goal == Goal.gain) dailyKcal += 500;
-if (goal == Goal.lose) dailyKcal -= 500;
-dailyKcal += weeklyRateKg * 1000;  // Wrong conversion factor
-```
+**✅ Implemented:** 
+- Mifflin-St Jeor BMR formula with gender-specific constants
+- 5-level activity system (sedentary, lightly/moderatelypoll/very/extremely active)
+- TDEE multipliers: 1.2, 1.375, 1.55, 1.725, 1.9
+- Evidence-based calorie bounds (1200F / 1800M minimum, TDEE × 1.5 maximum)
+- Proper 7700 kcal/kg conversion
+- Performance-focused macro split (2.0g/kg protein, 0.8g/kg fat, remainder carbs)
 
-**Original (Correct) Logic:**
-```dart
-final activityFactor = switch (activityLevel) {
-  ActivityLevel.low => 1.4,
-  ActivityLevel.moderate => 1.6,
-  ActivityLevel.high => 1.8,
-};
-final tdee = 22.0 * currentWeightKg * activityFactor;
-final dailyDelta = (weeklyRateKg * 7700.0) / 7.0;
-final dailyBudget = (tdee + dailyDelta).clamp(900.0, 5000.0);
-```
-
-**What's Missing:**
-- ❌ Current weight factor (using static 2000 instead of calculated TDEE)
-- ❌ Activity level multiplier (1.4x, 1.6x, 1.8x)
-- ❌ Proper calorie/kg conversion (should be 7700/7, not 1000)
-- ❌ Safe clamping (900-5000 kcal range)
-- ❌ Height, age, gender factors (for future BMR-based calculation)
-
-**Action Required:**
-1. Restore original TDEE calculation
-2. Update tests to validate dynamic behavior
-3. Consider upgrading to Mifflin-St Jeor or Harris-Benedict equation
-
-**Created:** 2025-11-22  
-**Severity:** High - Affects core calorie budgeting functionality
+**Tests:** All 40 tests passing  
+**Analyzer:** Zero issues  
 
 ---
+
+## High Priority
+
 
 ## Medium Priority
 

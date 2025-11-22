@@ -59,8 +59,8 @@ void main() {
       });
 
       test('setting activity updates state', () {
-        vm.setActivityLevel(ActivityLevel.moderate);
-        expect(vm.statsState.activity, ActivityLevel.moderate);
+        vm.setActivityLevel(ActivityLevel.moderatelyActive);
+        expect(vm.statsState.activity, ActivityLevel.moderatelyActive);
       });
 
       test('canContinue is true only when all stats are valid', () {
@@ -76,7 +76,7 @@ void main() {
         vm.setWeightKg(80);
         expect(vm.statsState.isValid, isFalse);
 
-        vm.setActivityLevel(ActivityLevel.moderate);
+        vm.setActivityLevel(ActivityLevel.moderatelyActive);
         expect(vm.statsState.isValid, isTrue);
       });
     });

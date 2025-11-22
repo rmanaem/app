@@ -13,6 +13,7 @@ import 'package:starter_app/src/features/onboarding/presentation/navigation/onbo
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/goal_configuration_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/onboarding_progress_bar.dart';
+import 'package:starter_app/src/features/onboarding/presentation/widgets/safety_warning_banner.dart';
 
 /// Onboarding step that fine-tunes target weight and pace before summary.
 class GoalConfigurationPage extends StatefulWidget {
@@ -51,7 +52,7 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
       height: stats.height ?? Stature.fromCm(175),
       currentWeight: weight,
       ageYears: _ageFromDob(stats.dob),
-      activity: stats.activity ?? ActivityLevel.moderate,
+      activity: stats.activity ?? ActivityLevel.moderatelyActive,
       initialTargetWeightKg: initialTarget,
       initialWeeklyRateKg: initialRate,
     );
@@ -91,6 +92,14 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
                         totalSteps: 4,
                       ),
                       const SizedBox(height: 20),
+                      // NEW: Safety warning banner
+                      if (_vm.showingSafetyWarning)
+                        SafetyWarningBanner(
+                          minCalories: _vm.safeMinimumKcal!,
+                          onAcknowledge: _vm.acknowledgeSafetyWarning,
+                          onCancel: _vm.adjustToSafeRate,
+                        ),
+                      if (_vm.showingSafetyWarning) const SizedBox(height: 20),
                       _StatsRow(vm: _vm),
                       const SizedBox(height: 24),
                       _WeightSection(vm: _vm, unitSystem: unit),

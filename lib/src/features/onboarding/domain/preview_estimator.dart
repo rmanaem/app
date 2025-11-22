@@ -5,6 +5,11 @@ import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.da
 /// Interface for pluggable preview estimators.
 abstract class PreviewEstimator {
   /// Computes the preview output based on the provided inputs.
+  ///
+  /// If [allowBelowMinimum] is false (default), calories are clamped to
+  /// evidence-based minimums (1800 kcal for males, 1200 kcal for females).
+  /// When true, user has acknowledged safety warning and lower values
+  /// are allowed.
   PreviewOutput estimate({
     required Goal goal,
     required double currentWeightKg,
@@ -14,6 +19,7 @@ abstract class PreviewEstimator {
     required double heightCm,
     required int age,
     required bool isMale,
+    bool allowBelowMinimum = false,
   });
 
   /// Computes safe bounds for target weight and weekly rate.
@@ -56,6 +62,8 @@ class PreviewOutput {
     this.proteinGrams = 0,
     this.carbsGrams = 0,
     this.fatGrams = 0,
+    this.isBelowSafeMinimum = false,
+    this.safeMinimumKcal,
   });
 
   /// Daily calorie budget suggested by the estimator.
@@ -72,4 +80,15 @@ class PreviewOutput {
 
   /// Fat target in grams.
   final int fatGrams;
+
+  /// Whether the calculated calories are below the recommended safe minimum.
+  ///
+  /// When true, UI should display a warning and allow user to acknowledge.
+  final bool isBelowSafeMinimum;
+
+  /// The safe minimum calorie value for this user (gender-specific).
+  ///
+  /// Null if calculation is above minimum. When non-null, indicates the
+  /// recommended minimum that was (or could be) enforced.
+  final double? safeMinimumKcal;
 }
