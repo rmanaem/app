@@ -13,6 +13,7 @@ Template:
 **Conventional commit message**
 
 > Check the staged file(s) and generate the appropriate conventional commit message
+> Check the changed file(s) and generate the appropriate conventional commit message
 
 
 **Implementation**
