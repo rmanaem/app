@@ -9,6 +9,7 @@ import 'package:starter_app/src/features/onboarding/domain/value_objects/activit
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
+import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/goal_configuration_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/onboarding_progress_bar.dart';
@@ -65,7 +66,8 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final unit = _flowVm.statsState.unitSystem;
+    final stats = _flowVm.statsState;
+    final unit = stats.unitSystem;
     return Scaffold(
       backgroundColor: colors.bg,
       appBar: AppBar(
@@ -103,12 +105,29 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: FilledButton(
                       onPressed: () {
+                        final args = _buildSummaryArguments();
+                        if (args == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Complete your details before continuing.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
                         _flowVm.setGoalConfigurationChoice(
                           targetWeightKg: _vm.targetWeightKg,
                           weeklyRateKg: _vm.weeklyRateKg,
                           dailyBudgetKcal: _vm.dailyKcal,
+                          projectedEndDate: args.projectedEnd,
                         );
-                        unawaited(context.push('/onboarding/summary'));
+                        unawaited(
+                          context.push(
+                            '/onboarding/summary',
+                            extra: args,
+                          ),
+                        );
                       },
                       child: const Text('Next'),
                     ),
@@ -130,6 +149,35 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
         now.month > dob.month || (now.month == dob.month && now.day >= dob.day);
     if (!passedBirthday) age -= 1;
     return age.clamp(14, 90);
+  }
+
+  OnboardingSummaryArguments? _buildSummaryArguments() {
+    final goal = _flowVm.goalState.selected;
+    final stats = _flowVm.statsState;
+    final dob = stats.dob;
+    final height = stats.height;
+    final weight = stats.weight;
+    final activity = stats.activity;
+    final endDate = _vm.endDate;
+    if (goal == null ||
+        dob == null ||
+        height == null ||
+        weight == null ||
+        activity == null ||
+        endDate == null) {
+      return null;
+    }
+    return OnboardingSummaryArguments(
+      goal: goal,
+      dob: dob,
+      heightCm: height.cm,
+      weightKg: weight.kg,
+      activity: activity,
+      targetWeightKg: _vm.targetWeightKg,
+      weeklyRateKg: _vm.weeklyRateKg,
+      dailyCalories: _vm.dailyKcal.round(),
+      projectedEnd: endDate,
+    );
   }
 }
 

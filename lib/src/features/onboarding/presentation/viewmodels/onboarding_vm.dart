@@ -129,11 +129,13 @@ class OnboardingVm extends ChangeNotifier {
     required double targetWeightKg,
     required double weeklyRateKg,
     required double dailyBudgetKcal,
+    required DateTime projectedEndDate,
   }) {
     _goalConfigurationState = _goalConfigurationState.copyWith(
       targetWeightKg: targetWeightKg,
       weeklyRateKg: weeklyRateKg,
       dailyBudgetKcal: dailyBudgetKcal,
+      projectedEndDate: projectedEndDate,
     );
     notifyListeners();
   }
@@ -146,6 +148,7 @@ class GoalConfigurationState {
     this.targetWeightKg,
     this.weeklyRateKg,
     this.dailyBudgetKcal,
+    this.projectedEndDate,
   });
 
   /// Stored target weight in kilograms.
@@ -157,16 +160,21 @@ class GoalConfigurationState {
   /// Stored daily calorie budget.
   final double? dailyBudgetKcal;
 
+  /// Stored projected completion date.
+  final DateTime? projectedEndDate;
+
   /// Returns a copy with the provided fields replaced.
   GoalConfigurationState copyWith({
     double? targetWeightKg,
     double? weeklyRateKg,
     double? dailyBudgetKcal,
+    DateTime? projectedEndDate,
   }) {
     return GoalConfigurationState(
       targetWeightKg: targetWeightKg ?? this.targetWeightKg,
       weeklyRateKg: weeklyRateKg ?? this.weeklyRateKg,
       dailyBudgetKcal: dailyBudgetKcal ?? this.dailyBudgetKcal,
+      projectedEndDate: projectedEndDate ?? this.projectedEndDate,
     );
   }
 }

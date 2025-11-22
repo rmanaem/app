@@ -22,6 +22,11 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.heroNeutral,
     required this.heroChip,
     required this.gaugeAccent,
+    required this.chartCalloutFill,
+    required this.chartCalloutText,
+    required this.macroCarbs,
+    required this.macroProtein,
+    required this.macroFat,
   });
 
   /// Page background.
@@ -72,6 +77,21 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Accent line/fill color for gauges.
   final Color gaugeAccent;
 
+  /// Background for highlighted chart callouts.
+  final Color chartCalloutFill;
+
+  /// Text color rendered on top of chart callouts.
+  final Color chartCalloutText;
+
+  /// Macro color representing carbohydrates.
+  final Color macroCarbs;
+
+  /// Macro color representing protein.
+  final Color macroProtein;
+
+  /// Macro color representing fat.
+  final Color macroFat;
+
   // ---- LIGHT (strict black/white UI)
   /// Light palette (black on white).
   static const AppColors light = AppColors(
@@ -91,6 +111,11 @@ class AppColors extends ThemeExtension<AppColors> {
     heroNeutral: Color(0xFFF2F2F2),
     heroChip: Color(0xFFE3F2FF),
     gaugeAccent: Color(0xFF3B82F6),
+    chartCalloutFill: Color(0xFF34D399),
+    chartCalloutText: Color(0xFF052E16),
+    macroCarbs: Color(0xFF5E8A12),
+    macroProtein: Color(0xFFB38600),
+    macroFat: Color(0xFFB45309),
   );
 
   // ---- DARK (strict black/white UI)
@@ -112,6 +137,11 @@ class AppColors extends ThemeExtension<AppColors> {
     heroNeutral: Color(0xFF1F2023),
     heroChip: Color(0xFF103654),
     gaugeAccent: Color(0xFF3B82F6),
+    chartCalloutFill: Color(0xFF22C55E),
+    chartCalloutText: Color(0xFF052E16),
+    macroCarbs: Color(0xFF6A9830),
+    macroProtein: Color(0xFFBA8B10),
+    macroFat: Color(0xFFC4441C),
   );
 
   @override
@@ -132,6 +162,11 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? heroNeutral,
     Color? heroChip,
     Color? gaugeAccent,
+    Color? chartCalloutFill,
+    Color? chartCalloutText,
+    Color? macroCarbs,
+    Color? macroProtein,
+    Color? macroFat,
   }) {
     return AppColors(
       bg: bg ?? this.bg,
@@ -150,6 +185,11 @@ class AppColors extends ThemeExtension<AppColors> {
       heroNeutral: heroNeutral ?? this.heroNeutral,
       heroChip: heroChip ?? this.heroChip,
       gaugeAccent: gaugeAccent ?? this.gaugeAccent,
+      chartCalloutFill: chartCalloutFill ?? this.chartCalloutFill,
+      chartCalloutText: chartCalloutText ?? this.chartCalloutText,
+      macroCarbs: macroCarbs ?? this.macroCarbs,
+      macroProtein: macroProtein ?? this.macroProtein,
+      macroFat: macroFat ?? this.macroFat,
     );
   }
 
@@ -174,6 +214,11 @@ class AppColors extends ThemeExtension<AppColors> {
       heroNeutral: lerpColor(heroNeutral, other.heroNeutral),
       heroChip: lerpColor(heroChip, other.heroChip),
       gaugeAccent: lerpColor(gaugeAccent, other.gaugeAccent),
+      chartCalloutFill: lerpColor(chartCalloutFill, other.chartCalloutFill),
+      chartCalloutText: lerpColor(chartCalloutText, other.chartCalloutText),
+      macroCarbs: lerpColor(macroCarbs, other.macroCarbs),
+      macroProtein: lerpColor(macroProtein, other.macroProtein),
+      macroFat: lerpColor(macroFat, other.macroFat),
     );
   }
 }
