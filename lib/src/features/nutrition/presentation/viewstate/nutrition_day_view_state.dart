@@ -18,6 +18,8 @@ class NutritionDayViewState {
     required this.meals,
     this.isLoading = false,
     this.errorMessage,
+    this.isAddingEntry = false,
+    this.addEntryErrorMessage,
   });
 
   /// Formatted date label (e.g. "Sat, Nov 22").
@@ -59,8 +61,17 @@ class NutritionDayViewState {
   /// Optional error message if loading fails.
   final String? errorMessage;
 
+  /// Whether a quick-entry submission is running.
+  final bool isAddingEntry;
+
+  /// Optional error surfaced when logging food fails.
+  final String? addEntryErrorMessage;
+
   /// True when [errorMessage] is non-null.
   bool get hasError => errorMessage != null;
+
+  /// True when [addEntryErrorMessage] is non-null.
+  bool get hasQuickAddError => addEntryErrorMessage != null;
 
   /// Creates a copy with updated fields.
   NutritionDayViewState copyWith({
@@ -77,6 +88,8 @@ class NutritionDayViewState {
     List<MealSummaryVm>? meals,
     bool? isLoading,
     String? errorMessage,
+    bool? isAddingEntry,
+    String? addEntryErrorMessage,
   }) {
     return NutritionDayViewState(
       dateLabel: dateLabel ?? this.dateLabel,
@@ -92,6 +105,8 @@ class NutritionDayViewState {
       meals: meals ?? this.meals,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
+      isAddingEntry: isAddingEntry ?? this.isAddingEntry,
+      addEntryErrorMessage: addEntryErrorMessage ?? this.addEntryErrorMessage,
     );
   }
 }

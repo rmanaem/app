@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/weight_picker_sheet.dart';
@@ -111,7 +112,10 @@ class TodayPage extends StatelessWidget {
   }
 
   void _onLogFoodTap(BuildContext context) {
-    context.go('/nutrition');
+    context.go(
+      '/nutrition',
+      extra: const NutritionPageArguments(showQuickAddSheet: true),
+    );
   }
 
   Future<void> _onLogWeightTap(BuildContext context) async {

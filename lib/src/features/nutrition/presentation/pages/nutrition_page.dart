@@ -1,15 +1,58 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewstate/nutrition_day_view_state.dart';
+import 'package:starter_app/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart';
 
 /// Main Nutrition tab page.
 ///
 /// Wires the [NutritionDayViewModel] state into presentational widgets.
-class NutritionPage extends StatelessWidget {
+class NutritionPage extends StatefulWidget {
   /// Creates the Nutrition page.
-  const NutritionPage({super.key});
+  const NutritionPage({
+    this.showQuickAddSheet = false,
+    super.key,
+  });
+
+  /// Whether to trigger the quick-add sheet once the page is built.
+  final bool showQuickAddSheet;
+
+  @override
+  State<NutritionPage> createState() => _NutritionPageState();
+}
+
+class _NutritionPageState extends State<NutritionPage> {
+  bool _shouldOpenQuickAdd = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _shouldOpenQuickAdd = widget.showQuickAddSheet;
+  }
+
+  @override
+  void didUpdateWidget(covariant NutritionPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.showQuickAddSheet && !oldWidget.showQuickAddSheet) {
+      _shouldOpenQuickAdd = true;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_shouldOpenQuickAdd) {
+      _shouldOpenQuickAdd = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final notifier = context.read<NutritionDayViewModel>();
+        unawaited(_showQuickAddSheet(notifier));
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +76,36 @@ class NutritionPage extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO(arman): hook into nutrition logging sheet / flow.
-        },
+        onPressed: state.isAddingEntry
+            ? null
+            : () => unawaited(_showQuickAddSheet(vm)),
         backgroundColor: colors.accent,
         foregroundColor: colors.bg,
         child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  Future<void> _showQuickAddSheet(NutritionDayViewModel vm) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return ChangeNotifierProvider<NutritionDayViewModel>.value(
+          value: vm,
+          child: Consumer<NutritionDayViewModel>(
+            builder: (context, notifier, _) {
+              final sheetState = notifier.state;
+              return QuickAddFoodSheet(
+                isSubmitting: sheetState.isAddingEntry,
+                errorText: sheetState.addEntryErrorMessage,
+                onErrorDismissed: notifier.clearQuickAddError,
+                onSubmit: notifier.addQuickEntry,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

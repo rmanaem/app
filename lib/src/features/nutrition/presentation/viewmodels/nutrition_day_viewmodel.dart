@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:starter_app/src/features/nutrition/domain/entities/day_food_log.dart';
 import 'package:starter_app/src/features/nutrition/domain/entities/food_entry.dart';
 import 'package:starter_app/src/features/nutrition/domain/repositories/food_log_repository.dart';
+import 'package:starter_app/src/features/nutrition/presentation/models/quick_food_entry_input.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewstate/nutrition_day_view_state.dart';
 import 'package:starter_app/src/features/plan/domain/repositories/plan_repository.dart';
 
@@ -44,24 +45,43 @@ class NutritionDayViewModel extends ChangeNotifier {
   Future<void> onDateSelected(DateTime date) => _loadForDate(date);
 
   /// Adds a quick entry (calories only, optional macros) to the current day.
-  Future<void> addQuickEntry({
-    required String title,
-    required int calories,
-    int proteinGrams = 0,
-    int carbGrams = 0,
-    int fatGrams = 0,
-    int? itemsCount,
-  }) async {
-    final entry = FoodEntry(
-      title: title,
-      calories: calories,
-      proteinGrams: proteinGrams,
-      carbGrams: carbGrams,
-      fatGrams: fatGrams,
-      itemsCount: itemsCount,
+  Future<bool> addQuickEntry(QuickFoodEntryInput input) async {
+    _updateState(
+      _state.copyWith(
+        isAddingEntry: true,
+      ),
     );
-    await _foodLogRepository.addQuickEntry(_selectedDate, entry);
-    await _loadForDate(_selectedDate);
+
+    final entry = FoodEntry(
+      title: (input.title ?? '').isEmpty ? input.mealLabel : input.title!,
+      calories: input.calories,
+      proteinGrams: input.proteinGrams ?? 0,
+      carbGrams: input.carbGrams ?? 0,
+      fatGrams: input.fatGrams ?? 0,
+    );
+
+    try {
+      await _foodLogRepository.addQuickEntry(_selectedDate, entry);
+      await _loadForDate(_selectedDate);
+      _updateState(_state.copyWith(isAddingEntry: false));
+      return true;
+    } on Exception catch (_) {
+      _updateState(
+        _state.copyWith(
+          isAddingEntry: false,
+          addEntryErrorMessage: 'Could not log food entry. Try again.',
+        ),
+      );
+      return false;
+    }
+  }
+
+  /// Clears the quick-add error message once rendered.
+  void clearQuickAddError() {
+    if (!_state.hasQuickAddError) {
+      return;
+    }
+    _updateState(_state.copyWith());
   }
 
   late DateTime _selectedDate = DateTime.now();

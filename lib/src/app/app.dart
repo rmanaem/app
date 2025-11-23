@@ -8,6 +8,7 @@ import 'package:starter_app/src/app/shell/presentation/pages/app_shell_page.dart
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
 import 'package:starter_app/src/features/nutrition/nutrition.dart';
+import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/infrastructure/memory_plan_repository.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/navigation.dart';
@@ -97,12 +98,17 @@ class App extends StatelessWidget {
                 GoRoute(
                   path: '/nutrition',
                   builder: (context, state) {
+                    final args = state.extra is NutritionPageArguments
+                        ? state.extra! as NutritionPageArguments
+                        : null;
                     return ChangeNotifierProvider(
                       create: (context) => NutritionDayViewModel(
                         foodLogRepository: context.read<FoodLogRepository>(),
                         planRepository: context.read<PlanRepository>(),
                       ),
-                      child: const NutritionPage(),
+                      child: NutritionPage(
+                        showQuickAddSheet: args?.showQuickAddSheet ?? false,
+                      ),
                     );
                   },
                 ),
