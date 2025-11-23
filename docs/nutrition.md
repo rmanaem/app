@@ -801,3 +801,425 @@ Plug your logging flow into the FAB + empty state CTA.
 - Persistent storage / real data source beyond the fake repository.
 - More detailed meal rows (items list, editing) and navigation hooks.
 - Additional widget extraction/tests once components grow.
+
+
+## Next steps after the above:
+
+Design the quick‑add interaction
+
+Trigger points:
+
+Nutrition FAB (+)
+
+“Log food” quick action on Today tab
+
+UX:
+
+showModalBottomSheet with:
+
+Title: “Quick add”
+
+Field: Energy (kcal, required)
+
+Optional fields (can be MVP‑optional): Protein / Carbs / Fat (g)
+
+Meal type dropdown (“Breakfast / Lunch / Dinner / Snack”) or default “Uncategorized”
+
+Primary button: Log food
+
+Secondary: Cancel
+
+Add a dedicated widget
+
+File (example):
+lib/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart
+
+Props:
+
+Future<void> Function(int kcal, {int? protein, int? carbs, int? fat, String? mealLabel}) onSubmit
+
+The sheet is pure UI: it validates and calls onSubmit.
+
+Extend the ViewModel
+
+In NutritionDayViewModel:
+
+Add a method like Future<void> addQuickEntry(QuickFoodEntryInput input) that:
+
+Builds a FoodEntry entity
+
+Calls FoodLogRepository.addQuickEntry
+
+Reloads the current day log (or mutates state in place)
+
+Expose a simple bool isAdding flag + error string to show loading state / error snackbars.
+
+Wire things together
+
+Nutrition FAB:
+
+onPressed → open bottom sheet, pass vm.addQuickEntry.
+
+Today → “Log food” quick action:
+
+For MVP, push to Nutrition tab and then open the same sheet, or just open the sheet directly if you can safely reuse the Nutrition VM.
+
+After successful add:
+
+Dismiss sheet
+
+Updated NutritionDayViewState should cause:
+
+New total calories/macros in summary card
+
+New meal row (or updated “Today” totals) in the list section.
+
+Add a minimal test
+
+New test file (following your testing plan):
+test/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel_test.dart
+
+MVP‑critical cases:
+
+When addQuickEntry succeeds, state.caloriesConsumed increases.
+
+When repo throws, state.errorMessage is set and loading flag resets.
+
+
+1. File + public API
+
+Suggested file path: lib/src/features/core/presentation/widgets/quick_actions_sheet.dart
+
+(If it's better practice to keep it under Today for now, move it to
+lib/src/features/today/presentation/widgets/quick_actions_sheet.dart without changing the API.)
+
+lib/src/features/today/presentation/widgets/quick_actions_sheet.dart without changing the API.)
+
+Public API
+
+/// Shows the global quick actions bottom sheet.
+///
+/// Usage:
+/// ```dart
+/// await QuickActionsSheet.show(
+///   context,
+///   onLogFood: () { /* open food log */ },
+///   onLogWeight: () { /* open weight sheet */ },
+///   onStartWorkout: () { /* go to training */ },
+/// );
+/// ```
+class QuickActionsSheet extends StatelessWidget {
+  const QuickActionsSheet({
+    super.key,
+    required this.onLogFood,
+    required this.onLogWeight,
+    required this.onStartWorkout,
+  });
+
+  final VoidCallback onLogFood;
+  final VoidCallback onLogWeight;
+  final VoidCallback onStartWorkout;
+
+  /// Convenience entry point to present the sheet as a modal bottom sheet.
+  static Future<void> show(
+    BuildContext context, {
+    required VoidCallback onLogFood,
+    required VoidCallback onLogWeight,
+    required VoidCallback onStartWorkout,
+  });
+}
+
+
+Full widget code
+// lib/src/features/core/presentation/widgets/quick_actions_sheet.dart
+
+import 'package:flutter/material.dart';
+
+import '../../../../app/design_system/app_colors.dart';
+
+/// Global "Shortcuts" / quick-actions bottom sheet.
+///
+/// This is a purely presentational widget: it just renders three primary
+/// actions tailored to this app:
+///
+///  * Log food
+///  * Log weight
+///  * Start workout
+///
+/// All navigation / logging flows are injected via callbacks.
+///
+/// Typical usage:
+/// ```dart
+/// await QuickActionsSheet.show(
+///   context,
+///   onLogFood: () { /* open food logging */ },
+///   onLogWeight: () { /* open weight picker */ },
+///   onStartWorkout: () { /* go to training tab */ },
+/// );
+/// ```
+class QuickActionsSheet extends StatelessWidget {
+  const QuickActionsSheet({
+    super.key,
+    required this.onLogFood,
+    required this.onLogWeight,
+    required this.onStartWorkout,
+  });
+
+  /// Called when the user taps "Log food".
+  final VoidCallback onLogFood;
+
+  /// Called when the user taps "Log weight".
+  final VoidCallback onLogWeight;
+
+  /// Called when the user taps "Workout".
+  final VoidCallback onStartWorkout;
+
+  /// Presents the sheet using [showModalBottomSheet].
+  static Future<void> show(
+    BuildContext context, {
+    required VoidCallback onLogFood,
+    required VoidCallback onLogWeight,
+    required VoidCallback onStartWorkout,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return QuickActionsSheet(
+          onLogFood: () {
+            Navigator.of(sheetContext).pop();
+            onLogFood();
+          },
+          onLogWeight: () {
+            Navigator.of(sheetContext).pop();
+            onLogWeight();
+          },
+          onStartWorkout: () {
+            Navigator.of(sheetContext).pop();
+            onStartWorkout();
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        // Semi-transparent backdrop like the reference screenshot.
+        color: colors.bg.withOpacity(0.6),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            margin: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+                bottom: Radius.circular(20),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // drag handle
+                  Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 4, bottom: 12),
+                    decoration: BoxDecoration(
+                      color: colors.ringTrack,
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(999),
+                      ),
+                    ),
+                  ),
+
+                  // header row: close icon + title + (optional) placeholder for settings
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        color: colors.inkSubtle,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Shortcuts',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colors.ink,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Right side: reserved for a future "customize" icon
+                      IconButton(
+                        icon: const Icon(Icons.tune),
+                        color: colors.inkSubtle,
+                        onPressed: () {
+                          // TODO: hook up "Customize shortcuts" later.
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // primary actions row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _QuickActionIconButton(
+                        label: 'Log food',
+                        icon: Icons.restaurant_outlined,
+                        onTap: onLogFood,
+                      ),
+                      _QuickActionIconButton(
+                        label: 'Log weight',
+                        icon: Icons.monitor_weight_outlined,
+                        onTap: onLogWeight,
+                      ),
+                      _QuickActionIconButton(
+                        label: 'Workout',
+                        icon: Icons.fitness_center_outlined,
+                        onTap: onStartWorkout,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // subtle footer copy (optional)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Fast access to the actions you use most.',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.inkSubtle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionIconButton extends StatelessWidget {
+  const _QuickActionIconButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: colors.surface2,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Icon(
+                icon,
+                size: 22,
+                color: colors.ink,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: textTheme.bodySmall?.copyWith(
+            color: colors.ink,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Wire the sheet to the central FAB (or the Today quick‑actions row):
+
+onPressed: () {
+  QuickActionsSheet.show(
+    context,
+    onLogFood: () => _goToNutrition(context),
+    onLogWeight: () => _showWeightPicker(context),
+    onStartWorkout: () => _goToTraining(context),
+  );
+}
+
+### Implementation plan (Quick add + shortcuts)
+
+1. **Quick add sheet UI**
+   - Create `lib/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart`.
+   - Build inputs for required kcal plus optional macros and meal type, with submit/cancel actions.
+   - Keep it presentational: use AppColors/textTheme, handle validation/loading, and invoke `onSubmit`.
+
+2. **ViewModel and state updates**
+   - Add a DTO (e.g., `QuickFoodEntryInput`) so the sheet can pass kcal/macros/meal label cleanly.
+   - Extend `NutritionDayViewState` with `isAdding` and `addError` (or reuse `errorMessage`) for quick-add feedback.
+   - Update `NutritionDayViewModel.addQuickEntry` to toggle `isAdding`, call the repo, refresh state, and handle errors.
+
+3. **Trigger wiring**
+   - NutritionPage FAB → `showModalBottomSheet` for `QuickAddFoodSheet`, hooking submit to `vm.addQuickEntry`.
+   - Today “Log food” quick action (from the shortcuts sheet) navigates to Nutrition and opens the same sheet, or reuses the VM directly.
+
+4. **Quick actions sheet**
+   - Implement `QuickActionsSheet` (core presentation widgets) with callbacks for log food/weight/workout.
+   - Wire the central FAB (e.g., in AppShell) to present this sheet so “Log food” can trigger step 3.
+
+5. **Testing**
+   - Add `test/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel_test.dart` covering:
+     - Successful `addQuickEntry` increases calories/meals and resets `isAdding`.
+     - Repository failure sets an error and resets `isAdding`.
+   - (Optional) widget tests for `QuickAddFoodSheet` validation once stabilized.
+
+---
+
+## What’s implemented now
+
+- **Domain & data**
+  - `FoodLogRepository`, `DayFoodLog`, `FoodEntry`, and the seeded `FoodLogRepositoryFake` (with async delays + in-memory quick add) provide the contract→fake stack the spec called for.
+
+- **ViewModel & state**
+  - `NutritionDayViewModel` drives `NutritionDayViewState`, handling day selection, totals, plan targets, quick-entry submissions (`QuickFoodEntryInput`), and exposes loading + error flags for both load and quick-add flows.
+
+- **Nutrition page**
+  - `NutritionPage` matches the hierarchical layout (day selector, summary card, meal list/empty state) and is DI-wired via Provider. All subwidgets remain presentational, using AppColors/textTheme tokens.
+  - FAB opens the new `QuickAddFoodSheet`; `/nutrition` accepts `NutritionPageArguments(showQuickAddSheet: true)` to auto-trigger it when navigating from Today/shortcuts.
+
+- **Quick add sheet & shortcuts**
+  - `QuickAddFoodSheet` collects kcal + optional macros + meal type, validates, surfaces VM errors, and closes on success.
+  - `QuickActionsSheet` (hooked to the AppShell FAB) and Today’s quick actions now route to Nutrition with the quick-add sheet, or to weight/workout flows via injected callbacks.
+
+- **Tests**
+  - `test/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel_test.dart` verifies quick-add success (calorie totals update) and repository-failure handling (error surfaced, `isAddingEntry` reset).
