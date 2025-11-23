@@ -16,6 +16,14 @@ class TodayViewState {
     this.consumedProtein = 0,
     this.consumedFat = 0,
     this.consumedCarbs = 0,
+    this.planLabel,
+    this.nextWorkoutTitle,
+    this.nextWorkoutSubtitle,
+    this.lastWorkoutTitle,
+    this.lastWorkoutSubtitle,
+    this.lastWeightKg,
+    this.weightDeltaLabel,
+    this.hasWeightTrend = false,
   });
 
   /// The user's active nutrition plan.
@@ -39,6 +47,33 @@ class TodayViewState {
   /// Carbohydrates consumed today in grams.
   final int consumedCarbs;
 
+  /// Short label for the plan chip (e.g. "Lose · Standard").
+  final String? planLabel;
+
+  /// Title for the next workout block.
+  final String? nextWorkoutTitle;
+
+  /// Subtitle for the next workout block (e.g. time/duration).
+  final String? nextWorkoutSubtitle;
+
+  /// Title for the last workout block.
+  final String? lastWorkoutTitle;
+
+  /// Subtitle for the last workout block.
+  final String? lastWorkoutSubtitle;
+
+  /// Last recorded weight in kg (MVP: placeholder).
+  final double? lastWeightKg;
+
+  /// Short trend label for weight compared to last week.
+  final String? weightDeltaLabel;
+
+  /// Whether there is enough data to show a trend visual.
+  final bool hasWeightTrend;
+
+  /// True when a non-null [errorMessage] is present.
+  bool get hasError => errorMessage != null;
+
   /// Creates a copy with updated fields.
   TodayViewState copyWith({
     UserPlan? plan,
@@ -48,6 +83,14 @@ class TodayViewState {
     int? consumedProtein,
     int? consumedFat,
     int? consumedCarbs,
+    String? planLabel,
+    String? nextWorkoutTitle,
+    String? nextWorkoutSubtitle,
+    String? lastWorkoutTitle,
+    String? lastWorkoutSubtitle,
+    double? lastWeightKg,
+    String? weightDeltaLabel,
+    bool? hasWeightTrend,
   }) {
     return TodayViewState(
       plan: plan ?? this.plan,
@@ -57,6 +100,14 @@ class TodayViewState {
       consumedProtein: consumedProtein ?? this.consumedProtein,
       consumedFat: consumedFat ?? this.consumedFat,
       consumedCarbs: consumedCarbs ?? this.consumedCarbs,
+      planLabel: planLabel ?? this.planLabel,
+      nextWorkoutTitle: nextWorkoutTitle ?? this.nextWorkoutTitle,
+      nextWorkoutSubtitle: nextWorkoutSubtitle ?? this.nextWorkoutSubtitle,
+      lastWorkoutTitle: lastWorkoutTitle ?? this.lastWorkoutTitle,
+      lastWorkoutSubtitle: lastWorkoutSubtitle ?? this.lastWorkoutSubtitle,
+      lastWeightKg: lastWeightKg ?? this.lastWeightKg,
+      weightDeltaLabel: weightDeltaLabel ?? this.weightDeltaLabel,
+      hasWeightTrend: hasWeightTrend ?? this.hasWeightTrend,
     );
   }
 }

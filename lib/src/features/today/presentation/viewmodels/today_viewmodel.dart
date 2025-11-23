@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:starter_app/src/features/plan/domain/entities/user_plan.dart';
+import 'package:starter_app/src/features/plan/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/today/domain/usecases/get_current_plan.dart';
 import 'package:starter_app/src/features/today/presentation/viewstate/today_view_state.dart';
 
@@ -31,7 +33,6 @@ class TodayViewModel extends ChangeNotifier {
     try {
       final plan = await _getCurrentPlan();
 
-      // TEMPORARY: Pre-fill some consumed data to visualize the UI
       if (plan != null) {
         _updateState(
           TodayViewState(
@@ -40,14 +41,19 @@ class TodayViewModel extends ChangeNotifier {
             consumedProtein: (plan.proteinGrams * 0.8).round(),
             consumedFat: (plan.fatGrams * 0.4).round(),
             consumedCarbs: (plan.carbGrams * 0.5).round(),
+            planLabel: _planLabelFor(plan),
+            nextWorkoutTitle: 'Upper A',
+            nextWorkoutSubtitle: 'Tomorrow · ~45 min',
+            lastWorkoutTitle: 'Mon · 42 min',
+            lastWorkoutSubtitle: 'Bench 5×5 @ 80 kg',
+            lastWeightKg: 82.4,
+            weightDeltaLabel: '-0.4 kg vs last week',
+            hasWeightTrend: true,
           ),
         );
       } else {
-        _updateState(
-          const TodayViewState(
-            errorMessage: 'No plan found.',
-          ),
-        );
+        // No plan yet: keep page usable, cards can show "no plan" copy.
+        _updateState(const TodayViewState());
       }
     } on Exception catch (_) {
       _updateState(
@@ -56,6 +62,16 @@ class TodayViewModel extends ChangeNotifier {
         ),
       );
     }
+  }
+
+  String _planLabelFor(UserPlan plan) {
+    final goal = plan.goal;
+    final goalLabel = switch (goal) {
+      Goal.lose => 'Lose',
+      Goal.maintain => 'Maintain',
+      Goal.gain => 'Gain',
+    };
+    return '$goalLabel · Standard';
   }
 
   void _updateState(TodayViewState newState) {
