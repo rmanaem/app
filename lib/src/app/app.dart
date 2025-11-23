@@ -23,7 +23,10 @@ import 'package:starter_app/src/features/today/data/repositories_impl/plan_repos
 import 'package:starter_app/src/features/today/domain/usecases/get_current_plan.dart';
 import 'package:starter_app/src/features/today/presentation/pages/today_page.dart';
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
+import 'package:starter_app/src/features/training/data/repositories_impl/training_overview_repository_fake.dart';
+import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
+import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
 import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
 
 /// Root widget for the template application, wired with [GoRouter].
@@ -118,7 +121,14 @@ class App extends StatelessWidget {
               routes: [
                 GoRoute(
                   path: '/training',
-                  builder: (context, state) => const TrainingPage(),
+                  builder: (context, state) {
+                    return ChangeNotifierProvider(
+                      create: (context) => TrainingOverviewViewModel(
+                        repository: context.read<TrainingOverviewRepository>(),
+                      ),
+                      child: const TrainingPage(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -148,6 +158,9 @@ class App extends StatelessWidget {
         ),
         Provider<GetCurrentPlan>(
           create: (_) => const GetCurrentPlan(PlanRepositoryFake()),
+        ),
+        Provider<TrainingOverviewRepository>(
+          create: (_) => const TrainingOverviewRepositoryFake(),
         ),
         ChangeNotifierProvider(
           create: (context) => OnboardingVm(context.read<AnalyticsService>()),
