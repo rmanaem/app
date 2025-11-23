@@ -7,10 +7,10 @@ import 'package:starter_app/src/app/design_system/app_theme.dart';
 import 'package:starter_app/src/app/shell/presentation/pages/app_shell_page.dart';
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
-import 'package:starter_app/src/features/nutrition/presentation/pages/nutrition_page.dart';
+import 'package:starter_app/src/features/nutrition/nutrition.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/infrastructure/memory_plan_repository.dart';
-import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
+import 'package:starter_app/src/features/onboarding/presentation/navigation/navigation.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/goal_configuration_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_goal_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
@@ -96,7 +96,15 @@ class App extends StatelessWidget {
               routes: [
                 GoRoute(
                   path: '/nutrition',
-                  builder: (context, state) => const NutritionPage(),
+                  builder: (context, state) {
+                    return ChangeNotifierProvider(
+                      create: (context) => NutritionDayViewModel(
+                        foodLogRepository: context.read<FoodLogRepository>(),
+                        planRepository: context.read<PlanRepository>(),
+                      ),
+                      child: const NutritionPage(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -128,6 +136,9 @@ class App extends StatelessWidget {
         ),
         Provider<PlanRepository>(
           create: (_) => const MemoryPlanRepository(),
+        ),
+        Provider<FoodLogRepository>(
+          create: (_) => FoodLogRepositoryFake(),
         ),
         Provider<GetCurrentPlan>(
           create: (_) => const GetCurrentPlan(PlanRepositoryFake()),
