@@ -728,7 +728,7 @@ class _EmptyMealState extends StatelessWidget {
 
 How to evolve this later
 
-Introduce NutritionViewState in viewstate/ and replace the hard‑coded arguments in _NutritionContent with real state fields.
+Introduce NutritionViewState in viewstate/ and replace the hard-coded arguments in _NutritionContent with real state fields.
 
 Move _DailySummaryCard, _MacroChip, _MealListSection into widgets/ if they grow.
 
@@ -785,3 +785,19 @@ Plug your logging flow into the FAB + empty state CTA.
   - Meal detail rows with items, macros, and editing.
   - Quick add bottom sheet with validation and macro inputs.
   - Per-meal type grouping and history across dates.
+
+---
+
+## Implementation status (latest)
+
+**Completed**
+- Domain contracts and entities: `FoodLogRepository`, `DayFoodLog`, `FoodEntry`.
+- Fake repository seeded with today’s meals and in-memory quick add (`FoodLogRepositoryFake`).
+- Presentation state and logic: `NutritionDayViewState` and `NutritionDayViewModel` (load today, date selection, quick add, totals, plan targets).
+- Nutrition page refactor: day selector, daily summary card, meal list/empty state, error/loading handling, Provider wiring in router, design-system styling.
+
+**Missing / pending**
+- Quick-add flow UI (FAB tap currently TODO; no bottom sheet).
+- Persistent storage / real data source beyond the fake repository.
+- More detailed meal rows (items list, editing) and navigation hooks.
+- Additional widget extraction/tests once components grow.
