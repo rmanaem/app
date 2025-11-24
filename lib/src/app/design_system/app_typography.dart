@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 
-/// Typography tokens. We generate styles from colors so they track light/dark.
+/// Typography tokens.
 @immutable
 class AppTypography extends ThemeExtension<AppTypography> {
   /// Constructs the typography set.
   const AppTypography({
+    required this.hero,
     required this.display,
     required this.title,
     required this.body,
@@ -15,44 +16,64 @@ class AppTypography extends ThemeExtension<AppTypography> {
 
   /// Generates typography styles tied to the provided color tokens.
   factory AppTypography.from(AppColors c) {
+    // Note: In a real app, apply GoogleFonts or custom assets here.
+    // e.g., SF Pro Rounded or JetBrains Mono.
     return AppTypography(
-      display: TextStyle(
-        fontSize: 28,
-        height: 1.15,
+      // HERO: Massive, Tight Spacing (for "2,450" kcal)
+      hero: TextStyle(
+        fontSize: 48,
+        height: 1,
         fontWeight: FontWeight.w800,
+        letterSpacing: -1.5,
         color: c.ink,
       ),
+      // DISPLAY: For headlines "Log Fast. Train Smart."
+      display: TextStyle(
+        fontSize: 32,
+        height: 1.1,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -1,
+        color: c.ink,
+      ),
+      // TITLE: Section headers
       title: TextStyle(
         fontSize: 20,
-        height: 1.20,
-        fontWeight: FontWeight.w700,
+        height: 1.2,
+        fontWeight: FontWeight.w600,
         color: c.ink,
       ),
+      // BODY: Primary readable text
       body: TextStyle(
         fontSize: 16,
-        height: 1.40,
+        height: 1.5,
         fontWeight: FontWeight.w400,
         color: c.ink,
       ),
+      // CAPTION: Secondary meta data
       caption: TextStyle(
         fontSize: 13,
-        height: 1.30,
-        fontWeight: FontWeight.w600,
+        height: 1.3,
+        fontWeight: FontWeight.w500,
         color: c.inkSubtle,
       ),
+      // BUTTON: Action labels
       button: TextStyle(
         fontSize: 16,
-        height: 1.20,
+        height: 1.2,
         fontWeight: FontWeight.w700,
-        color: c.ink,
+        letterSpacing: 0.5,
+        color: c.ink, // Silver text on buttons
       ),
     );
   }
 
-  /// Large hero/header style.
+  /// Massive hero style for data.
+  final TextStyle hero;
+
+  /// Large header style.
   final TextStyle display;
 
-  /// Section/page title style.
+  /// Section title style.
   final TextStyle title;
 
   /// Primary body copy style.
@@ -64,21 +85,24 @@ class AppTypography extends ThemeExtension<AppTypography> {
   /// Button label style.
   final TextStyle button;
 
-  /// Returns a copy with selectively overridden text styles.
   @override
   AppTypography copyWith({
+    TextStyle? hero,
     TextStyle? display,
     TextStyle? title,
     TextStyle? body,
     TextStyle? caption,
     TextStyle? button,
-  }) => AppTypography(
-    display: display ?? this.display,
-    title: title ?? this.title,
-    body: body ?? this.body,
-    caption: caption ?? this.caption,
-    button: button ?? this.button,
-  );
+  }) {
+    return AppTypography(
+      hero: hero ?? this.hero,
+      display: display ?? this.display,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      caption: caption ?? this.caption,
+      button: button ?? this.button,
+    );
+  }
 
   @override
   ThemeExtension<AppTypography> lerp(
@@ -86,13 +110,14 @@ class AppTypography extends ThemeExtension<AppTypography> {
     double t,
   ) {
     if (other is! AppTypography) return this;
-    TextStyle l(TextStyle a, TextStyle b) => TextStyle.lerp(a, b, t)!;
+    final o = other;
     return AppTypography(
-      display: l(display, other.display),
-      title: l(title, other.title),
-      body: l(body, other.body),
-      caption: l(caption, other.caption),
-      button: l(button, other.button),
+      hero: TextStyle.lerp(hero, o.hero, t)!,
+      display: TextStyle.lerp(display, o.display, t)!,
+      title: TextStyle.lerp(title, o.title, t)!,
+      body: TextStyle.lerp(body, o.body, t)!,
+      caption: TextStyle.lerp(caption, o.caption, t)!,
+      button: TextStyle.lerp(button, o.button, t)!,
     );
   }
 }

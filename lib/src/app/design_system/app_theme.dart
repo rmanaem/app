@@ -4,34 +4,20 @@ import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 
 /// Produces a Material 3 ThemeData from AppColors tokens.
-/// Ensures filled buttons have correct contrast:
-///   • light: primary=black, onPrimary=white
-///   • dark:  primary=white, onPrimary=black
 ThemeData makeTheme(AppColors tokens, {required bool dark}) {
-  final base = dark
-      ? ThemeData.dark(useMaterial3: true)
-      : ThemeData.light(useMaterial3: true);
+  final base = dark ? ThemeData.dark() : ThemeData.light();
 
+  // Force the industrial color scheme
   final colorScheme =
       (dark ? const ColorScheme.dark() : const ColorScheme.light()).copyWith(
         primary: tokens.accent,
-        onPrimary: dark ? Colors.black : Colors.white,
+        onPrimary: tokens.bg, // Black text on Silver button
         secondary: tokens.accent,
-        onSecondary: dark ? Colors.black : Colors.white,
-        secondaryContainer: tokens.accent,
-        onSecondaryContainer: dark ? Colors.black : Colors.white,
         surface: tokens.surface,
-        surfaceTint: Colors.transparent,
         onSurface: tokens.ink,
-        outline: tokens.ringTrack,
+        outline: tokens.glassBorder,
         error: tokens.danger,
-        onError: dark ? Colors.black : Colors.white,
       );
-
-  final textTheme = base.textTheme.apply(
-    bodyColor: tokens.ink,
-    displayColor: tokens.ink,
-  );
 
   final type = AppTypography.from(tokens);
   const spacing = AppSpacing.base;
@@ -39,77 +25,85 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
   return base.copyWith(
     colorScheme: colorScheme,
     scaffoldBackgroundColor: tokens.bg,
-    textTheme: textTheme,
+    textTheme: base.textTheme.apply(
+      bodyColor: tokens.ink,
+      displayColor: tokens.ink,
+    ),
 
+    // AppBar: Blend into background
     appBarTheme: AppBarTheme(
       backgroundColor: tokens.bg,
       elevation: 0,
+      centerTitle: true,
       iconTheme: IconThemeData(color: tokens.ink),
-      titleTextStyle: textTheme.titleLarge?.copyWith(
-        color: tokens.ink,
-        fontWeight: FontWeight.w700,
-      ),
+      titleTextStyle: type.title,
     ),
 
+    // Card: Use Surface color by default (GlassCard used explicitly elsewhere)
     cardTheme: CardThemeData(
       color: tokens.surface,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: tokens.glassBorder, width: 0.5),
+      ),
     ),
 
-    dividerTheme: DividerThemeData(
-      color: tokens.ringTrack,
-      thickness: 1,
-      space: 1,
-    ),
-
+    // Input: Industrial Field
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: tokens.surface2,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: spacing.md,
+        vertical: spacing.md,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: tokens.surface2),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: tokens.surface2),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: tokens.glassBorder, width: 0.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: tokens.ink),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: tokens.accent),
       ),
-      labelStyle: TextStyle(color: tokens.inkSubtle),
-      hintStyle: TextStyle(color: tokens.inkSubtle),
+      labelStyle: type.caption,
+      hintStyle: type.caption.copyWith(color: tokens.inkSubtle),
     ),
 
+    // Filled Button: Brushed Steel Pill
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: tokens.accent,
-        foregroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        minimumSize: const Size(64, 52),
+        backgroundColor: tokens.glassFill, // Dense Smoke
+        foregroundColor: tokens.ink, // Silver Text
+        elevation: 0,
+        padding: EdgeInsets.symmetric(horizontal: spacing.lg),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(100), // Stadium
+          side: BorderSide(color: tokens.glassBorder),
+        ),
+        minimumSize: const Size.fromHeight(56), // Tall tap target
+        textStyle: type.button,
       ),
     ),
 
+    // Outlined Button: Faint Steel Border
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: tokens.ink,
-        side: BorderSide(color: tokens.ringTrack),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        minimumSize: const Size(64, 52),
+        foregroundColor: tokens.inkSubtle,
+        side: BorderSide(color: tokens.glassBorder),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(100),
+        ),
+        minimumSize: const Size.fromHeight(56),
+        textStyle: type.button,
       ),
     ),
 
-    bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: tokens.surface,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-    ),
-
-    // Attach active tokens so widgets can read Theme.of(context).
+    // Extensions
     extensions: <ThemeExtension<dynamic>>[
       tokens,
       spacing,

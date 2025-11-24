@@ -15,6 +15,10 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.accentMuted,
     required this.ringTrack,
     required this.ringActive,
+    required this.ringActiveStart,
+    required this.ringActiveEnd,
+    required this.glassFill,
+    required this.glassBorder,
     required this.success,
     required this.warning,
     required this.danger,
@@ -29,40 +33,52 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.macroFat,
   });
 
-  /// Page background.
+  /// Page background (Deep Onyx).
   final Color bg;
 
-  /// Primary surface used for cards and sheets.
+  /// Primary surface used for cards and sheets (Matte Dark Grey).
   final Color surface;
 
   /// Secondary surface (inputs/chips).
   final Color surface2;
 
-  /// Primary text/foreground color.
+  /// Primary text/foreground color (Argent).
   final Color ink;
 
-  /// Secondary text color.
+  /// Secondary text color (Cool Grey).
   final Color inkSubtle;
 
-  /// Primary CTA fill color.
+  /// Primary CTA fill color (Brushed Steel).
   final Color accent;
 
   /// Muted version of the CTA color for pressed states.
   final Color accentMuted;
 
-  /// Divider/chart track color.
+  /// Divider/chart track color (Dark Steel).
   final Color ringTrack;
 
-  /// Active chart stroke/highlight color.
+  /// Legacy active ring color (kept for compatibility).
   final Color ringActive;
 
-  /// Success color slot (neutral by default).
+  /// Start color for the "White Hot" ring gradient.
+  final Color ringActiveStart;
+
+  /// End color for the "White Hot" ring gradient.
+  final Color ringActiveEnd;
+
+  /// "Dense Smoke" fill for glass cards (~80% opacity dark grey).
+  final Color glassFill;
+
+  /// Crisp steel edge for glass cards.
+  final Color glassBorder;
+
+  /// Success color slot (Muted Green/Grey).
   final Color success;
 
-  /// Warning color slot (neutral by default).
+  /// Warning color slot (Amber/Grey).
   final Color warning;
 
-  /// Danger color slot (neutral by default).
+  /// Danger color slot (Muted Red).
   final Color danger;
 
   /// Hero/card background emphasizing positive stats.
@@ -92,56 +108,52 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Macro color representing fat.
   final Color macroFat;
 
-  // ---- LIGHT (strict black/white UI)
-  /// Light palette (black on white).
-  static const AppColors light = AppColors(
-    bg: Color(0xFFFFFFFF),
-    surface: Color(0xFFFFFFFF),
-    surface2: Color(0xFFF2F2F2),
-    ink: Color(0xFF000000),
-    inkSubtle: Color(0xFF6B7280),
-    accent: Color(0xFF000000), // CTAs = black on light
-    accentMuted: Color(0xFF111111),
-    ringTrack: Color(0xFFE5E7EB),
-    ringActive: Color(0xFF000000), // charts draw in black
-    success: Color(0xFF000000), // reserved (kept neutral)
-    warning: Color(0xFF000000),
-    danger: Color(0xFF000000),
-    heroPositive: Color(0xFFE3F2FF),
+  // ---- LIGHT (Placeholder - Mapped to dark for consistency until
+  // light mode design is locked)
+  /// Light palette.
+  static const AppColors light = AppColors.dark;
+
+  // ---- DARK (The "Obsidian & Steel" Palette)
+  /// Dark palette (Deep Onyx & Steel).
+  static const AppColors dark = AppColors(
+    // Background: Deepest Onyx (Not pure black, prevents smearing on OLED)
+    bg: Color(0xFF050505),
+
+    // Surface: Matte Dark Grey (for non-glass elements)
+    surface: Color(0xFF121212),
+    surface2: Color(0xFF1C1C1E),
+
+    // Text: "Argent" (Silver-White) to reduce eye strain
+    ink: Color(0xFFE5E5EA),
+    inkSubtle: Color(0xFF8E8E93), // Cool Grey
+    // Accent: Brushed Steel
+    accent: Color(0xFFD1D1D6),
+    accentMuted: Color(0xFF636366),
+
+    // Glass: Dense, Tinted Privacy Glass (High Opacity)
+    glassFill: Color(0xCC151517), // ~80% Opacity
+    glassBorder: Color(0xFF3A3A3C), // Crisp Steel Edge
+    // Rings: Brushed Steel Gradient
+    ringTrack: Color(0xFF1C1C1E),
+    ringActive: Color(0xFFE5E5EA),
+    ringActiveStart: Color(0xFFE5E5EA), // Bright Silver
+    ringActiveEnd: Color(0xFF636366), // Fades to Steel
+    // Functional (Muted to maintain monochrome feel)
+    success: Color(0xFF30D158), // Muted Green
+    warning: Color(0xFFFFD60A), // Muted Amber
+    danger: Color(0xFFFF453A), // Muted Red
+    // Legacy Fields (Remapped to Monochrome/Industrial)
+    heroPositive: Color(0xFF1C1C1E),
     heroNeutral: Color(0xFFF2F2F2),
     heroChip: Color(0xFFE3F2FF),
-    gaugeAccent: Color(0xFF3B82F6),
-    chartCalloutFill: Color(0xFF34D399),
-    chartCalloutText: Color(0xFF052E16),
-    macroCarbs: Color(0xFF5E8A12),
-    macroProtein: Color(0xFFB38600),
-    macroFat: Color(0xFFB45309),
-  );
+    gaugeAccent: Color(0xFFD1D1D6),
+    chartCalloutFill: Color(0xFFD1D1D6),
+    chartCalloutText: Color(0xFF000000),
 
-  // ---- DARK (strict black/white UI)
-  /// Dark palette (white on black).
-  static const AppColors dark = AppColors(
-    bg: Color(0xFF111315), // charcoal
-    surface: Color(0xFF16181B),
-    surface2: Color(0xFF1F2124),
-    ink: Color(0xFFFFFFFF),
-    inkSubtle: Color(0xFFA1A1AA),
-    accent: Color(0xFFFFFFFF), // CTAs = white on dark
-    accentMuted: Color(0xFFE5E5E5),
-    ringTrack: Color(0xFF2B2D30),
-    ringActive: Color(0xFFFFFFFF), // charts draw in white
-    success: Color(0xFFFFFFFF),
-    warning: Color(0xFFFFFFFF),
-    danger: Color(0xFFFFFFFF),
-    heroPositive: Color(0xFF103654),
-    heroNeutral: Color(0xFF1F2023),
-    heroChip: Color(0xFF103654),
-    gaugeAccent: Color(0xFF3B82F6),
-    chartCalloutFill: Color(0xFF22C55E),
-    chartCalloutText: Color(0xFF052E16),
-    macroCarbs: Color(0xFF6A9830),
-    macroProtein: Color(0xFFBA8B10),
-    macroFat: Color(0xFFC4441C),
+    // Macros (Desaturated/Earthy to fit Industrial Vibe)
+    macroCarbs: Color(0xFFA8A8A8), // Silver
+    macroProtein: Color(0xFFD4C4A8), // Champagne Gold (Subtle)
+    macroFat: Color(0xFF5E5E5E), // Dark Steel
   );
 
   @override
@@ -155,6 +167,10 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? accentMuted,
     Color? ringTrack,
     Color? ringActive,
+    Color? ringActiveStart,
+    Color? ringActiveEnd,
+    Color? glassFill,
+    Color? glassBorder,
     Color? success,
     Color? warning,
     Color? danger,
@@ -178,6 +194,10 @@ class AppColors extends ThemeExtension<AppColors> {
       accentMuted: accentMuted ?? this.accentMuted,
       ringTrack: ringTrack ?? this.ringTrack,
       ringActive: ringActive ?? this.ringActive,
+      ringActiveStart: ringActiveStart ?? this.ringActiveStart,
+      ringActiveEnd: ringActiveEnd ?? this.ringActiveEnd,
+      glassFill: glassFill ?? this.glassFill,
+      glassBorder: glassBorder ?? this.glassBorder,
       success: success ?? this.success,
       warning: warning ?? this.warning,
       danger: danger ?? this.danger,
@@ -196,29 +216,33 @@ class AppColors extends ThemeExtension<AppColors> {
   @override
   ThemeExtension<AppColors> lerp(ThemeExtension<AppColors>? other, double t) {
     if (other is! AppColors) return this;
-    Color lerpColor(Color a, Color b) => Color.lerp(a, b, t)!;
+    final o = other; // Cast for easier access
     return AppColors(
-      bg: lerpColor(bg, other.bg),
-      surface: lerpColor(surface, other.surface),
-      surface2: lerpColor(surface2, other.surface2),
-      ink: lerpColor(ink, other.ink),
-      inkSubtle: lerpColor(inkSubtle, other.inkSubtle),
-      accent: lerpColor(accent, other.accent),
-      accentMuted: lerpColor(accentMuted, other.accentMuted),
-      ringTrack: lerpColor(ringTrack, other.ringTrack),
-      ringActive: lerpColor(ringActive, other.ringActive),
-      success: lerpColor(success, other.success),
-      warning: lerpColor(warning, other.warning),
-      danger: lerpColor(danger, other.danger),
-      heroPositive: lerpColor(heroPositive, other.heroPositive),
-      heroNeutral: lerpColor(heroNeutral, other.heroNeutral),
-      heroChip: lerpColor(heroChip, other.heroChip),
-      gaugeAccent: lerpColor(gaugeAccent, other.gaugeAccent),
-      chartCalloutFill: lerpColor(chartCalloutFill, other.chartCalloutFill),
-      chartCalloutText: lerpColor(chartCalloutText, other.chartCalloutText),
-      macroCarbs: lerpColor(macroCarbs, other.macroCarbs),
-      macroProtein: lerpColor(macroProtein, other.macroProtein),
-      macroFat: lerpColor(macroFat, other.macroFat),
+      bg: Color.lerp(bg, o.bg, t)!,
+      surface: Color.lerp(surface, o.surface, t)!,
+      surface2: Color.lerp(surface2, o.surface2, t)!,
+      ink: Color.lerp(ink, o.ink, t)!,
+      inkSubtle: Color.lerp(inkSubtle, o.inkSubtle, t)!,
+      accent: Color.lerp(accent, o.accent, t)!,
+      accentMuted: Color.lerp(accentMuted, o.accentMuted, t)!,
+      ringTrack: Color.lerp(ringTrack, o.ringTrack, t)!,
+      ringActive: Color.lerp(ringActive, o.ringActive, t)!,
+      ringActiveStart: Color.lerp(ringActiveStart, o.ringActiveStart, t)!,
+      ringActiveEnd: Color.lerp(ringActiveEnd, o.ringActiveEnd, t)!,
+      glassFill: Color.lerp(glassFill, o.glassFill, t)!,
+      glassBorder: Color.lerp(glassBorder, o.glassBorder, t)!,
+      success: Color.lerp(success, o.success, t)!,
+      warning: Color.lerp(warning, o.warning, t)!,
+      danger: Color.lerp(danger, o.danger, t)!,
+      heroPositive: Color.lerp(heroPositive, o.heroPositive, t)!,
+      heroNeutral: Color.lerp(heroNeutral, o.heroNeutral, t)!,
+      heroChip: Color.lerp(heroChip, o.heroChip, t)!,
+      gaugeAccent: Color.lerp(gaugeAccent, o.gaugeAccent, t)!,
+      chartCalloutFill: Color.lerp(chartCalloutFill, o.chartCalloutFill, t)!,
+      chartCalloutText: Color.lerp(chartCalloutText, o.chartCalloutText, t)!,
+      macroCarbs: Color.lerp(macroCarbs, o.macroCarbs, t)!,
+      macroProtein: Color.lerp(macroProtein, o.macroProtein, t)!,
+      macroFat: Color.lerp(macroFat, o.macroFat, t)!,
     );
   }
 }
