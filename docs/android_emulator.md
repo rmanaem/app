@@ -27,6 +27,12 @@ echo "no" | avdmanager create avd \
 avdmanager delete avd -n MyTestDevice
 ```
 
+### 3.5. List available device profiles
+
+```bash
+avdmanager list devices    # shows options like pixel_5, pixel_7, etc.
+```
+
 ### 4. Launch the emulator
 
 ```bash
