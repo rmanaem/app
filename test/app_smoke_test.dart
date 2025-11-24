@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter_app/src/app/app.dart';
-import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart'
+import 'package:starter_app/src/features/onboarding/presentation/pages/welcome_page.dart'
     show WelcomePage;
 
 void main() {

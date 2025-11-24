@@ -16,6 +16,7 @@ import 'package:starter_app/src/features/onboarding/presentation/pages/goal_conf
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_goal_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_summary_page.dart';
+import 'package:starter_app/src/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/features/plan/domain/repositories/plan_repository.dart';
 import 'package:starter_app/src/features/settings/presentation/pages/settings_page.dart';
@@ -27,7 +28,6 @@ import 'package:starter_app/src/features/training/data/repositories_impl/trainin
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
-import 'package:starter_app/src/presentation/pages/auth/welcome_page.dart';
 
 /// Root widget for the template application, wired with [GoRouter].
 class App extends StatelessWidget {
