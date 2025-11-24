@@ -1,5 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
@@ -166,12 +167,15 @@ class App extends StatelessWidget {
           create: (context) => OnboardingVm(context.read<AnalyticsService>()),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'App',
-        routerConfig: router,
-        theme: makeTheme(AppColors.light, dark: false),
-        darkTheme: makeTheme(AppColors.dark, dark: true),
-        themeMode: ThemeMode.dark,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: MaterialApp.router(
+          title: 'App',
+          routerConfig: router,
+          theme: makeTheme(AppColors.light, dark: false),
+          darkTheme: makeTheme(AppColors.dark, dark: true),
+          themeMode: ThemeMode.dark,
+        ),
       ),
     );
   }

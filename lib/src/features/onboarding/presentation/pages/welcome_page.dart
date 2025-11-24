@@ -153,6 +153,8 @@ class WelcomePage extends StatelessWidget {
                     ),
                   ),
 
+                  SizedBox(height: s.xl),
+
                   if (showLegal) ...[
                     const Spacer(),
                     _LegalNotice(),
