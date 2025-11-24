@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_spacing.dart';
+import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/goal_card.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/step_progress_bar.dart';
+import 'package:starter_app/src/features/onboarding/presentation/widgets/goal_selection_card.dart';
+import 'package:starter_app/src/presentation/atoms/glass_button.dart';
 
 /// Page that lets the user choose their primary goal during onboarding.
 class OnboardingGoalPage extends StatefulWidget {
@@ -34,81 +36,88 @@ class _OnboardingGoalPageState extends State<OnboardingGoalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
+    final c = Theme.of(context).extension<AppColors>()!;
+    final s = Theme.of(context).extension<AppSpacing>()!;
+    final t = Theme.of(context).extension<AppTypography>()!;
     final vm = context.watch<OnboardingVm>();
     return Scaffold(
-      backgroundColor: colors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
-        title: const Text('Set Your Goal'),
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: colors.bg,
+        backgroundColor: Colors.transparent,
+        leading: BackButton(color: c.ink),
         elevation: 0,
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(8),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: StepProgressBar(currentStep: 1, totalSteps: 4),
-          ),
-        ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                "What's your primary goal?",
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineSmall?.copyWith(color: colors.ink),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.symmetric(horizontal: s.gutter),
+                children: [
+                  Text(
+                    'WHAT IS YOUR\nPRIMARY GOAL?',
+                    style: t.display.copyWith(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                      height: 1,
+                      color: c.ink,
+                    ),
+                  ),
+                  SizedBox(height: s.sm),
+                  Text(
+                    'We’ll calibrate your nutrition plan\n'
+                    'based on this choice.',
+                    style: t.body.copyWith(
+                      color: c.inkSubtle,
+                      fontSize: 16,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: s.xl),
+                  GoalSelectionCard(
+                    goal: Goal.lose,
+                    title: 'Lose Weight',
+                    subtitle: 'Create a sustainable caloric deficit.',
+                    icon: Icons.arrow_downward_rounded,
+                    isSelected: vm.goalState.selected == Goal.lose,
+                    onTap: () => vm.selectGoal(Goal.lose),
+                  ),
+                  GoalSelectionCard(
+                    goal: Goal.maintain,
+                    title: 'Maintain Weight',
+                    subtitle: 'Optimize performance at current weight.',
+                    icon: Icons.balance_rounded,
+                    isSelected: vm.goalState.selected == Goal.maintain,
+                    onTap: () => vm.selectGoal(Goal.maintain),
+                  ),
+                  GoalSelectionCard(
+                    goal: Goal.gain,
+                    title: 'Gain Weight',
+                    subtitle: 'Build muscle with a controlled surplus.',
+                    icon: Icons.arrow_upward_rounded,
+                    isSelected: vm.goalState.selected == Goal.gain,
+                    onTap: () => vm.selectGoal(Goal.gain),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'You can fine-tune details later.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: colors.inkSubtle),
-              ),
-              const SizedBox(height: 16),
-              GoalCard(
-                goal: Goal.lose,
-                selected: vm.goalState.selected == Goal.lose,
-                onTap: () => vm.selectGoal(Goal.lose),
-              ),
-              const SizedBox(height: 12),
-              GoalCard(
-                goal: Goal.maintain,
-                selected: vm.goalState.selected == Goal.maintain,
-                onTap: () => vm.selectGoal(Goal.maintain),
-              ),
-              const SizedBox(height: 12),
-              GoalCard(
-                goal: Goal.gain,
-                selected: vm.goalState.selected == Goal.gain,
-                onTap: () => vm.selectGoal(Goal.gain),
-              ),
-              const Spacer(),
-              FilledButton(
-                onPressed: vm.goalState.canContinue
+            ),
+            Padding(
+              padding: EdgeInsets.all(s.gutter),
+              child: GlassButton(
+                label: 'NEXT STEP',
+                isPrimary: true,
+                isSelected: vm.goalState.canContinue,
+                onTap: vm.goalState.canContinue
                     ? () async {
                         final router = GoRouter.of(context);
                         await vm.logGoalNext();
                         await router.push('/onboarding/stats');
                       }
-                    : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: colors.accent,
-                  foregroundColor: colors.bg,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text('Next'),
+                    : () {},
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
