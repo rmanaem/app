@@ -5,16 +5,21 @@ import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
-import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_stats_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewstate/onboarding_stats_view_state.dart';
+import 'package:starter_app/src/presentation/atoms/app_button.dart';
 
 class MockOnboardingVm extends Mock implements OnboardingVm {}
 
 void main() {
-  group('OnboardingStatsPage', () {
+  setUpAll(() {
+    registerFallbackValue(UnitSystem.metric);
+    registerFallbackValue(ActivityLevel.moderatelyActive);
+  });
+
+  group('OnboardingStatsPage default selections', () {
     late OnboardingVm mockVm;
 
     setUp(() {
@@ -23,10 +28,20 @@ void main() {
         const OnboardingStatsViewState(unitSystem: UnitSystem.metric),
       );
       when(() => mockVm.logStatsScreenViewed()).thenAnswer((_) async {});
-      when(() => mockVm.setHeightCm(any())).thenAnswer((_) async {});
+      when(() => mockVm.setUnitSystem(any())).thenAnswer((_) {});
+      when(() => mockVm.setHeightCm(any())).thenAnswer((_) {});
+      when(
+        () => mockVm.setHeightImperial(
+          ft: any(named: 'ft'),
+          inch: any(named: 'inch'),
+        ),
+      ).thenAnswer((_) {});
+      when(() => mockVm.setWeightKg(any())).thenAnswer((_) {});
+      when(() => mockVm.setWeightLb(any())).thenAnswer((_) {});
+      when(() => mockVm.setActivityLevel(any())).thenAnswer((_) {});
     });
 
-    Widget createWidgetUnderTest() {
+    Widget buildSubject() {
       return ChangeNotifierProvider<OnboardingVm>.value(
         value: mockVm,
         child: MaterialApp(
@@ -36,39 +51,51 @@ void main() {
       );
     }
 
-    testWidgets('renders title and fields', (tester) async {
-      await tester.pumpWidget(createWidgetUnderTest());
+    testWidgets(
+      'confirming untouched height writes the default value',
+      (tester) async {
+        await tester.pumpWidget(buildSubject());
 
-      expect(find.text('About you'), findsOneWidget);
-      expect(find.text('Date of birth'), findsOneWidget);
-      expect(find.text('Height'), findsOneWidget);
-      expect(find.text('Weight'), findsOneWidget);
-      expect(find.text('Activity level'), findsOneWidget);
-    });
+        await tester.tap(find.text('HEIGHT'));
+        await tester.pumpAndSettle();
 
-    testWidgets('Next button is disabled initially', (tester) async {
-      await tester.pumpWidget(createWidgetUnderTest());
+        await tester.tap(find.widgetWithText(AppButton, 'CONFIRM'));
+        await tester.pumpAndSettle();
 
-      final nextButton = find.widgetWithText(FilledButton, 'Next');
-      expect(tester.widget<FilledButton>(nextButton).onPressed, isNull);
-    });
+        verify(() => mockVm.setHeightCm(175)).called(1);
+      },
+    );
 
-    testWidgets('Next button is enabled when stats are valid', (
-      tester,
-    ) async {
-      when(() => mockVm.statsState).thenReturn(
-        OnboardingStatsViewState(
-          unitSystem: UnitSystem.metric,
-          dob: DateTime(1990),
-          height: Stature.fromCm(180),
-          weight: BodyWeight.fromKg(80),
-          activity: ActivityLevel.moderatelyActive,
-        ),
-      );
-      await tester.pumpWidget(createWidgetUnderTest());
+    testWidgets(
+      'confirming untouched weight writes the default value',
+      (tester) async {
+        await tester.pumpWidget(buildSubject());
 
-      final nextButton = find.widgetWithText(FilledButton, 'Next');
-      expect(tester.widget<FilledButton>(nextButton).onPressed, isNotNull);
-    });
+        await tester.tap(find.text('WEIGHT'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.widgetWithText(AppButton, 'CONFIRM'));
+        await tester.pumpAndSettle();
+
+        verify(() => mockVm.setWeightKg(75)).called(1);
+      },
+    );
+
+    testWidgets(
+      'confirming untouched activity writes the default value',
+      (tester) async {
+        await tester.pumpWidget(buildSubject());
+
+        await tester.tap(find.text('ACTIVITY LEVEL'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.widgetWithText(AppButton, 'CONFIRM'));
+        await tester.pumpAndSettle();
+
+        verify(
+          () => mockVm.setActivityLevel(ActivityLevel.moderatelyActive),
+        ).called(1);
+      },
+    );
   });
 }

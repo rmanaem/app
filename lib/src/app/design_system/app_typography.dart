@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 
-/// Typography tokens.
+/// Typography tokens for the "Obsidian & Steel" design language.
 @immutable
 class AppTypography extends ThemeExtension<AppTypography> {
   /// Constructs the typography set.
@@ -19,7 +19,8 @@ class AppTypography extends ThemeExtension<AppTypography> {
     // Note: In a real app, apply GoogleFonts or custom assets here.
     // e.g., SF Pro Rounded or JetBrains Mono.
     return AppTypography(
-      // HERO: Massive, Tight Spacing (for "2,450" kcal)
+      // HERO: Massive, Tight Spacing (e.g., "2,450")
+      // Pure White for maximum punch.
       hero: TextStyle(
         fontSize: 48,
         height: 1,
@@ -27,7 +28,7 @@ class AppTypography extends ThemeExtension<AppTypography> {
         letterSpacing: -1.5,
         color: c.ink,
       ),
-      // DISPLAY: For headlines "Log Fast. Train Smart."
+      // DISPLAY: Headlines (e.g., "Log Fast.")
       display: TextStyle(
         fontSize: 32,
         height: 1.1,
@@ -35,21 +36,23 @@ class AppTypography extends ThemeExtension<AppTypography> {
         letterSpacing: -1,
         color: c.ink,
       ),
-      // TITLE: Section headers
+      // TITLE: Section headers (e.g., "Activity Level")
       title: TextStyle(
         fontSize: 20,
         height: 1.2,
         fontWeight: FontWeight.w600,
+        letterSpacing: -0.5,
         color: c.ink,
       ),
-      // BODY: Primary readable text
+      // BODY: Readable content
       body: TextStyle(
         fontSize: 16,
         height: 1.5,
         fontWeight: FontWeight.w400,
         color: c.ink,
       ),
-      // CAPTION: Secondary meta data
+      // CAPTION: Metadata / Labels
+      // Cool Grey to recede.
       caption: TextStyle(
         fontSize: 13,
         height: 1.3,
@@ -57,12 +60,13 @@ class AppTypography extends ThemeExtension<AppTypography> {
         color: c.inkSubtle,
       ),
       // BUTTON: Action labels
+      // High contrast: Black text on Silver buttons (Monolith style)
       button: TextStyle(
         fontSize: 16,
         height: 1.2,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5,
-        color: c.ink, // Silver text on buttons
+        color: c.bg,
       ),
     );
   }

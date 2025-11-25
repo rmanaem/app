@@ -4,6 +4,7 @@ import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 
 /// Produces a Material 3 ThemeData from AppColors tokens.
+/// Enforces the "Matte Monolith" aesthetic (Obsidian & Steel).
 ThemeData makeTheme(AppColors tokens, {required bool dark}) {
   final base = dark ? ThemeData.dark() : ThemeData.light();
 
@@ -15,7 +16,7 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
         secondary: tokens.accent,
         surface: tokens.surface,
         onSurface: tokens.ink,
-        outline: tokens.glassBorder,
+        outline: tokens.borderIdle,
         error: tokens.danger,
       );
 
@@ -30,7 +31,7 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
       displayColor: tokens.ink,
     ),
 
-    // AppBar: Blend into background
+    // AppBar: Blend into background (Seamless)
     appBarTheme: AppBarTheme(
       backgroundColor: tokens.bg,
       elevation: 0,
@@ -39,21 +40,23 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
       titleTextStyle: type.title,
     ),
 
-    // Card: Use Surface color by default (GlassCard used explicitly elsewhere)
+    // Card: "Matte Ceramic"
+    // Solid fill, milled steel border.
     cardTheme: CardThemeData(
       color: tokens.surface,
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: tokens.glassBorder, width: 0.5),
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: tokens.borderIdle),
       ),
     ),
 
-    // Input: Industrial Field
+    // Input: "Stealth Field"
+    // Uses lighter ceramic highlight to recede into surface.
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: tokens.surface2,
+      fillColor: tokens.surfaceHighlight,
       contentPadding: EdgeInsets.symmetric(
         horizontal: spacing.md,
         vertical: spacing.md,
@@ -64,37 +67,36 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: tokens.glassBorder, width: 0.5),
+        borderSide: BorderSide(color: tokens.borderIdle),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: tokens.accent),
+        borderSide: BorderSide(color: tokens.borderActive),
       ),
       labelStyle: type.caption,
       hintStyle: type.caption.copyWith(color: tokens.inkSubtle),
     ),
 
-    // Filled Button: Brushed Steel Pill
+    // Filled Button: "Polished Steel Pill"
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: tokens.glassFill, // Dense Smoke
-        foregroundColor: tokens.ink, // Silver Text
+        backgroundColor: tokens.accent, // Polished Silver
+        foregroundColor: tokens.bg, // Black Text
         elevation: 0,
         padding: EdgeInsets.symmetric(horizontal: spacing.lg),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(100), // Stadium
-          side: BorderSide(color: tokens.glassBorder),
+          borderRadius: BorderRadius.circular(100),
         ),
-        minimumSize: const Size.fromHeight(56), // Tall tap target
+        minimumSize: const Size.fromHeight(56),
         textStyle: type.button,
       ),
     ),
 
-    // Outlined Button: Faint Steel Border
+    // Outlined Button: "Milled Edge"
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: tokens.inkSubtle,
-        side: BorderSide(color: tokens.glassBorder),
+        foregroundColor: tokens.ink, // White text
+        side: BorderSide(color: tokens.borderIdle), // Steel border
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(100),
         ),

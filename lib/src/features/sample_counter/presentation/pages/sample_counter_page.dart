@@ -37,7 +37,8 @@ class SampleCounterPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 AppButton(
                   label: viewModel.isBusy ? 'Loading…' : 'Increment',
-                  onPressed: viewModel.isBusy ? null : viewModel.increment,
+                  onTap: viewModel.isBusy ? null : viewModel.increment,
+                  isPrimary: true,
                 ),
               ],
             ),

@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 
 /// App design tokens (colors) exposed as a ThemeExtension.
 /// Widgets MUST read from these tokens (no hard-coded hex in UI code).
+///
+/// Adheres to the "Matte Monolith" aesthetic (Obsidian & Steel).
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   /// Creates the token set with the provided colors.
   const AppColors({
     required this.bg,
     required this.surface,
+    required this.surfaceHighlight, // NEW: For inputs/nested elements
     required this.surface2,
+    required this.borderIdle, // NEW: Milled Steel Edge
+    required this.borderActive, // NEW: Polished Silver Edge
     required this.ink,
     required this.inkSubtle,
     required this.accent,
@@ -36,16 +41,25 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Page background (Deep Onyx).
   final Color bg;
 
-  /// Primary surface used for cards and sheets (Matte Dark Grey).
+  /// Primary surface used for cards (Matte Ceramic).
   final Color surface;
 
-  /// Secondary surface (inputs/chips).
+  /// NEW: Lighter ceramic surface for inputs or nested containers.
+  final Color surfaceHighlight;
+
+  /// Secondary surface (Legacy support).
   final Color surface2;
 
-  /// Primary text/foreground color (Argent).
+  /// NEW: Dark steel edge for inactive elements.
+  final Color borderIdle;
+
+  /// NEW: Polished silver edge for active/selected elements.
+  final Color borderActive;
+
+  /// Primary text/foreground color (Pure White).
   final Color ink;
 
-  /// Secondary text color (Cool Grey).
+  /// Secondary text color (Cool Grey/Argent).
   final Color inkSubtle;
 
   /// Primary CTA fill color (Brushed Steel).
@@ -57,7 +71,7 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Divider/chart track color (Dark Steel).
   final Color ringTrack;
 
-  /// Legacy active ring color (kept for compatibility).
+  /// Legacy active ring color.
   final Color ringActive;
 
   /// Start color for the "White Hot" ring gradient.
@@ -66,16 +80,16 @@ class AppColors extends ThemeExtension<AppColors> {
   /// End color for the "White Hot" ring gradient.
   final Color ringActiveEnd;
 
-  /// "Dense Smoke" fill for glass cards (~80% opacity dark grey).
+  /// Legacy Glass Fill. Remapped to Solid Surface in Monolith theme.
   final Color glassFill;
 
-  /// Crisp steel edge for glass cards.
+  /// Legacy Glass Border. Remapped to BorderIdle in Monolith theme.
   final Color glassBorder;
 
-  /// Success color slot (Muted Green/Grey).
+  /// Success color slot (Muted Green).
   final Color success;
 
-  /// Warning color slot (Amber/Grey).
+  /// Warning color slot (Muted Amber).
   final Color warning;
 
   /// Danger color slot (Muted Red).
@@ -108,59 +122,68 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Macro color representing fat.
   final Color macroFat;
 
-  // ---- LIGHT (Placeholder - Mapped to dark for consistency until
-  // light mode design is locked)
+  // ---- LIGHT (Placeholder - Mapped to dark until roadmap updates)
   /// Light palette.
   static const AppColors light = AppColors.dark;
 
   // ---- DARK (The "Obsidian & Steel" Palette)
   /// Dark palette (Deep Onyx & Steel).
   static const AppColors dark = AppColors(
-    // Background: Deepest Onyx (Not pure black, prevents smearing on OLED)
+    // Background: Deepest Onyx
     bg: Color(0xFF050505),
 
-    // Surface: Matte Dark Grey (for non-glass elements)
-    surface: Color(0xFF121212),
-    surface2: Color(0xFF1C1C1E),
+    // Surface: Matte Ceramic (Solid, No Blur)
+    surface: Color(0xFF1C1C1E),
+    surfaceHighlight: Color(0xFF2C2C2E), // Slightly lighter for inputs
+    surface2: Color(0xFF2C2C2E), // Mapping legacy surface2 to highlight
+    // Borders: Milled Steel
+    borderIdle: Color(0xFF3A3A3C), // Dark Steel
+    borderActive: Color(0xFFE5E5EA), // Polished Silver
+    // Text: Pure White vs Cool Grey
+    ink: Color(0xFFFFFFFF),
+    inkSubtle: Color(0xFF8E8E93),
 
-    // Text: "Argent" (Silver-White) to reduce eye strain
-    ink: Color(0xFFE5E5EA),
-    inkSubtle: Color(0xFF8E8E93), // Cool Grey
     // Accent: Brushed Steel
-    accent: Color(0xFFD1D1D6),
+    accent: Color(0xFFE5E5EA), // Silver
     accentMuted: Color(0xFF636366),
 
-    // Glass: Dense, Tinted Privacy Glass (High Opacity)
-    glassFill: Color(0xCC151517), // ~80% Opacity
-    glassBorder: Color(0xFF3A3A3C), // Crisp Steel Edge
-    // Rings: Brushed Steel Gradient
-    ringTrack: Color(0xFF1C1C1E),
+    // Legacy Glass Remapping -> Solid Monolith
+    // This ensures old glass widgets become solid matte widgets automatically.
+    glassFill: Color(0xFF1C1C1E),
+    glassBorder: Color(0xFF3A3A3C),
+
+    // Rings
+    ringTrack: Color(0xFF1C1C1E), // Blends with surface
     ringActive: Color(0xFFE5E5EA),
-    ringActiveStart: Color(0xFFE5E5EA), // Bright Silver
-    ringActiveEnd: Color(0xFF636366), // Fades to Steel
-    // Functional (Muted to maintain monochrome feel)
-    success: Color(0xFF30D158), // Muted Green
-    warning: Color(0xFFFFD60A), // Muted Amber
-    danger: Color(0xFFFF453A), // Muted Red
-    // Legacy Fields (Remapped to Monochrome/Industrial)
+    ringActiveStart: Color(0xFFE5E5EA),
+    ringActiveEnd: Color(0xFF636366),
+
+    // Functional (Muted/Industrial)
+    success: Color(0xFF30D158),
+    warning: Color(0xFFFFD60A),
+    danger: Color(0xFFFF453A),
+
+    // Legacy / Specifics (Desaturated for stealth look)
     heroPositive: Color(0xFF1C1C1E),
     heroNeutral: Color(0xFFF2F2F2),
-    heroChip: Color(0xFFE3F2FF),
-    gaugeAccent: Color(0xFFD1D1D6),
-    chartCalloutFill: Color(0xFFD1D1D6),
-    chartCalloutText: Color(0xFF000000),
-
-    // Macros (Desaturated/Earthy to fit Industrial Vibe)
+    heroChip: Color(0xFF2C2C2E), // Dark chip
+    gaugeAccent: Color(0xFFE5E5EA),
+    chartCalloutFill: Color(0xFFE5E5EA),
+    chartCalloutText: Color(0xFF050505), // Black text on silver
+    // Macros (Earthy/Metallic tones)
     macroCarbs: Color(0xFFA8A8A8), // Silver
-    macroProtein: Color(0xFFD4C4A8), // Champagne Gold (Subtle)
-    macroFat: Color(0xFF5E5E5E), // Dark Steel
+    macroProtein: Color(0xFFD4C4A8), // Champagne
+    macroFat: Color(0xFF5E5E5E), // Iron
   );
 
   @override
   AppColors copyWith({
     Color? bg,
     Color? surface,
+    Color? surfaceHighlight,
     Color? surface2,
+    Color? borderIdle,
+    Color? borderActive,
     Color? ink,
     Color? inkSubtle,
     Color? accent,
@@ -187,7 +210,10 @@ class AppColors extends ThemeExtension<AppColors> {
     return AppColors(
       bg: bg ?? this.bg,
       surface: surface ?? this.surface,
+      surfaceHighlight: surfaceHighlight ?? this.surfaceHighlight,
       surface2: surface2 ?? this.surface2,
+      borderIdle: borderIdle ?? this.borderIdle,
+      borderActive: borderActive ?? this.borderActive,
       ink: ink ?? this.ink,
       inkSubtle: inkSubtle ?? this.inkSubtle,
       accent: accent ?? this.accent,
@@ -216,11 +242,14 @@ class AppColors extends ThemeExtension<AppColors> {
   @override
   ThemeExtension<AppColors> lerp(ThemeExtension<AppColors>? other, double t) {
     if (other is! AppColors) return this;
-    final o = other; // Cast for easier access
+    final o = other;
     return AppColors(
       bg: Color.lerp(bg, o.bg, t)!,
       surface: Color.lerp(surface, o.surface, t)!,
+      surfaceHighlight: Color.lerp(surfaceHighlight, o.surfaceHighlight, t)!,
       surface2: Color.lerp(surface2, o.surface2, t)!,
+      borderIdle: Color.lerp(borderIdle, o.borderIdle, t)!,
+      borderActive: Color.lerp(borderActive, o.borderActive, t)!,
       ink: Color.lerp(ink, o.ink, t)!,
       inkSubtle: Color.lerp(inkSubtle, o.inkSubtle, t)!,
       accent: Color.lerp(accent, o.accent, t)!,

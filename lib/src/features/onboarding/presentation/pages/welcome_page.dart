@@ -2,33 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
-import 'package:starter_app/src/presentation/atoms/glass_button.dart';
+import 'package:starter_app/src/presentation/atoms/app_button.dart';
 
 /// Hero marketing page presented before onboarding.
+/// Design: "The Monolith Launchpad"
 class WelcomePage extends StatelessWidget {
   /// Creates the welcome page.
   const WelcomePage({
     required this.onGetStarted,
     required this.onLogIn,
-    this.appName = 'Your App',
+    this.appName = 'OBSIDIAN',
     this.tagline = 'The premium tracker for\nserious progress.',
     this.showLegal = true,
     super.key,
   });
 
-  /// Callback for the “Enter” CTA.
+  /// Callback executed when the user taps the primary CTA.
   final VoidCallback onGetStarted;
 
-  /// Callback for the “Log In” button.
+  /// Callback executed when the user taps "Log In".
   final VoidCallback onLogIn;
 
-  /// Display name of the product/brand.
+  /// Display name for branding.
   final String appName;
 
-  /// Supporting marketing copy.
+  /// Supporting marketing copy below the headline.
   final String tagline;
 
-  /// Whether to show the legal disclaimer row.
+  /// Whether to render the legal notice.
   final bool showLegal;
 
   @override
@@ -41,50 +42,24 @@ class WelcomePage extends StatelessWidget {
       backgroundColor: c.bg,
       body: Stack(
         children: [
-          // 1. TOP ATMOSPHERE
           Positioned(
-            top: -150,
+            top: -200,
             right: -100,
             child: Container(
-              width: 500,
-              height: 500,
+              width: 600,
+              height: 600,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.white.withValues(alpha: 0.05),
+                    c.accent.withValues(alpha: 0.05),
                     Colors.transparent,
                   ],
-                  stops: const [0.0, 0.7],
+                  stops: const [0.0, 0.6],
                 ),
               ),
             ),
           ),
-
-          // 2. BOTTOM STAGE LIGHT (THE FIX)
-          // This subtle glow gives the glass buttons something to refract.
-          Positioned(
-            bottom: -200,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                width: 600,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      c.ink.withValues(alpha: 0.08), // Faint silver glow
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.7],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -92,73 +67,43 @@ class WelcomePage extends StatelessWidget {
                 vertical: s.lg,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Spacer(flex: 2),
-
-                  // Brand Mark
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Semantics(
-                      label: appName,
-                      child: const FlutterLogo(size: 48),
-                    ),
-                  ),
-
-                  SizedBox(height: s.lg),
-
-                  // Massive Headline
+                  const Spacer(),
+                  _BrandSymbol(appName: appName),
+                  SizedBox(height: s.xl),
                   Text(
                     'LOG FAST.\nTRAIN SMART.',
                     style: t.display.copyWith(
                       fontSize: 56,
-                      height: 0.95,
+                      height: 0.9,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -1.5,
+                      letterSpacing: -2,
+                      color: c.ink,
                     ),
-                    textAlign: TextAlign.left,
                   ),
-
-                  SizedBox(height: s.md),
-
-                  // Subheadline
+                  SizedBox(height: s.lg),
                   Text(
                     tagline,
-                    textAlign: TextAlign.left,
                     style: t.body.copyWith(
                       fontSize: 18,
                       color: c.inkSubtle,
+                      height: 1.4,
                     ),
                   ),
-
-                  const Spacer(flex: 3),
-
-                  // Primary Action (Brushed Steel Look)
-                  GlassButton(
-                    label: 'ENTER',
+                  const Spacer(flex: 2),
+                  AppButton(
+                    label: 'GET STARTED',
                     onTap: onGetStarted,
-                    isPrimary: true, // Triggers the brighter style
+                    isPrimary: true,
                   ),
-
                   SizedBox(height: s.md),
-
-                  // Secondary Action
-                  TextButton(
-                    onPressed: onLogIn,
-                    child: Text(
-                      'Log In',
-                      style: t.button.copyWith(
-                        color: c.inkSubtle,
-                      ),
-                    ),
+                  AppButton(
+                    label: 'LOG IN',
+                    onTap: onLogIn,
                   ),
-
                   SizedBox(height: s.xl),
-
-                  if (showLegal) ...[
-                    const Spacer(),
-                    _LegalNotice(),
-                  ],
+                  if (showLegal) const _LegalNotice(),
                 ],
               ),
             ),
@@ -169,27 +114,75 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
+class _BrandSymbol extends StatelessWidget {
+  const _BrandSymbol({required this.appName});
+
+  final String appName;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).extension<AppColors>()!;
+    return Semantics(
+      label: appName,
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: c.borderIdle),
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.bolt_rounded,
+          size: 40,
+          color: c.accent,
+        ),
+      ),
+    );
+  }
+}
+
 class _LegalNotice extends StatelessWidget {
+  const _LegalNotice();
+
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).extension<AppColors>()!;
     final t = Theme.of(context).extension<AppTypography>()!;
-    final link = t.caption.copyWith(
+    final linkStyle = t.caption.copyWith(
       decoration: TextDecoration.underline,
-      color: c.ink,
+      decorationColor: c.accent,
+      color: c.accent,
+      fontWeight: FontWeight.w600,
     );
-    return Text.rich(
-      TextSpan(
-        text: 'By continuing, you agree to our ',
-        style: t.caption,
-        children: [
-          TextSpan(text: 'Terms', style: link),
-          const TextSpan(text: ' & '),
-          TextSpan(text: 'Privacy Policy', style: link),
-          const TextSpan(text: '.'),
-        ],
+
+    final textStyle = t.caption.copyWith(
+      color: c.inkSubtle.withValues(alpha: 0.8),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Center(
+        child: Text.rich(
+          TextSpan(
+            text: 'By continuing, you agree to our ',
+            style: textStyle,
+            children: [
+              TextSpan(text: 'Terms of Service', style: linkStyle),
+              TextSpan(text: ', ', style: textStyle),
+              TextSpan(text: 'Privacy Policy', style: linkStyle),
+              TextSpan(text: ' and ', style: textStyle),
+              TextSpan(
+                text: 'Consumer Health Privacy Policy',
+                style: linkStyle,
+              ),
+              TextSpan(text: '.', style: textStyle),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
-      textAlign: TextAlign.center,
     );
   }
 }

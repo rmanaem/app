@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_spacing.dart';
+import 'package:starter_app/src/app/design_system/app_typography.dart';
 
-/// Warning banner displayed when user's calorie target is below the
-/// recommended safe minimum (1800 kcal for males, 1200 kcal for females).
+/// A premium alert banner shown when calorie targets drop below the safe floor.
 class SafetyWarningBanner extends StatelessWidget {
-  /// Creates a safety warning banner.
+  /// Creates a banner warning about unsafe calorie targets.
   const SafetyWarningBanner({
     required this.minCalories,
     required this.onAcknowledge,
@@ -13,107 +14,129 @@ class SafetyWarningBanner extends StatelessWidget {
     super.key,
   });
 
-  /// The safe minimum calorie threshold being warned about.
+  /// Safe minimum calories used for copy.
   final double minCalories;
 
-  /// Callback when user acknow ledges and wants to proceed anyway.
+  /// Callback when the user proceeds despite the warning.
   final VoidCallback onAcknowledge;
 
-  /// Callback when user wants to adjust their goal instead.
+  /// Callback when the user wants to auto-adjust the plan.
   final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    final alertColor = colors.danger;
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colors.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.warning, width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.warning_amber, color: colors.warning, size: 24),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Below Safe Minimum',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colors.warning,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Your calorie intake is below the recommended minimum of '
-            '${minCalories.round()} kcal/day. This may lead to:',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colors.ink,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildBullet(context, colors, 'Nutrient deficiencies'),
-          _buildBullet(context, colors, 'Muscle loss'),
-          _buildBullet(context, colors, 'Metabolic slowdown'),
-          _buildBullet(context, colors, 'Reduced energy levels'),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: onCancel,
-                child: Text(
-                  'Adjust Goal',
-                  style: TextStyle(color: colors.ink),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: onAcknowledge,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.warning,
-                  foregroundColor: colors.surface,
-                ),
-                child: const Text('I Understand, Continue'),
-              ),
-            ],
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: alertColor.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBullet(BuildContext context, AppColors colors, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, top: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '• ',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colors.inkSubtle,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colors.inkSubtle,
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: alertColor),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(spacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.gpp_maybe_rounded,
+                          color: alertColor,
+                          size: 20,
+                        ),
+                        SizedBox(width: spacing.sm),
+                        Text(
+                          'BELOW SAFE MINIMUM',
+                          style: typography.caption.copyWith(
+                            color: alertColor,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: spacing.md),
+                    Text(
+                      'Your target is below the recommended '
+                      '${minCalories.round()} kcal floor. '
+                      'This increases injury risk and muscle loss.',
+                      style: typography.body.copyWith(
+                        fontSize: 14,
+                        color: colors.ink,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: spacing.lg),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        InkWell(
+                          onTap: onCancel,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            child: Text(
+                              'Auto-Adjust',
+                              style: typography.button.copyWith(
+                                fontSize: 13,
+                                color: colors.ink,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: spacing.sm),
+                        InkWell(
+                          onTap: onAcknowledge,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: alertColor.withValues(alpha: 0.5),
+                              ),
+                              borderRadius: BorderRadius.circular(100),
+                              color: alertColor.withValues(alpha: 0.1),
+                            ),
+                            child: Text(
+                              'Proceed Anyway',
+                              style: typography.button.copyWith(
+                                fontSize: 13,
+                                color: alertColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,18 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:starter_app/src/app/design_system/app_colors.dart';
 
-/// Template-level button atom to ensure consistent styling.
+/// Primary CTA pill used across the Matte Monolith experience.
 class AppButton extends StatelessWidget {
-  /// Creates a primary button with the provided [label].
-  const AppButton({required this.label, super.key, this.onPressed});
+  /// Creates a new [AppButton].
+  const AppButton({
+    required this.label,
+    this.onTap,
+    this.isPrimary = false,
+    this.isLoading = false,
+    super.key,
+  });
 
-  /// Text shown on the button.
+  /// Text rendered inside the button.
   final String label;
 
-  /// Optional handler invoked when the button is tapped.
-  final VoidCallback? onPressed;
+  /// Callback executed when tapped; when null the button is disabled.
+  final VoidCallback? onTap;
+
+  /// Whether the primary styling should be applied.
+  final bool isPrimary;
+
+  /// Whether to display the loading spinner.
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(onPressed: onPressed, child: Text(label));
+    final c = Theme.of(context).extension<AppColors>()!;
+    final isDisabled = onTap == null;
+
+    final backgroundColor = isDisabled
+        ? c.surface
+        : (isPrimary ? c.accent : c.surface);
+    final borderColor = isDisabled
+        ? c.borderIdle
+        : (isPrimary ? c.accent : c.borderIdle);
+    final foregroundColor = isDisabled
+        ? c.inkSubtle
+        : (isPrimary ? c.bg : c.ink);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isLoading || isDisabled ? null : onTap,
+        borderRadius: BorderRadius.circular(100),
+        splashColor: isPrimary
+            ? Colors.white.withValues(alpha: 0.3)
+            : c.accent.withValues(alpha: 0.1),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 56,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(color: borderColor),
+            boxShadow: (isPrimary && !isDisabled)
+                ? [
+                    BoxShadow(
+                      color: c.accent.withValues(alpha: 0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: isLoading
+              ? SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: foregroundColor,
+                  ),
+                )
+              : Text(
+                  label,
+                  style: TextStyle(
+                    color: foregroundColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
+                ),
+        ),
+      ),
+    );
   }
 }
