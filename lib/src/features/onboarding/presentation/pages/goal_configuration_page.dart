@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -11,16 +13,14 @@ import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_sy
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/goal_configuration_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/bento_stat_tile.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/tactile_ruler_picker.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/safety_warning_banner.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
-import 'package:starter_app/src/presentation/atoms/precision_slider.dart';
+import 'package:starter_app/src/presentation/atoms/fader_slider.dart';
 
-/// Onboarding step: "The Calibration Flight Deck".
-/// Fine-tunes target weight and pace using premium instruments.
+/// Screen that lets members configure their target weight and pacing.
 class GoalConfigurationPage extends StatefulWidget {
-  /// Creates the goal configuration page.
+  /// Creates the goal configuration flow page.
   const GoalConfigurationPage({super.key});
 
   @override
@@ -90,15 +90,6 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
       backgroundColor: colors.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(
-          'CALIBRATE PLAN',
-          style: typography.caption.copyWith(
-            letterSpacing: 2,
-            color: colors.inkSubtle,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
         leading: BackButton(color: colors.ink),
         elevation: 0,
       ),
@@ -111,58 +102,84 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(height: spacing.md),
-                        if (_vm.showingSafetyWarning) ...[
-                          SafetyWarningBanner(
-                            minCalories: _vm.safeMinimumKcal!,
-                            onAcknowledge: _vm.acknowledgeSafetyWarning,
-                            onCancel: _vm.adjustToSafeRate,
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: spacing.gutter,
                           ),
-                          SizedBox(height: spacing.lg),
-                        ],
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SizedBox(
-                                height: 120,
-                                child: BentoStatTile(
-                                  label: 'Daily Budget',
-                                  value: _vm.dailyKcal.round().toString(),
-                                  unit: 'KCAL',
-                                  onTap: () {},
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'CALIBRATE\nYOUR PLAN.',
+                                style: typography.display.copyWith(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -1,
+                                  height: 1,
+                                  color: colors.ink,
                                 ),
                               ),
-                            ),
-                            SizedBox(width: spacing.md),
-                            Expanded(
-                              child: SizedBox(
-                                height: 120,
-                                child: BentoStatTile(
-                                  label: 'Estimated Arrival',
-                                  value: _formatDateMonth(_vm.endDate),
-                                  unit: _formatDateYear(_vm.endDate),
-                                  onTap: () {},
+                              SizedBox(height: spacing.lg),
+                              if (_vm.showingSafetyWarning) ...[
+                                SafetyWarningBanner(
+                                  minCalories: _vm.safeMinimumKcal!,
+                                  onAcknowledge: _vm.acknowledgeSafetyWarning,
+                                  onCancel: _vm.adjustToSafeRate,
                                 ),
+                                SizedBox(height: spacing.lg),
+                              ],
+                              // ZONE A: Monitors (Floating HUD)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _MonitorItem(
+                                      label: 'DAILY TARGET',
+                                      value: _vm.dailyKcal.round().toString(),
+                                      unit: 'KCAL',
+                                      alignLeft: true,
+                                    ),
+                                  ),
+                                  Container(
+                                    height: 40,
+                                    width: 1,
+                                    color: colors.borderIdle,
+                                  ),
+                                  Expanded(
+                                    child: _MonitorItem(
+                                      label: 'COMPLETION',
+                                      value: _formatDateMonth(_vm.endDate),
+                                      unit: _formatDateYear(_vm.endDate),
+                                      alignLeft: false,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+
+                        // SPACING: Huge Gap between Monitor & Weight
                         SizedBox(height: spacing.xxl),
-                        Text(
-                          'TARGET WEIGHT',
-                          style: typography.caption.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.5,
-                            color: colors.inkSubtle,
+                        SizedBox(height: spacing.md),
+
+                        // ZONE B: Target Weight (Floating)
+                        Center(
+                          child: Text(
+                            'TARGET WEIGHT',
+                            style: typography.caption.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                              color: colors.inkSubtle,
+                            ),
                           ),
                         ),
-                        SizedBox(height: spacing.lg),
+                        SizedBox(height: spacing.xs),
                         SizedBox(
-                          height: 150,
+                          height: 120,
                           child: TactileRulerPicker(
                             min: _vm.minTargetKg,
                             max: _vm.maxTargetKg,
@@ -177,66 +194,20 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
                             onChanged: _vm.setTargetWeightKg,
                           ),
                         ),
-                        SizedBox(height: spacing.xl),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'WEEKLY RATE',
-                              style: typography.caption.copyWith(
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.5,
-                                color: colors.inkSubtle,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colors.surfaceHighlight,
-                                borderRadius: BorderRadius.circular(100),
-                                border: Border.all(color: colors.borderIdle),
-                              ),
-                              child: Text(
-                                _paceLabel(),
-                                style: typography.caption.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: colors.accent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: spacing.lg),
-                        PrecisionSlider(
-                          value: _vm.weeklyRateKg.clamp(
-                            _vm.minRateKg,
-                            _vm.maxRateKg,
+
+                        // SPACING: Huge Gap between Weight & Pace
+                        SizedBox(height: spacing.xxl),
+                        SizedBox(height: spacing.sm),
+
+                        // ZONE C: Weekly Rate (Floating HUD)
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: spacing.gutter,
                           ),
-                          min: _vm.minRateKg,
-                          max: _vm.maxRateKg,
-                          divisions: ((_vm.maxRateKg - _vm.minRateKg) / 0.05)
-                              .round(),
-                          onChanged: _vm.setWeeklyRateKg,
+                          child: _WeeklyRateHud(vm: _vm, unit: unit),
                         ),
-                        SizedBox(height: spacing.md),
-                        Wrap(
-                          spacing: spacing.md,
-                          runSpacing: spacing.sm,
-                          children: [
-                            _DataChip(
-                              label: _displayRate(_vm.weeklyDeltaAbs, unit),
-                              sub: '/ WEEK',
-                            ),
-                            _DataChip(
-                              label:
-                                  '${_vm.weeklyPercentBw.toStringAsFixed(1)}%',
-                              sub: 'BODYWEIGHT',
-                            ),
-                          ],
-                        ),
+
+                        // Bottom Padding for scroll
                         SizedBox(height: spacing.xl),
                       ],
                     ),
@@ -247,7 +218,7 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
                   child: AppButton(
                     label: 'CREATE PLAN',
                     isPrimary: true,
-                    onTap: () async {
+                    onTap: () {
                       final args = _buildSummaryArguments();
                       if (args == null) return;
                       _flowVm.setGoalConfigurationChoice(
@@ -256,7 +227,9 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
                         dailyBudgetKcal: _vm.dailyKcal,
                         projectedEndDate: args.projectedEnd,
                       );
-                      await context.push('/onboarding/summary', extra: args);
+                      unawaited(
+                        context.push('/onboarding/summary', extra: args),
+                      );
                     },
                   ),
                 ),
@@ -266,21 +239,6 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
         },
       ),
     );
-  }
-
-  String _paceLabel() {
-    final pct = _vm.weeklyPercentBw;
-    if (pct <= 0.5) return 'GENTLE';
-    if (pct <= 1.0) return 'STANDARD';
-    return 'AGGRESSIVE';
-  }
-
-  String _displayRate(double kg, UnitSystem unit) {
-    if (unit == UnitSystem.metric) {
-      return '${kg.toStringAsFixed(2)} kg';
-    }
-    final lb = BodyWeight.fromKg(kg).lb;
-    return '${lb.toStringAsFixed(2)} lb';
   }
 
   String _formatDateMonth(DateTime? date) {
@@ -310,71 +268,190 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
   OnboardingSummaryArguments? _buildSummaryArguments() {
     final goal = _flowVm.goalState.selected;
     final stats = _flowVm.statsState;
-    final dob = stats.dob;
-    final height = stats.height;
-    final weight = stats.weight;
-    final activity = stats.activity;
-    final endDate = _vm.endDate;
-
     if (goal == null ||
-        dob == null ||
-        height == null ||
-        weight == null ||
-        activity == null ||
-        endDate == null) {
+        stats.dob == null ||
+        stats.height == null ||
+        stats.weight == null ||
+        stats.activity == null ||
+        _vm.endDate == null) {
       return null;
     }
     return OnboardingSummaryArguments(
       goal: goal,
-      dob: dob,
-      heightCm: height.cm,
-      weightKg: weight.kg,
-      activity: activity,
+      dob: stats.dob!,
+      heightCm: stats.height!.cm,
+      weightKg: stats.weight!.kg,
+      activity: stats.activity!,
       targetWeightKg: _vm.targetWeightKg,
       weeklyRateKg: _vm.weeklyRateKg,
       dailyCalories: _vm.dailyKcal.round(),
-      projectedEnd: endDate,
+      projectedEnd: _vm.endDate!,
     );
   }
 }
 
-class _DataChip extends StatelessWidget {
-  const _DataChip({required this.label, required this.sub});
+class _MonitorItem extends StatelessWidget {
+  const _MonitorItem({
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.alignLeft,
+  });
+
   final String label;
-  final String sub;
+  final String value;
+  final String unit;
+  final bool alignLeft;
 
   @override
   Widget build(BuildContext context) {
-    final c = Theme.of(context).extension<AppColors>()!;
-    final t = Theme.of(context).extension<AppTypography>()!;
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: c.borderIdle),
-      ),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: t.body.copyWith(
-              fontWeight: FontWeight.w700,
-              color: c.ink,
-            ),
+    return Column(
+      crossAxisAlignment: alignLeft
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: typography.caption.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+            color: colors.inkSubtle,
+            fontSize: 10,
           ),
-          const SizedBox(width: 6),
-          Text(
-            sub,
-            style: t.caption.copyWith(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: c.inkSubtle,
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              value,
+              style: typography.display.copyWith(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: colors.ink,
+              ),
             ),
-          ),
-        ],
-      ),
+            if (unit.isNotEmpty) ...[
+              const SizedBox(width: 4),
+              Text(
+                unit,
+                style: typography.caption.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: colors.inkSubtle,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
     );
+  }
+}
+
+/// A transparent, heads-up-display style rate controller.
+/// Replaces the boxed "_WeeklyRateCard".
+class _WeeklyRateHud extends StatelessWidget {
+  const _WeeklyRateHud({
+    required this.vm,
+    required this.unit,
+  });
+
+  final GoalConfigurationVm vm;
+  final UnitSystem unit;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    return Column(
+      children: [
+        // 1. Header: Label + Badge
+        Text(
+          'TARGET PACE',
+          style: typography.caption.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2,
+            color: colors.inkSubtle,
+          ),
+        ),
+        SizedBox(height: spacing.sm),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(color: colors.ink, width: 1.5),
+          ),
+          child: Text(
+            _paceLabel(vm.weeklyPercentBw).toUpperCase(),
+            style: typography.caption.copyWith(
+              fontWeight: FontWeight.w900,
+              color: colors.ink,
+              fontSize: 11,
+              letterSpacing: 0.5,
+              height: 1,
+            ),
+          ),
+        ),
+
+        // 2. The Slider (floating HUD)
+        SizedBox(height: spacing.lg),
+        FaderSlider(
+          value: vm.weeklyRateKg.clamp(vm.minRateKg, vm.maxRateKg),
+          min: vm.minRateKg,
+          max: vm.maxRateKg,
+          divisions: ((vm.maxRateKg - vm.minRateKg) / 0.05).round(),
+          onChanged: vm.setWeeklyRateKg,
+        ),
+
+        // 3. Value readout
+        SizedBox(height: spacing.md),
+        Text(
+          _displayRateLine(vm.weeklyDeltaAbs, unit),
+          textAlign: TextAlign.center,
+          style: typography.display.copyWith(
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            color: colors.ink,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${vm.weeklyPercentBw.toStringAsFixed(1)}% bodyweight',
+          textAlign: TextAlign.center,
+          style: typography.caption.copyWith(
+            fontSize: 13,
+            color: colors.inkSubtle,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _paceLabel(double pct) {
+    if (pct <= 0.5) return 'Gentle';
+    if (pct <= 1.0) return 'Standard';
+    return 'Aggressive';
+  }
+
+  String _displayRateLine(double kg, UnitSystem unit) {
+    if (unit == UnitSystem.metric) {
+      return '${kg.toStringAsFixed(1)} kg / week';
+    }
+    final lb = BodyWeight.fromKg(kg).lb;
+    return '${lb.toStringAsFixed(1)} lb / week';
   }
 }

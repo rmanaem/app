@@ -6,6 +6,7 @@ import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 
 /// Scrollable ruler picker that provides tactile feedback on major ticks.
+/// Updated to be responsive and fit within compact vertical constraints.
 class TactileRulerPicker extends StatefulWidget {
   /// Creates a tactile ruler.
   const TactileRulerPicker({
@@ -20,28 +21,28 @@ class TactileRulerPicker extends StatefulWidget {
     super.key,
   });
 
-  /// Minimum selectable value.
+  /// Minimum selectable value on the ruler.
   final double min;
 
-  /// Maximum selectable value.
+  /// Maximum selectable value on the ruler.
   final double max;
 
-  /// Initial value to snap the ruler to.
+  /// Initial value the ruler positions itself at.
   final double initialValue;
 
-  /// Callback invoked when the ruler scroll position changes.
+  /// Callback fired when the value changes.
   final ValueChanged<double> onChanged;
 
-  /// Unit label displayed beneath the value.
+  /// Optional unit label displayed next to the value.
   final String unitLabel;
 
-  /// Increment between ticks.
+  /// Step size between ticks.
   final double step;
 
-  /// Number of minor ticks before a major tick is drawn.
+  /// Number of minor ticks to render between each major tick.
   final int minorTicksPerMajor;
 
-  /// Optional formatter for the displayed value.
+  /// Optional formatter for customizing the displayed number.
   final String Function(double)? valueFormatter;
 
   @override
@@ -58,10 +59,7 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
   @override
   void initState() {
     super.initState();
-    _currentValue = widget.initialValue.clamp(
-      widget.min,
-      widget.max,
-    );
+    _currentValue = widget.initialValue.clamp(widget.min, widget.max);
     final initialTickIndex = (_currentValue - widget.min) / widget.step;
     final initialOffset = initialTickIndex * _tickSpacing;
     _scrollController = ScrollController(initialScrollOffset: initialOffset)
@@ -89,7 +87,6 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
       setState(() => _currentValue = snapped);
       widget.onChanged(snapped);
 
-      // HAPTIC FIX: Only vibrate on integer steps to avoid "buzzing"
       if (snapped % 1 == 0 && snapped != _lastFeedbackValue) {
         unawaited(HapticFeedback.selectionClick());
         _lastFeedbackValue = snapped;
@@ -105,18 +102,14 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : null;
-        const valueHeight = 72.0;
-        const spacingHeight = 32.0;
-        final rulerHeight = availableHeight != null
-            ? (availableHeight - valueHeight - spacingHeight).clamp(60.0, 140.0)
-            : 100.0;
+        // If height is constrained, let the ruler fill the remainder.
+        // Otherwise default to a compact fixed height.
+        final isConstrained = constraints.maxHeight.isFinite;
 
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 1. The Value Display
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -128,8 +121,9 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
                       : _currentValue.toStringAsFixed(
                           widget.step < 1 ? 1 : 0,
                         ),
+                  // Reduce font size slightly to fit compact layouts
                   style: typography.hero.copyWith(
-                    fontSize: 56,
+                    fontSize: 48,
                     color: colors.ink,
                     letterSpacing: -2,
                     height: 1,
@@ -148,95 +142,111 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
                 ],
               ],
             ),
-            const SizedBox(height: spacingHeight),
-            SizedBox(
-              height: rulerHeight,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final centerPadding = constraints.maxWidth / 2;
 
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      ListView.builder(
-                        controller: _scrollController,
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: centerPadding,
-                        ),
-                        itemCount: tickCount + 1,
-                        itemBuilder: (context, index) {
-                          final hasMinor = widget.minorTicksPerMajor > 0;
-                          final isMajor =
-                              hasMinor &&
-                              index % widget.minorTicksPerMajor == 0;
-                          final half = hasMinor
-                              ? (widget.minorTicksPerMajor / 2).round().clamp(
-                                  1,
-                                  widget.minorTicksPerMajor,
-                                )
-                              : 1;
-                          final isMedium =
-                              hasMinor && !isMajor && index % half == 0;
-                          final height = isMajor
-                              ? 48.0
-                              : isMedium
-                              ? 32.0
-                              : 16.0;
-                          final width = isMajor ? 2.0 : 1.5;
-                          final color = isMajor
-                              ? colors.ink
-                              : colors.ink.withValues(alpha: 0.2);
-                          return Container(
-                            width: _tickSpacing,
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              width: width,
-                              height: height,
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      Container(
-                        width: 4,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: colors.accent,
-                          borderRadius: BorderRadius.circular(4),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colors.accent.withValues(alpha: 0.3),
-                              blurRadius: 12,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  colors.surface,
-                                  colors.surface.withValues(alpha: 0),
-                                  colors.surface.withValues(alpha: 0),
-                                  colors.surface,
-                                ],
-                                stops: const [0, 0.2, 0.8, 1],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+            // 2. Responsive Spacer
+            // If constrained, use a smaller gap.
+            SizedBox(height: isConstrained ? 12 : 32),
+
+            // 3. The Ruler
+            if (isConstrained)
+              Expanded(
+                child: _buildRuler(tickCount, colors),
+              )
+            else
+              SizedBox(
+                height: 100,
+                child: _buildRuler(tickCount, colors),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRuler(int tickCount, AppColors colors) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final centerPadding = constraints.maxWidth / 2;
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            ListView.builder(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: centerPadding),
+              itemCount: tickCount + 1,
+              itemBuilder: (context, index) {
+                final hasMinor = widget.minorTicksPerMajor > 0;
+                final isMajor =
+                    hasMinor && index % widget.minorTicksPerMajor == 0;
+                final half = hasMinor
+                    ? (widget.minorTicksPerMajor / 2).round().clamp(
+                        1,
+                        widget.minorTicksPerMajor,
+                      )
+                    : 1;
+                final isMedium = hasMinor && !isMajor && index % half == 0;
+
+                // Adaptive tick heights based on available height
+                final maxH = constraints.maxHeight;
+                final height = isMajor
+                    ? maxH * 0.6
+                    : isMedium
+                    ? maxH * 0.4
+                    : maxH * 0.25;
+
+                final width = isMajor ? 2.0 : 1.5;
+                final color = isMajor
+                    ? colors.ink
+                    : colors.ink.withValues(alpha: 0.2);
+
+                return Container(
+                  width: _tickSpacing,
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: width,
+                    height: height,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                );
+              },
+            ),
+            // Center Indicator
+            Container(
+              width: 4,
+              height: constraints.maxHeight * 0.8,
+              decoration: BoxDecoration(
+                color: colors.accent,
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.accent.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+            ),
+            // Edge Fades
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        colors.bg,
+                        colors.bg.withValues(alpha: 0),
+                        colors.bg.withValues(alpha: 0),
+                        colors.bg,
+                      ],
+                      stops: const [0, 0.2, 0.8, 1],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
