@@ -9,6 +9,7 @@ import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/sex.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/goal_configuration_vm.dart';
@@ -38,6 +39,7 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
     final stats = _flowVm.statsState;
     final goal = _flowVm.goalState.selected ?? Goal.maintain;
     final weight = stats.weight ?? BodyWeight.fromKg(75);
+    final sex = stats.sex ?? Sex.male;
 
     final initialTarget = switch (goal) {
       Goal.lose => weight.kg * 0.95,
@@ -52,6 +54,7 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
 
     _vm = GoalConfigurationVm(
       goal: goal,
+      sex: sex,
       height: stats.height ?? Stature.fromCm(175),
       currentWeight: weight,
       ageYears: _ageFromDob(stats.dob),

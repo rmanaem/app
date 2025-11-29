@@ -5,6 +5,7 @@ import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/sex.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewstate/onboarding_goal_view_state.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewstate/onboarding_stats_view_state.dart';
@@ -106,6 +107,13 @@ class OnboardingVm extends ChangeNotifier {
   void setActivityLevel(ActivityLevel level) {
     if (_statsState.activity == level) return;
     _statsState = _statsState.copyWith(activity: level);
+    notifyListeners();
+  }
+
+  /// Updates the biological sex for calculations.
+  void setSex(Sex sex) {
+    if (_statsState.sex == sex) return;
+    _statsState = _statsState.copyWith(sex: sex);
     notifyListeners();
   }
 

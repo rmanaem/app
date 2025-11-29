@@ -9,6 +9,7 @@ import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/sex.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/bento_stat_tile.dart';
@@ -337,13 +338,105 @@ class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
     );
   }
 
+  Future<void> _showSexSelector(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    final vm = context.read<OnboardingVm>();
+
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: colors.bg,
+      isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: false,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (_, setModalState) {
+            final selected = sheetContext.watch<OnboardingVm>().statsState.sex;
+            return SizedBox(
+              height: MediaQuery.of(context).size.height,
+              child: Column(
+                children: [
+                  const Spacer(),
+                  Text(
+                    'BIOLOGICAL SEX',
+                    style: typography.display.copyWith(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                      color: colors.ink,
+                    ),
+                  ),
+                  SizedBox(height: spacing.xxl),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AspectRatio(
+                            aspectRatio: 0.75,
+                            child: _SexSelectionCard(
+                              label: 'MALE',
+                              icon: Icons.male_rounded,
+                              isSelected: selected == Sex.male,
+                              onTap: () {
+                                vm.setSex(Sex.male);
+                                setModalState(() {});
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: spacing.md),
+                        Expanded(
+                          child: AspectRatio(
+                            aspectRatio: 0.75,
+                            child: _SexSelectionCard(
+                              label: 'FEMALE',
+                              icon: Icons.female_rounded,
+                              isSelected: selected == Sex.female,
+                              onTap: () {
+                                vm.setSex(Sex.female);
+                                setModalState(() {});
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
+                    child: AppButton(
+                      label: 'CONFIRM',
+                      isPrimary: true,
+                      onTap: () {
+                        if (selected == null) {
+                          vm.setSex(Sex.male);
+                        }
+                        Navigator.pop(sheetContext);
+                      },
+                    ),
+                  ),
+                  SizedBox(height: spacing.xl),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final spacing = Theme.of(context).extension<AppSpacing>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
-    final vm = context.watch<OnboardingVm>();
-    final state = vm.statsState;
+    final vm = context.read<OnboardingVm>();
+    final state = context.watch<OnboardingVm>().statsState;
+
     return Scaffold(
       backgroundColor: colors.bg,
       appBar: AppBar(
@@ -353,15 +446,14 @@ class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
       ),
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
                 children: [
                   Text(
-                    'TELL US\nABOUT YOU.',
+                    'CALIBRATE\nYOUR PLAN.',
                     style: typography.display.copyWith(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
@@ -375,87 +467,86 @@ class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
                     'We use this to calibrate your initial targets.',
                     style: typography.body.copyWith(
                       color: colors.inkSubtle,
-                      fontSize: 16,
+                      fontSize: 14,
                     ),
                   ),
+                  SizedBox(height: spacing.xl),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: BentoStatTile(
+                          label: 'SEX',
+                          value: state.sex?.label.toUpperCase(),
+                          icon: _getSexIcon(state.sex) ?? Icons.wc_rounded,
+                          onTap: () => _showSexSelector(context),
+                          placeholder: '--',
+                        ),
+                      ),
+                      SizedBox(width: spacing.md),
+                      Expanded(
+                        child: BentoStatTile(
+                          label: 'AGE',
+                          value: state.dob != null
+                              ? '${_calculateAge(state.dob!)}'
+                              : null,
+                          icon: Icons.cake_outlined,
+                          onTap: () async {
+                            final picked = await showDobPickerSheet(
+                              context: context,
+                              initial: state.dob,
+                            );
+                            if (picked != null) {
+                              vm.setDob(picked);
+                            }
+                          },
+                          placeholder: '--',
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: spacing.md),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: BentoStatTile(
+                          label: 'HEIGHT',
+                          value: _getHeightValue(
+                            state.height,
+                            state.unitSystem,
+                          ),
+                          unit: _getHeightUnit(state.unitSystem),
+                          icon: Icons.height,
+                          onTap: _showHeightSheet,
+                          placeholder: '--',
+                        ),
+                      ),
+                      SizedBox(width: spacing.md),
+                      Expanded(
+                        child: BentoStatTile(
+                          label: 'WEIGHT',
+                          value: _getWeightValue(
+                            state.weight,
+                            state.unitSystem,
+                          ),
+                          unit: _getWeightUnit(state.unitSystem),
+                          icon: Icons.monitor_weight_outlined,
+                          onTap: _showWeightSheet,
+                          placeholder: '--',
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: spacing.md),
+                  BentoStatTile(
+                    label: 'ACTIVITY LEVEL',
+                    value: _formatActivityForTile(state.activity),
+                    isWide: true,
+                    icon: _activityIcon(state.activity),
+                    placeholder: '--',
+                    onTap: _showActivitySheet,
+                  ),
+                  SizedBox(height: spacing.xxl),
                 ],
-              ),
-            ),
-            SizedBox(height: spacing.xl),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 80,
-                      child: BentoStatTile(
-                        label: 'Birthday',
-                        value: _formatDob(state.dob),
-                        unit: '',
-                        icon: Icons.cake_outlined,
-                        isWide: true,
-                        placeholder: 'Select Date',
-                        onTap: () async {
-                          final picked = await showDobPickerSheet(
-                            context: context,
-                            initial: state.dob,
-                          );
-                          if (picked != null) {
-                            vm.setDob(picked);
-                          }
-                        },
-                      ),
-                    ),
-                    SizedBox(height: spacing.md),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 160,
-                            child: BentoStatTile(
-                              label: 'Height',
-                              value: _getHeightValue(
-                                state.height,
-                                state.unitSystem,
-                              ),
-                              unit: _getHeightUnit(state.unitSystem),
-                              onTap: _showHeightSheet,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: spacing.md),
-                        Expanded(
-                          child: SizedBox(
-                            height: 160,
-                            child: BentoStatTile(
-                              label: 'Weight',
-                              value: _getWeightValue(
-                                state.weight,
-                                state.unitSystem,
-                              ),
-                              unit: _getWeightUnit(state.unitSystem),
-                              onTap: _showWeightSheet,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: spacing.md),
-                    SizedBox(
-                      height: 80,
-                      child: BentoStatTile(
-                        label: 'Activity Level',
-                        value: _formatActivity(state.activity),
-                        unit: '',
-                        icon: Icons.fitness_center,
-                        isWide: true,
-                        placeholder: 'Select Level',
-                        onTap: _showActivitySheet,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
             Padding(
@@ -478,23 +569,14 @@ class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
     );
   }
 
-  String? _formatDob(DateTime? dob) {
-    if (dob == null) return null;
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[dob.month - 1]} ${dob.day}, ${dob.year}';
+  int _calculateAge(DateTime dob) {
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
   }
 
   String? _getHeightValue(Stature? height, UnitSystem unit) {
@@ -522,7 +604,102 @@ class _OnboardingStatsPageState extends State<OnboardingStatsPage> {
     return unit == UnitSystem.metric ? 'KG' : 'LB';
   }
 
-  String? _formatActivity(ActivityLevel? level) {
-    return level?.label;
+  /// Shortened activity labels to fit the 32px hero size.
+  String? _formatActivityForTile(ActivityLevel? level) {
+    if (level == null) return null;
+    return switch (level) {
+      ActivityLevel.sedentary => 'SEDENTARY',
+      ActivityLevel.lightlyActive => 'LIGHT',
+      ActivityLevel.moderatelyActive => 'MODERATE',
+      ActivityLevel.veryActive => 'HIGH',
+      ActivityLevel.extremelyActive => 'EXTREME',
+    };
+  }
+
+  IconData? _getSexIcon(Sex? sex) {
+    return switch (sex) {
+      Sex.male => Icons.male_rounded,
+      Sex.female => Icons.female_rounded,
+      null => null,
+    };
+  }
+
+  IconData _activityIcon(ActivityLevel? level) {
+    return switch (level) {
+      ActivityLevel.sedentary => Icons.weekend_outlined,
+      ActivityLevel.lightlyActive => Icons.directions_walk,
+      ActivityLevel.moderatelyActive => Icons.fitness_center,
+      ActivityLevel.veryActive => Icons.sports_mma,
+      ActivityLevel.extremelyActive => Icons.flash_on,
+      null => Icons.fitness_center_rounded,
+    };
+  }
+}
+
+class _SexSelectionCard extends StatelessWidget {
+  const _SexSelectionCard({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    final borderColor = isSelected ? colors.accent : colors.borderIdle;
+    final fillColor = isSelected ? colors.surfaceHighlight : colors.surface2;
+    final contentColor = isSelected ? colors.ink : colors.inkSubtle;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: const BorderRadius.all(Radius.circular(24)),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.all(spacing.lg),
+        decoration: BoxDecoration(
+          color: fillColor,
+          borderRadius: const BorderRadius.all(Radius.circular(24)),
+          border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: colors.accent.withValues(alpha: 0.1),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: contentColor,
+            ),
+            SizedBox(height: spacing.md),
+            Text(
+              label,
+              style: typography.display.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: contentColor,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

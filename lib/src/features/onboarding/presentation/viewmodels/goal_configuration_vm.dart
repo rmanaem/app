@@ -3,6 +3,7 @@ import 'package:starter_app/src/features/onboarding/domain/preview_estimator.dar
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/sex.dart';
 import 'package:starter_app/src/features/onboarding/infrastructure/standard_preview_estimator.dart';
 
 /// ViewModel powering the goal configuration sliders and metrics.
@@ -10,6 +11,7 @@ class GoalConfigurationVm extends ChangeNotifier {
   /// Creates the ViewModel bound to the provided onboarding stats.
   GoalConfigurationVm({
     required Goal goal,
+    required Sex sex,
     required Stature height,
     required BodyWeight currentWeight,
     required int ageYears,
@@ -18,6 +20,7 @@ class GoalConfigurationVm extends ChangeNotifier {
     required double initialWeeklyRateKg,
     PreviewEstimator? estimator,
   }) : _goal = goal,
+       _sex = sex,
        _height = height,
        _currentWeight = currentWeight,
        _ageYears = ageYears,
@@ -29,6 +32,7 @@ class GoalConfigurationVm extends ChangeNotifier {
   }
 
   final Goal _goal;
+  final Sex _sex;
   final Stature _height;
   final BodyWeight _currentWeight;
   final int _ageYears;
@@ -45,6 +49,8 @@ class GoalConfigurationVm extends ChangeNotifier {
   bool _allowBelowMinimum = false;
   bool _isBelowSafeMinimum = false;
   double? _safeMinimumKcal;
+
+  bool get _isMale => _sex == Sex.male;
 
   /// Current slider value for the target weight (kg).
   double get targetWeightKg => _targetWeightKg;
@@ -157,12 +163,11 @@ class GoalConfigurationVm extends ChangeNotifier {
       activityLevel: _activity,
       targetWeightKg: _targetWeightKg,
       weeklyRateKg: 0,
-      isMale: true,
+      isMale: _isMale,
     );
 
     final tdee = maintenanceOutput.dailyKcal;
-    const minSafe =
-        1800.0; // Hardcoded for male for now, should match estimator
+    final minSafe = _isMale ? 1800.0 : 1200.0;
 
     // 2. Calculate safe rate: Rate = (MinSafe - TDEE) / 1100
     // 1100 = 7700 kcal/kg / 7 days
@@ -190,7 +195,7 @@ class GoalConfigurationVm extends ChangeNotifier {
       activityLevel: _activity,
       targetWeightKg: _targetWeightKg,
       weeklyRateKg: _weeklyRateKg,
-      isMale: true,
+      isMale: _isMale,
       allowBelowMinimum: _allowBelowMinimum, // NEW
     );
     _dailyKcal = output.dailyKcal;

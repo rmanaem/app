@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/sex.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/goal_configuration_vm.dart';
 
 void main() {
@@ -13,6 +14,7 @@ void main() {
 
       final vm = GoalConfigurationVm(
         goal: Goal.lose,
+        sex: Sex.male,
         currentWeight: BodyWeight.fromKg(80),
         height: Stature.fromCm(180),
         ageYears: 30,

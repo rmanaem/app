@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'package:starter_app/src/features/onboarding/domain/value_objects/activity_level.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/measurements.dart';
+import 'package:starter_app/src/features/onboarding/domain/value_objects/sex.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_system.dart';
 
 /// ViewState for the onboarding stats & units screen.
@@ -13,6 +14,7 @@ class OnboardingStatsViewState extends Equatable {
     this.height,
     this.weight,
     this.activity,
+    this.sex,
   });
 
   /// Active unit system to display inputs in.
@@ -30,9 +32,16 @@ class OnboardingStatsViewState extends Equatable {
   /// Baseline activity level.
   final ActivityLevel? activity;
 
+  /// Biological sex, used for metabolic estimates.
+  final Sex? sex;
+
   /// True when all required fields for the step are satisfied.
   bool get isValid =>
-      dob != null && height != null && weight != null && activity != null;
+      dob != null &&
+      height != null &&
+      weight != null &&
+      activity != null &&
+      sex != null;
 
   /// Creates a copy overriding provided fields.
   OnboardingStatsViewState copyWith({
@@ -41,6 +50,7 @@ class OnboardingStatsViewState extends Equatable {
     Stature? height,
     BodyWeight? weight,
     ActivityLevel? activity,
+    Sex? sex,
   }) {
     return OnboardingStatsViewState(
       unitSystem: unitSystem ?? this.unitSystem,
@@ -48,9 +58,10 @@ class OnboardingStatsViewState extends Equatable {
       height: height ?? this.height,
       weight: weight ?? this.weight,
       activity: activity ?? this.activity,
+      sex: sex ?? this.sex,
     );
   }
 
   @override
-  List<Object?> get props => [unitSystem, dob, height, weight, activity];
+  List<Object?> get props => [unitSystem, dob, height, weight, activity, sex];
 }

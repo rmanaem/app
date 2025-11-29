@@ -3,197 +3,147 @@ import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 
-/// A "Biometric Dashboard" tile with tactile border feedback.
+/// Stateless bento-style tile for stats entry.
 ///
-/// Idle: Dark steel border.
-/// Pressed: bright silver border plus subtle glow.
-class BentoStatTile extends StatefulWidget {
-  /// Creates a new bento stat tile.
+/// Follows the "Biometric Dashboard" aesthetic:
+/// - Top-Left: Micro-Label (Caption)
+/// - Top-Right: Category Anchor (Icon)
+/// - Bottom-Left: Hero Value (Display)
+class BentoStatTile extends StatelessWidget {
+  /// Creates a bento stat tile.
   const BentoStatTile({
     required this.label,
     required this.value,
-    required this.unit,
     required this.onTap,
+    this.unit = '',
     this.icon,
+    this.placeholder,
     this.isWide = false,
-    this.placeholder = 'SET',
     super.key,
   });
 
-  /// Small label displayed above the primary value.
+  /// Label rendered above the value (Micro-label).
   final String label;
 
   /// Primary value shown in the tile body.
   final String? value;
 
-  /// Unit rendered beneath or beside the value.
+  /// Optional unit shown next to the value.
   final String unit;
 
-  /// Callback triggered when the tile is tapped.
-  final VoidCallback onTap;
-
-  /// Optional icon used on the wide layout.
+  /// Optional anchor icon shown in the top-right.
   final IconData? icon;
 
-  /// Whether to render the wide variant.
+  /// Tap handler.
+  final VoidCallback onTap;
+
+  /// Optional placeholder text.
+  final String? placeholder;
+
+  /// Whether to render the wider variant.
   final bool isWide;
-
-  /// Placeholder text when no value is provided.
-  final String placeholder;
-
-  @override
-  State<BentoStatTile> createState() => _BentoStatTileState();
-}
-
-class _BentoStatTileState extends State<BentoStatTile> {
-  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final spacing = Theme.of(context).extension<AppSpacing>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
-    final hasValue = widget.value != null;
 
-    final borderColor = _isPressed ? colors.accent : colors.borderIdle;
+    final showPlaceholder = value == null;
+    final displayValue = showPlaceholder ? (placeholder ?? '--') : value!;
+    // VISUAL STATE LOGIC:
+    // Filled = Active Border (Silver) & White Text
+    // Empty = Idle Border (Dark Steel) & Grey Text
+    final borderColor = showPlaceholder
+        ? colors.borderIdle
+        : colors.borderActive;
+    final textColor = showPlaceholder ? colors.inkSubtle : colors.ink;
+    final iconColor = showPlaceholder
+        ? colors.inkSubtle.withValues(alpha: 0.5)
+        : colors.inkSubtle;
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: borderColor,
-            width: _isPressed ? 2 : 1,
-          ),
-          boxShadow: _isPressed
-              ? [
-                  BoxShadow(
-                    color: colors.accent.withValues(alpha: 0.1),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Container(
-          padding: EdgeInsets.all(spacing.lg),
-          alignment: widget.isWide ? Alignment.centerLeft : Alignment.center,
-          child: widget.isWide
-              ? _buildWideLayout(colors, typography, spacing, hasValue)
-              : _buildSquareLayout(colors, typography, spacing, hasValue),
+    return Material(
+      color: colors.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: borderColor,
+          width: showPlaceholder ? 1 : 1.5,
         ),
       ),
-    );
-  }
-
-  Widget _buildWideLayout(
-    AppColors c,
-    AppTypography t,
-    AppSpacing s,
-    bool hasValue,
-  ) {
-    return Row(
-      children: [
-        if (widget.icon != null) ...[
-          Icon(widget.icon, color: c.inkSubtle, size: 24),
-          SizedBox(width: s.md),
-        ],
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              widget.label.toUpperCase(),
-              style: t.caption.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: c.inkSubtle,
-                fontSize: 11,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: colors.accent.withValues(alpha: 0.1),
+        highlightColor: colors.surfaceHighlight,
+        child: Container(
+          padding: EdgeInsets.all(spacing.lg),
+          height: isWide
+              ? 100
+              : 120, // Wide tiles can be slightly shorter if needed
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // TOP ROW: Label + Icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    style: typography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                      fontSize: 10,
+                      color: colors.inkSubtle,
+                    ),
+                  ),
+                  if (icon != null)
+                    Icon(
+                      icon,
+                      // Dim icon if empty, brighter if filled
+                      color: iconColor,
+                      size: 24, // BUMPED UP from 20
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              hasValue ? widget.value! : widget.placeholder,
-              style: t.title.copyWith(
-                color: hasValue ? c.ink : c.inkSubtle.withValues(alpha: 0.5),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const Spacer(),
-        if (widget.unit.isNotEmpty && hasValue)
-          Text(
-            widget.unit.toUpperCase(),
-            style: t.caption.copyWith(
-              fontWeight: FontWeight.w800,
-              color: c.accent,
-            ),
-          )
-        else
-          Icon(
-            Icons.add,
-            color: c.inkSubtle.withValues(alpha: 0.3),
-            size: 20,
-          ),
-      ],
-    );
-  }
 
-  Widget _buildSquareLayout(
-    AppColors c,
-    AppTypography t,
-    AppSpacing s,
-    bool hasValue,
-  ) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          widget.label.toUpperCase(),
-          style: t.caption.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: c.inkSubtle,
-            fontSize: 11,
+              // BOTTOM ROW: Value + Unit
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Flexible(
+                    child: Text(
+                      displayValue,
+                      style: typography.display.copyWith(
+                        fontSize: 32, // Consistent Hero Size
+                        fontWeight: FontWeight.w800,
+                        color: textColor,
+                        height: 1,
+                        letterSpacing: -1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (unit.isNotEmpty && !showPlaceholder) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      unit,
+                      style: typography.caption.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: colors.inkSubtle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ),
         ),
-        SizedBox(height: s.sm),
-        Text(
-          hasValue ? widget.value! : '--',
-          style: t.display.copyWith(
-            color: hasValue ? c.ink : c.inkSubtle.withValues(alpha: 0.3),
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            height: 1,
-          ),
-        ),
-        if (widget.unit.isNotEmpty) ...[
-          SizedBox(height: s.xs),
-          Text(
-            widget.unit.toUpperCase(),
-            style: t.caption.copyWith(
-              fontWeight: FontWeight.w800,
-              color: c.accent,
-            ),
-          ),
-        ] else if (!hasValue) ...[
-          SizedBox(height: s.xs),
-          Text(
-            widget.placeholder,
-            style: t.caption.copyWith(
-              color: c.inkSubtle.withValues(alpha: 0.5),
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
