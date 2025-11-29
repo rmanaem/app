@@ -12,6 +12,9 @@ class AppSpacing extends ThemeExtension<AppSpacing> {
     required this.lg,
     required this.xl,
     required this.xxl,
+    required this.xxxl,
+    required this.quad,
+    required this.quint,
     required this.gutter,
   });
 
@@ -33,6 +36,15 @@ class AppSpacing extends ThemeExtension<AppSpacing> {
   /// Double extra-large spacing (32dp).
   final double xxl;
 
+  /// Triple extra-large spacing (48dp).
+  final double xxxl;
+
+  /// Quadruple extra-large spacing (64dp).
+  final double quad;
+
+  /// Quintuple extra-large spacing (80dp).
+  final double quint;
+
   /// Horizontal page gutter spacing.
   final double gutter;
 
@@ -44,6 +56,9 @@ class AppSpacing extends ThemeExtension<AppSpacing> {
     lg: 16,
     xl: 24,
     xxl: 32,
+    xxxl: 48,
+    quad: 64,
+    quint: 80,
     gutter: 24,
   );
 
@@ -65,6 +80,9 @@ class AppSpacing extends ThemeExtension<AppSpacing> {
     double? lg,
     double? xl,
     double? xxl,
+    double? xxxl,
+    double? quad,
+    double? quint,
     double? gutter,
   }) => AppSpacing(
     xs: xs ?? this.xs,
@@ -73,6 +91,9 @@ class AppSpacing extends ThemeExtension<AppSpacing> {
     lg: lg ?? this.lg,
     xl: xl ?? this.xl,
     xxl: xxl ?? this.xxl,
+    xxxl: xxxl ?? this.xxxl,
+    quad: quad ?? this.quad,
+    quint: quint ?? this.quint,
     gutter: gutter ?? this.gutter,
   );
 
@@ -87,6 +108,9 @@ class AppSpacing extends ThemeExtension<AppSpacing> {
       lg: l(lg, other.lg),
       xl: l(xl, other.xl),
       xxl: l(xxl, other.xxl),
+      xxxl: l(xxxl, other.xxxl),
+      quad: l(quad, other.quad),
+      quint: l(quint, other.quint),
       gutter: l(gutter, other.gutter),
     );
   }

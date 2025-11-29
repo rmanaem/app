@@ -7,6 +7,8 @@ class AppButton extends StatelessWidget {
   const AppButton({
     required this.label,
     this.onTap,
+    this.icon,
+    this.leading,
     this.isPrimary = false,
     this.isLoading = false,
     super.key,
@@ -17,6 +19,12 @@ class AppButton extends StatelessWidget {
 
   /// Callback executed when tapped; when null the button is disabled.
   final VoidCallback? onTap;
+
+  /// Optional leading icon rendered before the label.
+  final IconData? icon;
+
+  /// Optional custom leading widget (e.g., branded logos).
+  final Widget? leading;
 
   /// Whether the primary styling should be applied.
   final bool isPrimary;
@@ -74,14 +82,31 @@ class AppButton extends StatelessWidget {
                     color: foregroundColor,
                   ),
                 )
-              : Text(
-                  label,
-                  style: TextStyle(
-                    color: foregroundColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                  ),
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (leading != null) ...[
+                      leading!,
+                      const SizedBox(width: 8),
+                    ] else if (icon != null) ...[
+                      Icon(
+                        icon,
+                        color: foregroundColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: foregroundColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),

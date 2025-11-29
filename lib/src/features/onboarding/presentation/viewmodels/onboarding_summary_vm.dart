@@ -218,13 +218,41 @@ class OnboardingSummaryVm extends ChangeNotifier {
 
   /// Highlights rendered as bullet text.
   List<String> get highlightBullets {
-    final weight = state.targetWeightKg.toStringAsFixed(1);
-    final date = _formatDate(state.projectedEndDate);
-    return [
-      'Reach $weight kg by $date.',
-      'Daily budget of ${state.dailyCalories} kcal keeps you on pace.',
-      'Tailored to your ${_formatActivityLabel(state.activity)} lifestyle.',
-    ];
+    return [];
+  }
+
+  /// Formatted mission start date (today).
+  String get startDateFormatted => _formatDate(DateTime.now());
+
+  /// Formatted projected end date.
+  String get endDateFormatted => _formatDate(state.projectedEndDate);
+
+  /// Starting weight shown in the mission grid.
+  String get startWeightFormatted => state.currentWeightKg.toStringAsFixed(1);
+
+  /// Target weight shown in the mission grid.
+  String get targetWeightFormatted => state.targetWeightKg.toStringAsFixed(1);
+
+  /// Weekly rate copy for the mission grid.
+  String get weeklyRateFormatted =>
+      '${state.weeklyRateKg.abs().toStringAsFixed(2)} kg/wk';
+
+  /// Returns true if the selected goal is maintenance.
+  bool get isMaintenance => state.goal == Goal.maintain;
+
+  /// Returns the combined summary string for the vector footer.
+  /// Handles maintenance vs loss/gain states.
+  String get vectorFooterStats {
+    if (isMaintenance) {
+      return 'DURATION: ONGOING  •  ZONE: ±1.5 KG  •  FOCUS: RECOMP';
+    }
+    final days = state.projectedEndDate.difference(DateTime.now()).inDays;
+    final weeks = (days / 7).ceil().clamp(1, 999);
+    final delta = state.targetWeightKg - state.currentWeightKg;
+    final sign = delta > 0 ? '+' : '';
+    final pace = state.weeklyRateKg.abs().toStringAsFixed(2);
+
+    return '$weeks WEEKS  •  $sign${delta.toStringAsFixed(1)} KG  •  $pace KG/WK';
   }
 
   /// Nutrition macro split percentages.
@@ -306,12 +334,4 @@ class OnboardingSummaryVm extends ChangeNotifier {
     final dd = date.day.toString().padLeft(2, '0');
     return '${date.year}-$mm-$dd';
   }
-
-  String _formatActivityLabel(ActivityLevel level) => switch (level) {
-    ActivityLevel.sedentary => 'mostly sedentary',
-    ActivityLevel.lightlyActive => 'lightly active',
-    ActivityLevel.moderatelyActive => 'moderately active',
-    ActivityLevel.veryActive => 'very active',
-    ActivityLevel.extremelyActive => 'extremely active',
-  };
 }

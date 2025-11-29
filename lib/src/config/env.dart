@@ -1,10 +1,10 @@
 /// Supported runtime environments for the template.
 enum Env {
   /// Local or internal development environment.
-  dev('dev', 'rc_public_sdk_key_dev'),
+  dev('dev', 'test_IOZA0PfyiFLiqipCLJypWnCMPw'),
 
   /// Production environment used for shipping builds.
-  prod('prod', 'rc_public_sdk_key_prod')
+  prod('prod', 'test_IOZA0PfyiFLiqipCLJypWnCMPw')
   ;
 
   const Env(this.displayName, this.revenuecatPublicSdkKey);

@@ -71,6 +71,9 @@ class GoalConfigurationVm extends ChangeNotifier {
   /// Whether to show the safety warning banner.
   bool get showingSafetyWarning => _isBelowSafeMinimum && !_allowBelowMinimum;
 
+  /// True when the configured goal is maintenance.
+  bool get isMaintenance => _goal == Goal.maintain;
+
   /// Absolute weekly mass delta ignoring sign.
   double get weeklyDeltaAbs => _weeklyRateKg.abs();
 
@@ -175,10 +178,14 @@ class GoalConfigurationVm extends ChangeNotifier {
   }
 
   void _recompute() {
+    final weightForCalculation = isMaintenance
+        ? _targetWeightKg
+        : _currentWeight.kg;
+
     final output = _estimator.estimate(
       goal: _goal,
       heightCm: _height.cm,
-      currentWeightKg: _currentWeight.kg,
+      currentWeightKg: weightForCalculation,
       age: _ageYears,
       activityLevel: _activity,
       targetWeightKg: _targetWeightKg,

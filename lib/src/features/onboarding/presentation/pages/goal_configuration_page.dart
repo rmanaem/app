@@ -100,118 +100,33 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: spacing.gutter,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'CALIBRATE\nYOUR PLAN.',
-                                style: typography.display.copyWith(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -1,
-                                  height: 1,
-                                  color: colors.ink,
-                                ),
-                              ),
-                              SizedBox(height: spacing.lg),
-                              if (_vm.showingSafetyWarning) ...[
-                                SafetyWarningBanner(
-                                  minCalories: _vm.safeMinimumKcal!,
-                                  onAcknowledge: _vm.acknowledgeSafetyWarning,
-                                  onCancel: _vm.adjustToSafeRate,
-                                ),
-                                SizedBox(height: spacing.lg),
-                              ],
-                              // ZONE A: Monitors (Floating HUD)
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: _MonitorItem(
-                                      label: 'DAILY TARGET',
-                                      value: _vm.dailyKcal.round().toString(),
-                                      unit: 'KCAL',
-                                      alignLeft: true,
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 40,
-                                    width: 1,
-                                    color: colors.borderIdle,
-                                  ),
-                                  Expanded(
-                                    child: _MonitorItem(
-                                      label: 'COMPLETION',
-                                      value: _formatDateMonth(_vm.endDate),
-                                      unit: _formatDateYear(_vm.endDate),
-                                      alignLeft: false,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // SPACING: Huge Gap between Monitor & Weight
-                        SizedBox(height: spacing.xxl),
-                        SizedBox(height: spacing.md),
-
-                        // ZONE B: Target Weight (Floating)
-                        Center(
-                          child: Text(
-                            'TARGET WEIGHT',
-                            style: typography.caption.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.5,
-                              color: colors.inkSubtle,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: spacing.xs),
-                        SizedBox(
-                          height: 120,
-                          child: TactileRulerPicker(
-                            min: _vm.minTargetKg,
-                            max: _vm.maxTargetKg,
-                            initialValue: _vm.targetWeightKg,
-                            unitLabel: unit == UnitSystem.metric ? 'KG' : 'LB',
-                            step: 0.1,
-                            valueFormatter: unit == UnitSystem.metric
-                                ? null
-                                : (val) => BodyWeight.fromKg(
-                                    val,
-                                  ).lb.toStringAsFixed(1),
-                            onChanged: _vm.setTargetWeightKg,
-                          ),
-                        ),
-
-                        // SPACING: Huge Gap between Weight & Pace
-                        SizedBox(height: spacing.xxl),
-                        SizedBox(height: spacing.sm),
-
-                        // ZONE C: Weekly Rate (Floating HUD)
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: spacing.gutter,
-                          ),
-                          child: _WeeklyRateHud(vm: _vm, unit: unit),
-                        ),
-
-                        // Bottom Padding for scroll
-                        SizedBox(height: spacing.xl),
-                      ],
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
+                  child: Text(
+                    'CALIBRATE\nYOUR PLAN.',
+                    style: typography.display.copyWith(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                      height: 1,
+                      color: colors.ink,
                     ),
                   ),
+                ),
+                Expanded(
+                  child: _vm.isMaintenance
+                      ? _buildMaintenanceLayout(
+                          colors,
+                          spacing,
+                          typography,
+                          unit,
+                        )
+                      : _buildStandardLayout(
+                          colors,
+                          spacing,
+                          typography,
+                          unit,
+                        ),
                 ),
                 Padding(
                   padding: EdgeInsets.all(spacing.gutter),
@@ -237,6 +152,171 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildMaintenanceLayout(
+    AppColors colors,
+    AppSpacing spacing,
+    AppTypography typography,
+    UnitSystem unit,
+  ) {
+    return Column(
+      children: [
+        const Spacer(flex: 2),
+        Column(
+          children: [
+            Text(
+              'DAILY MAINTENANCE TARGET',
+              style: typography.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+                color: colors.inkSubtle,
+                fontSize: 10,
+              ),
+            ),
+            SizedBox(height: spacing.md),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  _vm.dailyKcal.round().toString(),
+                  style: typography.hero.copyWith(
+                    fontSize: 64,
+                    color: colors.ink,
+                    height: 1,
+                    letterSpacing: -2,
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                Text(
+                  'KCAL',
+                  style: typography.caption.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: colors.inkSubtle,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const Spacer(),
+        Column(
+          children: [
+            Text(
+              'TARGET WEIGHT',
+              style: typography.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+                color: colors.inkSubtle,
+              ),
+            ),
+            SizedBox(height: spacing.sm),
+            SizedBox(
+              height: 120,
+              child: TactileRulerPicker(
+                min: _vm.minTargetKg,
+                max: _vm.maxTargetKg,
+                initialValue: _vm.targetWeightKg,
+                unitLabel: unit == UnitSystem.metric ? 'KG' : 'LB',
+                step: 0.1,
+                valueFormatter: unit == UnitSystem.metric
+                    ? null
+                    : (val) => BodyWeight.fromKg(val).lb.toStringAsFixed(1),
+                onChanged: _vm.setTargetWeightKg,
+              ),
+            ),
+          ],
+        ),
+        const Spacer(flex: 3),
+      ],
+    );
+  }
+
+  Widget _buildStandardLayout(
+    AppColors colors,
+    AppSpacing spacing,
+    AppTypography typography,
+    UnitSystem unit,
+  ) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: spacing.xl),
+          if (_vm.showingSafetyWarning) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
+              child: SafetyWarningBanner(
+                minCalories: _vm.safeMinimumKcal!,
+                onAcknowledge: _vm.acknowledgeSafetyWarning,
+                onCancel: _vm.adjustToSafeRate,
+              ),
+            ),
+            SizedBox(height: spacing.lg),
+          ],
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _MonitorItem(
+                    label: 'DAILY TARGET',
+                    value: _vm.dailyKcal.round().toString(),
+                    unit: 'KCAL',
+                    alignLeft: true,
+                  ),
+                ),
+                Container(height: 40, width: 1, color: colors.borderIdle),
+                Expanded(
+                  child: _MonitorItem(
+                    label: 'COMPLETION',
+                    value: _formatDateMonth(_vm.endDate),
+                    unit: _formatDateYear(_vm.endDate),
+                    alignLeft: false,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: spacing.quad),
+          Center(
+            child: Text(
+              'TARGET WEIGHT',
+              style: typography.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+                color: colors.inkSubtle,
+              ),
+            ),
+          ),
+          SizedBox(height: spacing.sm),
+          SizedBox(
+            height: 120,
+            child: TactileRulerPicker(
+              min: _vm.minTargetKg,
+              max: _vm.maxTargetKg,
+              initialValue: _vm.targetWeightKg,
+              unitLabel: unit == UnitSystem.metric ? 'KG' : 'LB',
+              step: 0.1,
+              valueFormatter: unit == UnitSystem.metric
+                  ? null
+                  : (val) => BodyWeight.fromKg(val).lb.toStringAsFixed(1),
+              onChanged: _vm.setTargetWeightKg,
+            ),
+          ),
+          SizedBox(height: spacing.xxxl),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
+            child: _WeeklyRateHud(vm: _vm, unit: unit),
+          ),
+          SizedBox(height: spacing.xxl),
+        ],
       ),
     );
   }
@@ -307,6 +387,7 @@ class _MonitorItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
 
     return Column(
       crossAxisAlignment: alignLeft
@@ -322,7 +403,7 @@ class _MonitorItem extends StatelessWidget {
             fontSize: 10,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: spacing.xs),
         Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -337,7 +418,7 @@ class _MonitorItem extends StatelessWidget {
               ),
             ),
             if (unit.isNotEmpty) ...[
-              const SizedBox(width: 4),
+              SizedBox(width: spacing.xs),
               Text(
                 unit,
                 style: typography.caption.copyWith(
@@ -427,7 +508,7 @@ class _WeeklyRateHud extends StatelessWidget {
             height: 1,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: spacing.sm),
         Text(
           '${vm.weeklyPercentBw.toStringAsFixed(1)}% bodyweight',
           textAlign: TextAlign.center,

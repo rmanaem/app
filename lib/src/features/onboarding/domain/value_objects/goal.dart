@@ -1,35 +1,36 @@
-/// Primary objectives a user can choose during onboarding.
+/// The primary objective for the user's plan.
 enum Goal {
-  /// Focus on losing weight.
+  /// Indicates the member is focused on fat loss.
   lose,
 
-  /// Maintain the current weight.
+  /// Indicates the member intends to maintain their current weight.
   maintain,
 
-  /// Gain weight.
-  gain,
-}
+  /// Indicates the member is targeting lean mass gain.
+  gain
+  ;
 
-/// Convenience labels derived from a [Goal].
-extension GoalLabel on Goal {
-  /// Human-readable title used in UI copy.
+  /// The short title used in headers.
   String get title => switch (this) {
-    Goal.lose => 'Lose Weight',
-    Goal.maintain => 'Maintain Weight',
-    Goal.gain => 'Gain Weight',
+    Goal.lose => 'LOSE WEIGHT',
+    Goal.maintain => 'MAINTAIN WEIGHT',
+    Goal.gain => 'GAIN WEIGHT',
   };
 
-  /// Supporting copy clarifying what the [Goal] entails.
-  String get subtitle => switch (this) {
-    Goal.lose => 'Create a mild daily deficit.',
-    Goal.maintain => 'Keep weight steady.',
-    Goal.gain => 'Create a mild daily surplus.',
+  /// The descriptive subtitle used in cards and summaries.
+  String get description => switch (this) {
+    Goal.lose => 'Lose fat with a sustainable caloric deficit.',
+    Goal.maintain => 'Optimize performance at current weight.',
+    Goal.gain => 'Build muscle with a controlled surplus.',
   };
 
-  /// Analytics-friendly identifier for the [Goal].
+  /// Secondary subtitle used in cards.
+  String get subtitle => description;
+
+  /// Analytics-safe identifier.
   String get analyticsName => switch (this) {
-    Goal.lose => 'lose',
-    Goal.maintain => 'maintain',
-    Goal.gain => 'gain',
+    Goal.lose => 'lose_weight',
+    Goal.maintain => 'maintain_weight',
+    Goal.gain => 'gain_weight',
   };
 }
