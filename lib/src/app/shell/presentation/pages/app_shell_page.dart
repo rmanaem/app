@@ -20,6 +20,10 @@ class AppShellPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    // Adjust nav index to account for the center FAB spacer (at nav index 2).
+    final navIndex = navigationShell.currentIndex >= 2
+        ? navigationShell.currentIndex + 1
+        : navigationShell.currentIndex;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -60,13 +64,15 @@ class AppShellPage extends StatelessWidget {
           backgroundColor: colors.bg, // Matches void, but separated by border
           indicatorColor:
               Colors.transparent, // No pill indicator, just icon color change
-          selectedIndex: navigationShell.currentIndex,
+          selectedIndex: navIndex,
           height: 70, // Slightly taller for "Panel" feel
           labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
           onDestinationSelected: (index) {
+            if (index == 2) return; // Spacer under the FAB
+            final branchIndex = index >= 2 ? index - 1 : index;
             navigationShell.goBranch(
-              index,
-              initialLocation: index == navigationShell.currentIndex,
+              branchIndex,
+              initialLocation: branchIndex == navigationShell.currentIndex,
             );
           },
           destinations: [
@@ -85,7 +91,10 @@ class AppShellPage extends StatelessWidget {
               1,
             ),
             // Middle gap for FAB
-            const SizedBox(width: 48),
+            const NavigationDestination(
+              icon: SizedBox(width: 48),
+              label: '',
+            ),
             _buildNavDest(
               context,
               Icons.fitness_center_outlined,
