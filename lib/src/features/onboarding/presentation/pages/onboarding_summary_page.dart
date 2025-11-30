@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
+import 'package:starter_app/src/core/services/notification_service.dart';
 import 'package:starter_app/src/features/onboarding/domain/usecases/save_user_plan.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
@@ -129,8 +130,8 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
       context.go('/today', extra: {'planId': planId});
     } on Object catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Launch sequence failed: $error')),
+      context.read<NotificationService>().showError(
+        'Launch sequence failed: $error',
       );
     }
   }

@@ -5,9 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
+import 'package:starter_app/src/app/root_navigator_key.dart';
+import 'package:starter_app/src/app/scaffold_messenger_key.dart';
 import 'package:starter_app/src/app/shell/presentation/pages/app_shell_page.dart';
 import 'package:starter_app/src/core/analytics/analytics_service.dart';
 import 'package:starter_app/src/core/analytics/firebase_analytics_service.dart';
+import 'package:starter_app/src/core/services/notification_service.dart';
+import 'package:starter_app/src/core/services/scaffold_notification_service.dart';
 import 'package:starter_app/src/features/nutrition/nutrition.dart';
 import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
@@ -41,6 +45,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final router = GoRouter(
+      navigatorKey: rootNavigatorKey,
       initialLocation: '/',
       routes: [
         GoRoute(
@@ -151,6 +156,9 @@ class App extends StatelessWidget {
         Provider<AnalyticsService>(
           create: (_) => FirebaseAnalyticsService(FirebaseAnalytics.instance),
         ),
+        Provider<NotificationService>(
+          create: (_) => ScaffoldNotificationService(),
+        ),
         Provider<PlanRepository>(
           create: (_) => const MemoryPlanRepository(),
         ),
@@ -171,6 +179,7 @@ class App extends StatelessWidget {
         value: SystemUiOverlayStyle.light,
         child: MaterialApp.router(
           title: 'App',
+          scaffoldMessengerKey: rootScaffoldMessengerKey,
           routerConfig: router,
           theme: makeTheme(AppColors.light, dark: false),
           darkTheme: makeTheme(AppColors.dark, dark: true),
