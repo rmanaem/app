@@ -221,28 +221,28 @@ class OnboardingSummaryVm extends ChangeNotifier {
     return [];
   }
 
-  /// Formatted mission start date (today).
+  /// Formatted start date (today).
   String get startDateFormatted => _formatDate(DateTime.now());
 
   /// Formatted projected end date.
   String get endDateFormatted => _formatDate(state.projectedEndDate);
 
-  /// Starting weight shown in the mission grid.
+  /// Starting weight shown in the plan overview grid.
   String get startWeightFormatted => state.currentWeightKg.toStringAsFixed(1);
 
-  /// Target weight shown in the mission grid.
+  /// Target weight shown in the plan overview grid.
   String get targetWeightFormatted => state.targetWeightKg.toStringAsFixed(1);
 
-  /// Weekly rate copy for the mission grid.
+  /// Weekly rate copy for the plan overview grid.
   String get weeklyRateFormatted =>
       '${state.weeklyRateKg.abs().toStringAsFixed(2)} kg/wk';
 
   /// Returns true if the selected goal is maintenance.
   bool get isMaintenance => state.goal == Goal.maintain;
 
-  /// Returns the combined summary string for the vector footer.
+  /// Returns the combined summary string for the projection footer.
   /// Handles maintenance vs loss/gain states.
-  String get vectorFooterStats {
+  String get projectionSummaryStats {
     if (isMaintenance) {
       return 'DURATION: ONGOING  •  ZONE: ±1.5 KG  •  FOCUS: RECOMP';
     }

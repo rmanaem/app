@@ -27,7 +27,7 @@ class TodayPage extends StatelessWidget {
         child: state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : state.hasError
-            ? _ErrorState(message: state.errorMessage ?? 'System Malfunction.')
+            ? _ErrorState(message: state.errorMessage ?? 'System Error')
             : _buildContent(context, vm),
       ),
     );
@@ -43,29 +43,29 @@ class TodayPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. STATUS HEADER
-          _FlightDeckHeader(
+          // 1. HEADER
+          _Header(
             dateLabel: formattedDate,
             statusLabel: state.planLabel?.toUpperCase() ?? 'CALIBRATING...',
           ),
 
           const SizedBox(height: 32),
 
-          // 2. FUEL GAUGE HERO
-          _FuelGaugeHero(vm: vm, onTap: () => _onLogFoodTap(context)),
+          // 2. CALORIE & MACRO DISPLAY
+          _DailyCaloriesSection(vm: vm, onTap: () => _onLogFoodTap(context)),
 
           const SizedBox(height: 40),
 
-          // 3. QUICK ACTIONS (Ghost Buttons)
-          _QuickActionSwitches(
+          // 3. QUICK ACTIONS
+          _QuickActions(
             onLogFood: () => _onLogFoodTap(context),
             onLogWeight: () => _onLogWeightTap(context, vm),
           ),
 
           const SizedBox(height: 32),
 
-          // 4. MISSION TICKET (Floating)
-          _MissionTicket(
+          // 4. WORKOUT CARD
+          _WorkoutCard(
             title: state.nextWorkoutTitle ?? 'REST DAY',
             subtitle: state.nextWorkoutSubtitle ?? 'Recovery & Mobility',
             onTap: () => context.go('/training'),
@@ -73,7 +73,7 @@ class TodayPage extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          // 5. RESULT TICKET (Floating)
+          // 5. WEIGHT CARD
           _WeightTrendCard(
             currentWeight: state.lastWeightKg,
             deltaLabel: state.weightDeltaLabel,
@@ -93,7 +93,6 @@ class TodayPage extends StatelessWidget {
     );
   }
 
-  // REUSING ONBOARDING WIDGET LOGIC
   Future<void> _onLogWeightTap(BuildContext context, TodayViewModel vm) async {
     final colors = Theme.of(context).extension<AppColors>()!;
     // Use last logged weight or default to 75
@@ -123,7 +122,7 @@ class TodayPage extends StatelessWidget {
                 min: 30,
                 max: 200,
                 initialValue: currentVal,
-                unitLabel: 'KG', // Or logic for LB
+                unitLabel: 'KG',
                 step: 0.1,
                 onChanged: (val) => currentVal = val,
               ),
@@ -146,10 +145,10 @@ class TodayPage extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 1. STATUS HEADER
+// 1. HEADER
 // -----------------------------------------------------------------------------
-class _FlightDeckHeader extends StatelessWidget {
-  const _FlightDeckHeader({required this.dateLabel, required this.statusLabel});
+class _Header extends StatelessWidget {
+  const _Header({required this.dateLabel, required this.statusLabel});
   final String dateLabel;
   final String statusLabel;
 
@@ -184,17 +183,16 @@ class _FlightDeckHeader extends StatelessWidget {
             ),
           ],
         ),
-        // Status pill removed per request.
       ],
     );
   }
 }
 
 // -----------------------------------------------------------------------------
-// 2. FUEL GAUGE HERO (Compact Ring + Alloy Macros)
+// 2. DAILY CALORIES & MACROS
 // -----------------------------------------------------------------------------
-class _FuelGaugeHero extends StatelessWidget {
-  const _FuelGaugeHero({required this.vm, required this.onTap});
+class _DailyCaloriesSection extends StatelessWidget {
+  const _DailyCaloriesSection({required this.vm, required this.onTap});
   final TodayViewModel vm;
   final VoidCallback onTap;
 
@@ -204,16 +202,15 @@ class _FuelGaugeHero extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final state = vm.state;
 
-    // Status Color Logic using AppColors
     var gaugeColor = colors.accent;
-    if (vm.isOverBudget) gaugeColor = colors.danger; // Danger state
-    if (vm.isTargetHit) gaugeColor = colors.ink; // Monochrome success
+    if (vm.isOverBudget) gaugeColor = colors.danger;
+    if (vm.isTargetHit) gaugeColor = colors.ink;
 
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
-          // 1. THE ARC GAUGE (Scaled Down)
+          // 1. GAUGE
           SizedBox(
             height: 150,
             width: 220,
@@ -222,9 +219,9 @@ class _FuelGaugeHero extends StatelessWidget {
               children: [
                 CustomPaint(
                   size: const Size(220, 150),
-                  painter: _FuelGaugePainter(
+                  painter: _GaugePainter(
                     color: gaugeColor,
-                    trackColor: colors.surface, // Subtle track
+                    trackColor: colors.surface,
                     percent: vm.gaugePercent,
                     strokeWidth: 10,
                   ),
@@ -268,33 +265,32 @@ class _FuelGaugeHero extends StatelessWidget {
             ),
           ),
 
-          // 2. DECOUPLING GAP
           const SizedBox(height: 40),
 
-          // 3. TACTICAL MACROS (Using Tokens)
+          // 2. MACROS
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _TacticalMacro(
+              _MacroRing(
                 label: 'Protein',
                 current: state.consumedProtein,
                 target: state.plan?.proteinGrams ?? 0,
-                color: colors.macroProtein, // Token: White
+                color: colors.macroProtein,
               ),
-              const SizedBox(width: 24), // Breathing room
-              _TacticalMacro(
+              const SizedBox(width: 24),
+              _MacroRing(
                 label: 'Carbs',
                 current: state.consumedCarbs,
                 target: state.plan?.carbGrams ?? 0,
-                color: colors.macroCarbs, // Token: Silver
+                color: colors.macroCarbs,
               ),
               const SizedBox(width: 24),
-              _TacticalMacro(
+              _MacroRing(
                 label: 'Fat',
                 current: state.consumedFat,
                 target: state.plan?.fatGrams ?? 0,
-                color: colors.macroFat, // Token: Grey
+                color: colors.macroFat,
               ),
             ],
           ),
@@ -304,8 +300,8 @@ class _FuelGaugeHero extends StatelessWidget {
   }
 }
 
-class _TacticalMacro extends StatelessWidget {
-  const _TacticalMacro({
+class _MacroRing extends StatelessWidget {
+  const _MacroRing({
     required this.label,
     required this.current,
     required this.target,
@@ -358,8 +354,8 @@ class _TacticalMacro extends StatelessWidget {
   }
 }
 
-class _FuelGaugePainter extends CustomPainter {
-  _FuelGaugePainter({
+class _GaugePainter extends CustomPainter {
+  _GaugePainter({
     required this.color,
     required this.trackColor,
     required this.percent,
@@ -372,18 +368,16 @@ class _FuelGaugePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Arc setup
     final center = Offset(size.width / 2, size.height * 0.7);
     final radius = size.width * 0.45;
-    const startAngle = 135 * (math.pi / 180); // Start at 8 o'clock
-    const sweepAngle = 270 * (math.pi / 180); // End at 4 o'clock
+    const startAngle = 135 * (math.pi / 180);
+    const sweepAngle = 270 * (math.pi / 180);
 
-    // Track
     final trackPaint = Paint()
       ..color = trackColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt; // Industrial look
+      ..strokeCap = StrokeCap.butt;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       startAngle,
@@ -392,7 +386,6 @@ class _FuelGaugePainter extends CustomPainter {
       trackPaint,
     );
 
-    // Progress
     final progressPaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
@@ -401,9 +394,8 @@ class _FuelGaugePainter extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(
         BlurStyle.solid,
         2,
-      ); // Subtle glow
+      );
 
-    // Calculate progress sweep
     final progressSweep = sweepAngle * percent;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
@@ -419,10 +411,10 @@ class _FuelGaugePainter extends CustomPainter {
 }
 
 // -----------------------------------------------------------------------------
-// 3. QUICK ACTIONS ROW
+// 3. QUICK ACTIONS
 // -----------------------------------------------------------------------------
-class _QuickActionSwitches extends StatelessWidget {
-  const _QuickActionSwitches({
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({
     required this.onLogFood,
     required this.onLogWeight,
   });
@@ -434,7 +426,7 @@ class _QuickActionSwitches extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _GhostButton(
+          child: _ActionTile(
             icon: Icons.add,
             label: 'LOG FOOD',
             onTap: onLogFood,
@@ -442,7 +434,7 @@ class _QuickActionSwitches extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _GhostButton(
+          child: _ActionTile(
             icon: Icons.monitor_weight_outlined,
             label: 'WEIGH IN',
             onTap: onLogWeight,
@@ -453,8 +445,8 @@ class _QuickActionSwitches extends StatelessWidget {
   }
 }
 
-class _GhostButton extends StatelessWidget {
-  const _GhostButton({
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -500,10 +492,10 @@ class _GhostButton extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 4. MISSION TICKET (Training)
+// 4. WORKOUT CARD
 // -----------------------------------------------------------------------------
-class _MissionTicket extends StatelessWidget {
-  const _MissionTicket({
+class _WorkoutCard extends StatelessWidget {
+  const _WorkoutCard({
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -523,7 +515,7 @@ class _MissionTicket extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         child: Row(
           children: [
-            // Left Strip Anchor
+            // Left Strip
             Container(
               width: 4,
               height: 48,
@@ -581,7 +573,7 @@ class _MissionTicket extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 5. WEIGHT TREND CARD (New)
+// 5. WEIGHT CARD
 // -----------------------------------------------------------------------------
 class _WeightTrendCard extends StatelessWidget {
   const _WeightTrendCard({

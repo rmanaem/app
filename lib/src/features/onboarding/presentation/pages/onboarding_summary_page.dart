@@ -72,7 +72,7 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
                   child: ListView(
                     padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
                     children: [
-                      // 1. HERO HEADER
+                      // 1. HEADER
                       Text(
                         'YOUR PLAN\nIS READY.',
                         style: typography.display.copyWith(
@@ -83,20 +83,20 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
                           color: colors.ink,
                         ),
                       ),
-                      // FIX 1: Trim dramatic pause to reclaim space
+                      // Visual separation between header and content
                       SizedBox(height: spacing.xxl),
 
-                      // 2. Mission Summary (Maintenance vs. Standard)
+                      // 2. PLAN OVERVIEW (Maintenance vs. Standard)
                       if (_vm.state.goal == Goal.maintain)
-                        _MaintenanceSummarySection(vm: _vm)
+                        _MaintenanceOverviewSection(vm: _vm)
                       else
-                        _TimeVectorSection(vm: _vm),
+                        _PlanProjectionSection(vm: _vm),
 
-                      // FIX 2: Pull nutrition closer to the timeline
+                      // Visual separation between Plan and Nutrition
                       SizedBox(height: spacing.lg),
 
-                      // 3. FUEL CONFIGURATION
-                      _NutritionSection(vm: _vm),
+                      // 3. NUTRITION SUMMARY
+                      _DailyNutritionSection(vm: _vm),
 
                       // Bottom padding to clear CTA
                       SizedBox(height: spacing.xxl),
@@ -137,10 +137,10 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
 }
 
 // -----------------------------------------------------------------------------
-// 1. TIME VECTOR SECTION (with maintenance support)
+// 1. PLAN PROJECTION SECTION (Standard Loss/Gain)
 // -----------------------------------------------------------------------------
-class _TimeVectorSection extends StatelessWidget {
-  const _TimeVectorSection({required this.vm});
+class _PlanProjectionSection extends StatelessWidget {
+  const _PlanProjectionSection({required this.vm});
   final OnboardingSummaryVm vm;
 
   @override
@@ -174,7 +174,7 @@ class _TimeVectorSection extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         Text(
-          vm.vectorFooterStats,
+          vm.projectionSummaryStats,
           style: typography.caption.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -188,16 +188,16 @@ class _TimeVectorSection extends StatelessWidget {
           height: 120,
           width: double.infinity,
           child: vm.isMaintenance
-              ? _buildMaintenanceVector(colors)
-              : _buildStandardVector(colors),
+              ? _buildMaintenanceProjection(colors)
+              : _buildStandardProjection(colors),
         ),
       ],
     );
   }
 
-  Widget _buildStandardVector(AppColors colors) {
+  Widget _buildStandardProjection(AppColors colors) {
     return CustomPaint(
-      painter: _VectorPainter(
+      painter: _ProjectionPainter(
         accentColor: colors.accent,
         idleColor: colors.borderIdle,
         bg: colors.bg,
@@ -207,7 +207,7 @@ class _TimeVectorSection extends StatelessWidget {
         children: [
           Align(
             alignment: const Alignment(-0.95, 0),
-            child: _VectorLabel(
+            child: _ProjectionLabel(
               weight: '${vm.state.currentWeightKg.toStringAsFixed(1)} kg',
               date: 'TODAY',
               alignLeft: true,
@@ -216,7 +216,7 @@ class _TimeVectorSection extends StatelessWidget {
           ),
           Align(
             alignment: const Alignment(0.95, 0),
-            child: _VectorLabel(
+            child: _ProjectionLabel(
               weight: '${vm.state.targetWeightKg.toStringAsFixed(1)} kg',
               date: vm.endDateFormatted,
               alignLeft: false,
@@ -228,9 +228,9 @@ class _TimeVectorSection extends StatelessWidget {
     );
   }
 
-  Widget _buildMaintenanceVector(AppColors colors) {
+  Widget _buildMaintenanceProjection(AppColors colors) {
     return CustomPaint(
-      painter: _MaintenanceHorizonPainter(
+      painter: _MaintenanceProjectionPainter(
         accentColor: colors.accent,
         idleColor: colors.borderIdle,
         bg: colors.bg,
@@ -240,7 +240,7 @@ class _TimeVectorSection extends StatelessWidget {
         children: [
           Align(
             alignment: const Alignment(-0.95, 0),
-            child: _VectorLabel(
+            child: _ProjectionLabel(
               weight: '${vm.state.currentWeightKg.toStringAsFixed(1)} kg',
               date: 'NOW',
               alignLeft: true,
@@ -249,7 +249,7 @@ class _TimeVectorSection extends StatelessWidget {
           ),
           Align(
             alignment: const Alignment(0.95, 0),
-            child: _VectorLabel(
+            child: _ProjectionLabel(
               weight: '${vm.state.targetWeightKg.toStringAsFixed(1)} kg',
               date: 'ONGOING',
               alignLeft: false,
@@ -262,8 +262,8 @@ class _TimeVectorSection extends StatelessWidget {
   }
 }
 
-class _MaintenanceSummarySection extends StatelessWidget {
-  const _MaintenanceSummarySection({required this.vm});
+class _MaintenanceOverviewSection extends StatelessWidget {
+  const _MaintenanceOverviewSection({required this.vm});
   final OnboardingSummaryVm vm;
 
   @override
@@ -338,8 +338,8 @@ class _MaintenanceSummarySection extends StatelessWidget {
   }
 }
 
-class _VectorLabel extends StatelessWidget {
-  const _VectorLabel({
+class _ProjectionLabel extends StatelessWidget {
+  const _ProjectionLabel({
     required this.weight,
     required this.date,
     required this.alignLeft,
@@ -387,8 +387,8 @@ class _VectorLabel extends StatelessWidget {
   }
 }
 
-class _VectorPainter extends CustomPainter {
-  _VectorPainter({
+class _ProjectionPainter extends CustomPainter {
+  _ProjectionPainter({
     required this.accentColor,
     required this.idleColor,
     required this.bg,
@@ -434,8 +434,8 @@ class _VectorPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _MaintenanceHorizonPainter extends CustomPainter {
-  _MaintenanceHorizonPainter({
+class _MaintenanceProjectionPainter extends CustomPainter {
+  _MaintenanceProjectionPainter({
     required this.accentColor,
     required this.idleColor,
     required this.bg,
@@ -483,8 +483,8 @@ class _MaintenanceHorizonPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _NutritionSection extends StatelessWidget {
-  const _NutritionSection({required this.vm});
+class _DailyNutritionSection extends StatelessWidget {
+  const _DailyNutritionSection({required this.vm});
   final OnboardingSummaryVm vm;
 
   @override
@@ -550,7 +550,7 @@ class _NutritionSection extends StatelessWidget {
               .map(
                 (macro) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _MacroDisplay(macro: macro),
+                  child: _MacroRing(macro: macro),
                 ),
               )
               .toList(),
@@ -560,8 +560,8 @@ class _NutritionSection extends StatelessWidget {
   }
 }
 
-class _MacroDisplay extends StatelessWidget {
-  const _MacroDisplay({required this.macro});
+class _MacroRing extends StatelessWidget {
+  const _MacroRing({required this.macro});
   final NutritionMacroVm macro;
 
   @override

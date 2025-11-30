@@ -118,17 +118,19 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
                 ),
                 Expanded(
                   child: _vm.isMaintenance
-                      ? _buildMaintenanceLayout(
-                          colors,
-                          spacing,
-                          typography,
-                          unit,
+                      ? _MaintenanceLayout(
+                          colors: colors,
+                          spacing: spacing,
+                          typography: typography,
+                          unit: unit,
+                          vm: _vm,
                         )
-                      : _buildStandardLayout(
-                          colors,
-                          spacing,
-                          typography,
-                          unit,
+                      : _StandardGoalLayout(
+                          colors: colors,
+                          spacing: spacing,
+                          typography: typography,
+                          unit: unit,
+                          vm: _vm,
                         ),
                 ),
                 Padding(
@@ -159,12 +161,48 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
     );
   }
 
-  Widget _buildMaintenanceLayout(
-    AppColors colors,
-    AppSpacing spacing,
-    AppTypography typography,
-    UnitSystem unit,
-  ) {
+  OnboardingSummaryArguments? _buildSummaryArguments() {
+    final goal = _flowVm.goalState.selected;
+    final stats = _flowVm.statsState;
+    if (goal == null ||
+        stats.dob == null ||
+        stats.height == null ||
+        stats.weight == null ||
+        stats.activity == null ||
+        _vm.endDate == null) {
+      return null;
+    }
+    return OnboardingSummaryArguments(
+      goal: goal,
+      dob: stats.dob!,
+      heightCm: stats.height!.cm,
+      weightKg: stats.weight!.kg,
+      activity: stats.activity!,
+      targetWeightKg: _vm.targetWeightKg,
+      weeklyRateKg: _vm.weeklyRateKg,
+      dailyCalories: _vm.dailyKcal.round(),
+      projectedEnd: _vm.endDate!,
+    );
+  }
+}
+
+class _MaintenanceLayout extends StatelessWidget {
+  const _MaintenanceLayout({
+    required this.colors,
+    required this.spacing,
+    required this.typography,
+    required this.unit,
+    required this.vm,
+  });
+
+  final AppColors colors;
+  final AppSpacing spacing;
+  final AppTypography typography;
+  final UnitSystem unit;
+  final GoalConfigurationVm vm;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         const Spacer(flex: 2),
@@ -186,7 +224,7 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  _vm.dailyKcal.round().toString(),
+                  vm.dailyKcal.round().toString(),
                   style: typography.hero.copyWith(
                     fontSize: 64,
                     color: colors.ink,
@@ -222,15 +260,15 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
             SizedBox(
               height: 120,
               child: TactileRulerPicker(
-                min: _vm.minTargetKg,
-                max: _vm.maxTargetKg,
-                initialValue: _vm.targetWeightKg,
+                min: vm.minTargetKg,
+                max: vm.maxTargetKg,
+                initialValue: vm.targetWeightKg,
                 unitLabel: unit == UnitSystem.metric ? 'KG' : 'LB',
                 step: 0.1,
                 valueFormatter: unit == UnitSystem.metric
                     ? null
                     : (val) => BodyWeight.fromKg(val).lb.toStringAsFixed(1),
-                onChanged: _vm.setTargetWeightKg,
+                onChanged: vm.setTargetWeightKg,
               ),
             ),
           ],
@@ -239,25 +277,37 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
       ],
     );
   }
+}
 
-  Widget _buildStandardLayout(
-    AppColors colors,
-    AppSpacing spacing,
-    AppTypography typography,
-    UnitSystem unit,
-  ) {
+class _StandardGoalLayout extends StatelessWidget {
+  const _StandardGoalLayout({
+    required this.colors,
+    required this.spacing,
+    required this.typography,
+    required this.unit,
+    required this.vm,
+  });
+
+  final AppColors colors;
+  final AppSpacing spacing;
+  final AppTypography typography;
+  final UnitSystem unit;
+  final GoalConfigurationVm vm;
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(height: spacing.xl),
-          if (_vm.showingSafetyWarning) ...[
+          if (vm.showingSafetyWarning) ...[
             Padding(
               padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
               child: SafetyWarningBanner(
-                minCalories: _vm.safeMinimumKcal!,
-                onAcknowledge: _vm.acknowledgeSafetyWarning,
-                onCancel: _vm.adjustToSafeRate,
+                minCalories: vm.safeMinimumKcal!,
+                onAcknowledge: vm.acknowledgeSafetyWarning,
+                onCancel: vm.adjustToSafeRate,
               ),
             ),
             SizedBox(height: spacing.lg),
@@ -268,19 +318,19 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: _MonitorItem(
+                  child: _PlanTargetTile(
                     label: 'DAILY TARGET',
-                    value: _vm.dailyKcal.round().toString(),
+                    value: vm.dailyKcal.round().toString(),
                     unit: 'KCAL',
                     alignLeft: true,
                   ),
                 ),
                 Container(height: 40, width: 1, color: colors.borderIdle),
                 Expanded(
-                  child: _MonitorItem(
+                  child: _PlanTargetTile(
                     label: 'COMPLETION',
-                    value: _formatDateMonth(_vm.endDate),
-                    unit: _formatDateYear(_vm.endDate),
+                    value: _formatDateMonth(vm.endDate),
+                    unit: _formatDateYear(vm.endDate),
                     alignLeft: false,
                   ),
                 ),
@@ -302,21 +352,21 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
           SizedBox(
             height: 120,
             child: TactileRulerPicker(
-              min: _vm.minTargetKg,
-              max: _vm.maxTargetKg,
-              initialValue: _vm.targetWeightKg,
+              min: vm.minTargetKg,
+              max: vm.maxTargetKg,
+              initialValue: vm.targetWeightKg,
               unitLabel: unit == UnitSystem.metric ? 'KG' : 'LB',
               step: 0.1,
               valueFormatter: unit == UnitSystem.metric
                   ? null
                   : (val) => BodyWeight.fromKg(val).lb.toStringAsFixed(1),
-              onChanged: _vm.setTargetWeightKg,
+              onChanged: vm.setTargetWeightKg,
             ),
           ),
           SizedBox(height: spacing.xxxl),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: spacing.gutter),
-            child: _WeeklyRateHud(vm: _vm, unit: unit),
+            child: _WeeklyRateSelector(vm: vm, unit: unit),
           ),
           SizedBox(height: spacing.xxl),
         ],
@@ -347,34 +397,10 @@ class _GoalConfigurationPageState extends State<GoalConfigurationPage> {
     if (date == null) return '';
     return '${date.year}';
   }
-
-  OnboardingSummaryArguments? _buildSummaryArguments() {
-    final goal = _flowVm.goalState.selected;
-    final stats = _flowVm.statsState;
-    if (goal == null ||
-        stats.dob == null ||
-        stats.height == null ||
-        stats.weight == null ||
-        stats.activity == null ||
-        _vm.endDate == null) {
-      return null;
-    }
-    return OnboardingSummaryArguments(
-      goal: goal,
-      dob: stats.dob!,
-      heightCm: stats.height!.cm,
-      weightKg: stats.weight!.kg,
-      activity: stats.activity!,
-      targetWeightKg: _vm.targetWeightKg,
-      weeklyRateKg: _vm.weeklyRateKg,
-      dailyCalories: _vm.dailyKcal.round(),
-      projectedEnd: _vm.endDate!,
-    );
-  }
 }
 
-class _MonitorItem extends StatelessWidget {
-  const _MonitorItem({
+class _PlanTargetTile extends StatelessWidget {
+  const _PlanTargetTile({
     required this.label,
     required this.value,
     required this.unit,
@@ -438,10 +464,8 @@ class _MonitorItem extends StatelessWidget {
   }
 }
 
-/// A transparent, heads-up-display style rate controller.
-/// Replaces the boxed "_WeeklyRateCard".
-class _WeeklyRateHud extends StatelessWidget {
-  const _WeeklyRateHud({
+class _WeeklyRateSelector extends StatelessWidget {
+  const _WeeklyRateSelector({
     required this.vm,
     required this.unit,
   });
@@ -457,7 +481,6 @@ class _WeeklyRateHud extends StatelessWidget {
 
     return Column(
       children: [
-        // 1. Header: Label + Badge
         Text(
           'TARGET PACE',
           style: typography.caption.copyWith(
@@ -488,8 +511,6 @@ class _WeeklyRateHud extends StatelessWidget {
             ),
           ),
         ),
-
-        // 2. The Slider (floating HUD)
         SizedBox(height: spacing.lg),
         FaderSlider(
           value: vm.weeklyRateKg.clamp(vm.minRateKg, vm.maxRateKg),
@@ -498,8 +519,6 @@ class _WeeklyRateHud extends StatelessWidget {
           divisions: ((vm.maxRateKg - vm.minRateKg) / 0.05).round(),
           onChanged: vm.setWeeklyRateKg,
         ),
-
-        // 3. Value readout
         SizedBox(height: spacing.md),
         Text(
           _displayRateLine(vm.weeklyDeltaAbs, unit),
