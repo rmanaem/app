@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/training/domain/entities/training_day_overview.dart';
 import 'package:starter_app/src/features/training/domain/entities/workout_summary.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
 import 'package:starter_app/src/features/training/presentation/viewstate/training_overview_view_state.dart';
+import 'package:starter_app/src/presentation/atoms/app_button.dart';
 
-/// Training tab showing the weekly overview.
+/// The main page for the Training feature, displaying a weekly overview,
+/// next workout, and recent activity.
 class TrainingPage extends StatelessWidget {
   /// Creates the Training page.
   const TrainingPage({super.key});
@@ -19,10 +22,12 @@ class TrainingPage extends StatelessWidget {
 
     Widget child;
     if (state.isLoading) {
-      child = const Center(child: CircularProgressIndicator());
+      child = Center(
+        child: CircularProgressIndicator(color: colors.ink),
+      );
     } else if (state.hasError) {
       child = _TrainingError(
-        message: state.errorMessage ?? 'Something went wrong.',
+        message: state.errorMessage ?? 'Unable to load training data.',
       );
     } else {
       child = _TrainingContent(
@@ -74,31 +79,31 @@ class _TrainingContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _TrainingHeader(weekLabel: 'This week'),
-          const SizedBox(height: 16),
-          _WeeklySummaryCard(
+          const SizedBox(height: 24),
+          _WeeklyProgress(
             completed: state.completedWorkouts,
             planned: state.plannedWorkouts,
           ),
-          const SizedBox(height: 12),
-          _TrainingWeekStrip(
+          const SizedBox(height: 24),
+          _WeekDaySelector(
             days: state.weekDays,
             selectedDate: state.selectedDate,
             onSelect: onSelectDate,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
           if (state.nextWorkout != null)
             _NextWorkoutCard(
               workout: state.nextWorkout!,
               onStartPressed: onStartNextWorkout,
             ),
-          if (state.nextWorkout != null) const SizedBox(height: 12),
+          if (state.nextWorkout != null) const SizedBox(height: 16),
           if (state.lastWorkout != null)
             _LastWorkoutCard(
               workout: state.lastWorkout!,
               onTap: onOpenLastWorkout,
             ),
-          const SizedBox(height: 12),
-          _TrainingActionsRow(
+          const SizedBox(height: 32),
+          _TrainingActions(
             hasProgram: state.hasProgram,
             onViewProgram: onViewProgram,
             onCreateProgram: onCreateProgram,
@@ -119,24 +124,23 @@ class _TrainingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'TRAINING',
-          style: textTheme.labelSmall?.copyWith(
+          style: typography.caption.copyWith(
             color: colors.inkSubtle,
-            letterSpacing: 1.3,
+            letterSpacing: 2,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           weekLabel,
-          style: textTheme.headlineSmall?.copyWith(
+          style: typography.display.copyWith(
             color: colors.ink,
-            fontWeight: FontWeight.bold,
           ),
         ),
       ],
@@ -144,8 +148,52 @@ class _TrainingHeader extends StatelessWidget {
   }
 }
 
-class _TrainingWeekStrip extends StatelessWidget {
-  const _TrainingWeekStrip({
+class _WeeklyProgress extends StatelessWidget {
+  const _WeeklyProgress({
+    required this.completed,
+    required this.planned,
+  });
+
+  final int completed;
+  final int planned;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    final progress = planned > 0 ? (completed / planned).clamp(0.0, 1.0) : 0.0;
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Weekly Volume',
+              style: typography.caption.copyWith(color: colors.inkSubtle),
+            ),
+            Text(
+              '$completed / $planned',
+              style: typography.caption.copyWith(color: colors.ink),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: progress,
+          backgroundColor: colors.borderIdle,
+          color: colors.ink,
+          minHeight: 4,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ],
+    );
+  }
+}
+
+class _WeekDaySelector extends StatelessWidget {
+  const _WeekDaySelector({
     required this.days,
     required this.selectedDate,
     required this.onSelect,
@@ -158,13 +206,12 @@ class _TrainingWeekStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
-    if (days.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    if (days.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: 80,
+      height: 72,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: days.length,
@@ -172,43 +219,54 @@ class _TrainingWeekStrip extends StatelessWidget {
         itemBuilder: (context, index) {
           final day = days[index];
           final isSelected = _isSameDay(day.date, selectedDate);
-          final chipColor = isSelected ? colors.ink : colors.surface2;
+
+          final backgroundColor = isSelected ? colors.ink : colors.surface;
+          final borderColor = isSelected ? colors.ink : colors.borderIdle;
           final textColor = isSelected ? colors.bg : colors.ink;
+          final subtitleColor = isSelected
+              ? colors.bg.withValues(alpha: 0.7)
+              : colors.inkSubtle;
+
           final statusColor = switch (day.status) {
-            TrainingDayStatus.completed => colors.accent,
-            TrainingDayStatus.planned => colors.ink,
-            TrainingDayStatus.rest => colors.ringTrack,
+            TrainingDayStatus.completed =>
+              isSelected ? colors.bg : colors.accent,
+            TrainingDayStatus.planned => isSelected ? colors.bg : colors.ink,
+            TrainingDayStatus.rest => Colors.transparent,
           };
 
           return GestureDetector(
             onTap: () => onSelect(day.date),
-            child: Container(
-              width: 56,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 50,
               decoration: BoxDecoration(
-                color: chipColor,
-                borderRadius: const BorderRadius.all(Radius.circular(14)),
-                border: Border.all(color: colors.ringTrack),
+                color: backgroundColor,
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                border: Border.all(color: borderColor),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     _weekdayLetter(day.date),
-                    style: textTheme.labelSmall?.copyWith(
-                      color: textColor,
-                      letterSpacing: 1.1,
+                    style: typography.caption.copyWith(
+                      color: subtitleColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     day.date.day.toString(),
-                    style: textTheme.titleMedium?.copyWith(color: textColor),
+                    style: typography.title.copyWith(
+                      color: textColor,
+                      height: 1,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Container(
-                    width: 6,
-                    height: 6,
+                    width: 4,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: statusColor,
                       shape: BoxShape.circle,
@@ -245,48 +303,53 @@ class _NextWorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
     return Container(
       decoration: BoxDecoration(
-        color: colors.surface2,
+        color: colors.surface,
         borderRadius: const BorderRadius.all(Radius.circular(16)),
-        border: Border.all(color: colors.ringTrack),
+        border: Border.all(color: colors.borderActive),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Next',
-                  style: textTheme.bodySmall?.copyWith(color: colors.inkSubtle),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'NEXT WORKOUT',
+                style: typography.caption.copyWith(
+                  color: colors.accent,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  workout.name,
-                  style: textTheme.titleMedium?.copyWith(color: colors.ink),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${workout.dayLabel} · ${workout.meta}',
-                  style: textTheme.bodySmall?.copyWith(color: colors.inkSubtle),
-                ),
-              ],
+              ),
+              Icon(Icons.bolt, color: colors.accent, size: 16),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            workout.name,
+            style: typography.display.copyWith(
+              fontSize: 28,
             ),
           ),
-          TextButton.icon(
-            onPressed: onStartPressed,
-            style: TextButton.styleFrom(
-              foregroundColor: colors.bg,
-              backgroundColor: colors.ink,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: const StadiumBorder(),
+          const SizedBox(height: 8),
+          Text(
+            '${workout.dayLabel} · ${workout.meta}',
+            style: typography.body.copyWith(color: colors.inkSubtle),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: AppButton(
+              label: 'START SESSION',
+              onTap: onStartPressed,
+              isPrimary: true,
+              icon: Icons.play_arrow_rounded,
             ),
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Start'),
           ),
         ],
       ),
@@ -306,7 +369,7 @@ class _LastWorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
     return Material(
       color: Colors.transparent,
@@ -315,33 +378,60 @@ class _LastWorkoutCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: colors.surface2,
+            color: Colors.transparent,
             borderRadius: const BorderRadius.all(Radius.circular(16)),
-            border: Border.all(color: colors.ringTrack),
+            border: Border.all(color: colors.borderIdle),
           ),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Last',
-                style: textTheme.bodySmall?.copyWith(color: colors.inkSubtle),
+                'LAST WORKOUT',
+                style: typography.caption.copyWith(
+                  color: colors.inkSubtle,
+                  letterSpacing: 1.5,
+                ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                workout.name,
-                style: textTheme.titleMedium?.copyWith(color: colors.ink),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${workout.dayLabel} · ${workout.timeLabel}',
-                style: textTheme.bodySmall?.copyWith(color: colors.inkSubtle),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    workout.name,
+                    style: typography.title.copyWith(color: colors.inkSubtle),
+                  ),
+                  Text(
+                    workout.timeLabel,
+                    style: typography.caption.copyWith(color: colors.inkSubtle),
+                  ),
+                ],
               ),
               if (workout.notePreview != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '“${workout.notePreview!}”',
-                  style: textTheme.bodySmall?.copyWith(color: colors.ink),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_note, size: 16, color: colors.inkSubtle),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          workout.notePreview!,
+                          style: typography.caption.copyWith(
+                            color: colors.ink,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ],
@@ -352,8 +442,8 @@ class _LastWorkoutCard extends StatelessWidget {
   }
 }
 
-class _TrainingActionsRow extends StatelessWidget {
-  const _TrainingActionsRow({
+class _TrainingActions extends StatelessWidget {
+  const _TrainingActions({
     required this.hasProgram,
     required this.onViewProgram,
     required this.onCreateProgram,
@@ -368,35 +458,35 @@ class _TrainingActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Program',
-          style: textTheme.titleMedium?.copyWith(color: colors.ink),
+          'PROGRAM',
+          style: typography.caption.copyWith(
+            color: colors.inkSubtle,
+            letterSpacing: 1.5,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            _ActionChip(
-              label: 'View program',
+            _OutlinedActionButton(
+              label: 'View Program',
               onTap: onViewProgram,
-              colors: colors,
             ),
             if (hasProgram)
-              _ActionChip(
-                label: 'View history',
+              _OutlinedActionButton(
+                label: 'History',
                 onTap: onViewHistory,
-                colors: colors,
               ),
-            _ActionChip(
-              label: 'Create program',
+            _OutlinedActionButton(
+              label: 'Edit',
               onTap: onCreateProgram,
-              colors: colors,
             ),
           ],
         ),
@@ -405,35 +495,37 @@ class _TrainingActionsRow extends StatelessWidget {
   }
 }
 
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({
+class _OutlinedActionButton extends StatelessWidget {
+  const _OutlinedActionButton({
     required this.label,
     required this.onTap,
-    required this.colors,
   });
 
   final String label;
   final VoidCallback onTap;
-  final AppColors colors;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: const BorderRadius.all(Radius.circular(999)),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: colors.surface,
-            border: Border.all(color: colors.ringTrack),
-            borderRadius: const BorderRadius.all(Radius.circular(999)),
+            border: Border.all(color: colors.borderIdle),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             label,
-            style: textTheme.bodySmall?.copyWith(color: colors.ink),
+            style: typography.caption.copyWith(
+              color: colors.ink,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -449,77 +541,12 @@ class _TrainingError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
     return Center(
       child: Text(
         message,
-        style: textTheme.bodyMedium?.copyWith(color: colors.ink),
+        style: typography.body.copyWith(color: colors.ink),
         textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
-class _WeeklySummaryCard extends StatelessWidget {
-  const _WeeklySummaryCard({
-    required this.completed,
-    required this.planned,
-  });
-
-  final int completed;
-  final int planned;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
-    final onTrack = completed >= planned && planned > 0;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface2,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        border: Border.all(color: colors.ringTrack),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$completed / $planned',
-                  style: textTheme.headlineMedium?.copyWith(
-                    color: colors.ink,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Workouts completed',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colors.inkSubtle,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                onTrack ? 'On track' : 'Keep going',
-                style: textTheme.bodyMedium?.copyWith(color: colors.ink),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Based on your current program.',
-                style: textTheme.bodySmall?.copyWith(color: colors.inkSubtle),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
