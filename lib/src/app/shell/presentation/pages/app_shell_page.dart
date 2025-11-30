@@ -6,15 +6,15 @@ import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
 import 'package:starter_app/src/features/today/presentation/widgets/quick_actions_sheet.dart';
 
-/// Root shell for the main application, managing bottom navigation.
+/// Top-level shell that hosts the tab navigation and floating action button.
 class AppShellPage extends StatelessWidget {
-  /// Creates the app shell with the provided [navigationShell].
+  /// Creates the shell with the provided nested navigation container.
   const AppShellPage({
     required this.navigationShell,
     super.key,
   });
 
-  /// The navigation shell managing the nested routes.
+  /// Nested navigation controller injected by `go_router`.
   final StatefulNavigationShell navigationShell;
 
   @override
@@ -24,46 +24,102 @@ class AppShellPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: colors.bg,
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: colors.surface,
-        indicatorColor: colors.accent.withValues(alpha: 0.2),
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) {
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: 'Today',
+      // FLOAT THE FAB: Docked in the "Steel Beam" bottom bar
+      floatingActionButton: Container(
+        height: 56,
+        width: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.borderIdle, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () => unawaited(_showQuickActions(context)),
+          backgroundColor: colors.surface,
+          foregroundColor: colors.ink,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.restaurant_outlined),
-            selectedIcon: Icon(Icons.restaurant),
-            label: 'Nutrition',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.fitness_center_outlined),
-            selectedIcon: Icon(Icons.fitness_center),
-            label: 'Training',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => unawaited(_showQuickActions(context)),
-        backgroundColor: colors.accent,
-        foregroundColor: colors.bg,
-        child: const Icon(Icons.add),
+          child: const Icon(Icons.add, size: 28),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // THE CONTROL PANEL (Bottom Nav)
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: colors.borderIdle)),
+        ),
+        child: NavigationBar(
+          backgroundColor: colors.bg, // Matches void, but separated by border
+          indicatorColor:
+              Colors.transparent, // No pill indicator, just icon color change
+          selectedIndex: navigationShell.currentIndex,
+          height: 70, // Slightly taller for "Panel" feel
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+          onDestinationSelected: (index) {
+            navigationShell.goBranch(
+              index,
+              initialLocation: index == navigationShell.currentIndex,
+            );
+          },
+          destinations: [
+            _buildNavDest(
+              context,
+              Icons.dashboard_outlined,
+              Icons.dashboard,
+              'Today',
+              0,
+            ),
+            _buildNavDest(
+              context,
+              Icons.restaurant_outlined,
+              Icons.restaurant,
+              'Nutrition',
+              1,
+            ),
+            // Middle gap for FAB
+            const SizedBox(width: 48),
+            _buildNavDest(
+              context,
+              Icons.fitness_center_outlined,
+              Icons.fitness_center,
+              'Training',
+              2,
+            ),
+            _buildNavDest(
+              context,
+              Icons.settings_outlined,
+              Icons.settings,
+              'Settings',
+              3,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Custom Destination Builder for "Active/Idle" states
+  NavigationDestination _buildNavDest(
+    BuildContext context,
+    IconData icon,
+    IconData selectedIcon,
+    String label,
+    int index,
+  ) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return NavigationDestination(
+      icon: Icon(icon, color: colors.inkSubtle),
+      selectedIcon: Icon(selectedIcon, color: colors.accent),
+      label: label,
     );
   }
 

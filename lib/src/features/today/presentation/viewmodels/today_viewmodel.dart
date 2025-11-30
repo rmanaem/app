@@ -23,10 +23,6 @@ class TodayViewModel extends ChangeNotifier {
   /// Current view state exposed to the UI.
   TodayViewState get state => _state;
 
-  /// Remaining calories for today based on consumed vs target.
-  int get remainingCalories =>
-      (state.plan?.dailyCalories.round() ?? 0) - state.consumedCalories;
-
   Future<void> _loadData() async {
     _updateState(_state.copyWith(isLoading: true));
 
@@ -37,11 +33,12 @@ class TodayViewModel extends ChangeNotifier {
         _updateState(
           TodayViewState(
             plan: plan,
-            consumedCalories: (plan.dailyCalories * 0.6).round(),
+            consumedCalories: (plan.dailyCalories * 0.6).round(), // Mock data
             consumedProtein: (plan.proteinGrams * 0.8).round(),
             consumedFat: (plan.fatGrams * 0.4).round(),
             consumedCarbs: (plan.carbGrams * 0.5).round(),
             planLabel: _planLabelFor(plan),
+            // Mock workout/weight data for now
             nextWorkoutTitle: 'Upper A',
             nextWorkoutSubtitle: 'Tomorrow · ~45 min',
             lastWorkoutTitle: 'Mon · 42 min',
@@ -63,6 +60,57 @@ class TodayViewModel extends ChangeNotifier {
       );
     }
   }
+
+  // --- Goal-dependent gauge logic ---
+
+  /// Returns true if we should celebrate hitting the target (Gain).
+  bool get isBulking => state.plan?.goal == Goal.gain;
+
+  /// Returns true if we are restricting calories (Lose/Maintain).
+  bool get isRestricting =>
+      state.plan?.goal == Goal.lose || state.plan?.goal == Goal.maintain;
+
+  /// Main number for the gauge (consumed for bulking, remaining otherwise).
+  String get heroValue {
+    final target = state.plan?.dailyCalories.round() ?? 2000;
+    final consumed = state.consumedCalories;
+
+    if (isBulking) {
+      return '$consumed';
+    }
+    final remaining = target - consumed;
+    return '$remaining';
+  }
+
+  /// Label under the hero number.
+  String get heroLabel => isBulking ? 'KCAL CONSUMED' : 'KCAL REMAINING';
+
+  /// Subtitle context for the gauge.
+  String get gaugeSubtitle {
+    final target = state.plan?.dailyCalories.round() ?? 0;
+    final eaten = state.consumedCalories;
+    if (isBulking) {
+      final left = (target - eaten).clamp(0, 9999);
+      return '$left LEFT TO GO';
+    }
+    return '$eaten CONSUMED / $target TARGET';
+  }
+
+  /// Percentage 0.0 → 1.0 for the gauge.
+  double get gaugePercent {
+    final target = state.plan?.dailyCalories ?? 1;
+    final eaten = state.consumedCalories.toDouble();
+    return (eaten / target).clamp(0.0, 1.0);
+  }
+
+  /// Gauge state flags to allow color messaging in the UI layer.
+  bool get isOverBudget =>
+      isRestricting &&
+      state.consumedCalories > (state.plan?.dailyCalories ?? 0);
+
+  /// Returns true when a bulking plan has met or exceeded the calorie goal.
+  bool get isTargetHit =>
+      isBulking && state.consumedCalories >= (state.plan?.dailyCalories ?? 0);
 
   String _planLabelFor(UserPlan plan) {
     final goal = plan.goal;

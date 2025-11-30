@@ -109,7 +109,7 @@ class _OnboardingSummaryPageState extends State<OnboardingSummaryPage> {
                   child: AppButton(
                     label: _vm.state.isSaving
                         ? 'INITIALIZING...'
-                        : 'INITIATE PLAN',
+                        : 'CONFIRM PLAN',
                     isPrimary: true,
                     onTap: _vm.state.isSaving ? null : _onSave,
                   ),
@@ -491,6 +491,17 @@ class _NutritionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final macrosByType = {
+      for (final macro in vm.macroBreakdown) macro.type: macro,
+    };
+    final orderedMacros = <NutritionMacroVm>[
+      if (macrosByType[NutritionMacroType.protein] != null)
+        macrosByType[NutritionMacroType.protein]!,
+      if (macrosByType[NutritionMacroType.carbs] != null)
+        macrosByType[NutritionMacroType.carbs]!,
+      if (macrosByType[NutritionMacroType.fat] != null)
+        macrosByType[NutritionMacroType.fat]!,
+    ];
 
     return Column(
       children: [
@@ -535,7 +546,7 @@ class _NutritionSection extends StatelessWidget {
         const SizedBox(height: 32),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: vm.macroBreakdown
+          children: orderedMacros
               .map(
                 (macro) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -558,14 +569,14 @@ class _MacroDisplay extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
     final color = switch (macro.type) {
-      NutritionMacroType.carbs => colors.macroCarbs,
       NutritionMacroType.protein => colors.macroProtein,
+      NutritionMacroType.carbs => colors.macroCarbs,
       NutritionMacroType.fat => colors.macroFat,
     };
 
     final fullLabel = switch (macro.type) {
-      NutritionMacroType.carbs => 'Carbs',
       NutritionMacroType.protein => 'Protein',
+      NutritionMacroType.carbs => 'Carbs',
       NutritionMacroType.fat => 'Fat',
     };
 

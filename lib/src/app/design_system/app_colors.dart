@@ -170,10 +170,10 @@ class AppColors extends ThemeExtension<AppColors> {
     gaugeAccent: Color(0xFFE5E5EA),
     chartCalloutFill: Color(0xFFE5E5EA),
     chartCalloutText: Color(0xFF050505), // Black text on silver
-    // Macros
-    macroCarbs: Color(0xFFCED6E0), // Cooler Silver-Blue
-    macroProtein: Color(0xFFFFD700), // Polished Gold
-    macroFat: Color(0xFFD35400), // Copper
+    // MACROS: "Anodized Metals"
+    macroProtein: Color(0xFFCD5C5C),
+    macroCarbs: Color(0xFF7CA0C0), // Blued Steel
+    macroFat: Color(0xFFC8AA6E), // Pale Brass
   );
 
   @override
