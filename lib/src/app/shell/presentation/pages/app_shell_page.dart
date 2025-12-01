@@ -2,8 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
-import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
+import 'package:starter_app/src/core/services/notification_service.dart';
+import 'package:starter_app/src/features/nutrition/domain/repositories/food_log_repository.dart';
+import 'package:starter_app/src/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel.dart';
+import 'package:starter_app/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart';
+import 'package:starter_app/src/features/plan/domain/repositories/plan_repository.dart';
+import 'package:starter_app/src/features/today/presentation/widgets/log_weight_sheet.dart';
 import 'package:starter_app/src/features/today/presentation/widgets/quick_actions_sheet.dart';
 
 /// Top-level shell that hosts the tab navigation and floating action button.
@@ -45,8 +51,8 @@ class AppShellPage extends StatelessWidget {
         ),
         child: FloatingActionButton(
           onPressed: () => unawaited(_showQuickActions(context)),
-          backgroundColor: colors.surface,
-          foregroundColor: colors.ink,
+          backgroundColor: colors.accent,
+          foregroundColor: colors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -135,21 +141,54 @@ class AppShellPage extends StatelessWidget {
   Future<void> _showQuickActions(BuildContext context) {
     return QuickActionsSheet.show(
       context,
-      onLogFood: () => _navigateToNutrition(context),
-      onLogWeight: () => _navigateToToday(context),
+      onLogFood: () => unawaited(_openFoodModal(context)),
+      onLogWeight: () => unawaited(_openWeightModal(context)),
       onStartWorkout: () => _navigateToTraining(context),
     );
   }
 
-  void _navigateToNutrition(BuildContext context) {
-    context.go(
-      '/nutrition',
-      extra: const NutritionPageArguments(showQuickAddSheet: true),
+  Future<void> _openFoodModal(BuildContext context) async {
+    final foodRepo = context.read<FoodLogRepository>();
+    final planRepo = context.read<PlanRepository>();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return ChangeNotifierProvider(
+          create: (_) => NutritionDayViewModel(
+            foodLogRepository: foodRepo,
+            planRepository: planRepo,
+          ),
+          child: Consumer<NutritionDayViewModel>(
+            builder: (context, notifier, _) {
+              return QuickAddFoodSheet(
+                isSubmitting: notifier.state.isAddingEntry,
+                errorText: notifier.state.addEntryErrorMessage,
+                onErrorDismissed: notifier.clearQuickAddError,
+                onSubmit: notifier.addQuickEntry,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  void _navigateToToday(BuildContext context) {
-    context.go('/today');
+  Future<void> _openWeightModal(BuildContext context) async {
+    final weight = await showModalBottomSheet<double>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return const LogWeightSheet();
+      },
+    );
+    if (!context.mounted || weight == null) return;
+    context.read<NotificationService>().showSuccess(
+      'Logged ${weight.toStringAsFixed(1)} kg',
+    );
   }
 
   void _navigateToTraining(BuildContext context) {
