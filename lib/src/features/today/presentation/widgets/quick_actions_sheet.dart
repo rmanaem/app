@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_typography.dart';
 
 /// Global quick actions bottom sheet.
+///
+/// Displays action buttons for logging food, weight, or starting a workout.
+/// Uses an inset design style where buttons appear recessed into the sheet.
 class QuickActionsSheet extends StatelessWidget {
   /// Creates the quick actions sheet.
   const QuickActionsSheet({
@@ -53,98 +57,84 @@ class QuickActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
     return SafeArea(
-      top: false,
-      child: ColoredBox(
-        color: colors.bg.withValues(alpha: 0.6),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            margin: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-                bottom: Radius.circular(20),
-              ),
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colors.borderIdle),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.8),
+              blurRadius: 32,
+              offset: const Offset(0, 8),
             ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: colors.borderIdle,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(top: 4, bottom: 12),
-                    decoration: BoxDecoration(
-                      color: colors.ringTrack,
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(999),
-                      ),
+                  Text(
+                    'SHORTCUTS',
+                    style: typography.caption.copyWith(
+                      color: colors.inkSubtle,
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        color: colors.inkSubtle,
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            'Shortcuts',
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colors.ink,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.tune),
-                        color: colors.inkSubtle,
-                        onPressed: () {},
-                      ),
-                    ],
+                  Icon(
+                    Icons.shortcut,
+                    color: colors.inkSubtle,
+                    size: 16,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _QuickActionIconButton(
-                        label: 'Log food',
-                        icon: Icons.restaurant_outlined,
-                        onTap: onLogFood,
-                      ),
-                      _QuickActionIconButton(
-                        label: 'Log weight',
-                        icon: Icons.monitor_weight_outlined,
-                        onTap: onLogWeight,
-                      ),
-                      _QuickActionIconButton(
-                        label: 'Workout',
-                        icon: Icons.fitness_center_outlined,
-                        onTap: onStartWorkout,
-                      ),
-                    ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionTile(
+                      label: 'LOG FOOD',
+                      icon: Icons.restaurant,
+                      onTap: onLogFood,
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Fast access to the actions you use most.',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colors.inkSubtle,
-                      ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionTile(
+                      label: 'WEIGH IN',
+                      icon: Icons.monitor_weight_outlined,
+                      onTap: onLogWeight,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionTile(
+                      label: 'WORKOUT',
+                      icon: Icons.fitness_center,
+                      onTap: onStartWorkout,
                     ),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -152,8 +142,8 @@ class QuickActionsSheet extends StatelessWidget {
   }
 }
 
-class _QuickActionIconButton extends StatelessWidget {
-  const _QuickActionIconButton({
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
     required this.label,
     required this.icon,
     required this.onTap,
@@ -166,33 +156,43 @@ class _QuickActionIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Material(
-          color: colors.surface2,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Icon(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 110,
+          decoration: BoxDecoration(
+            color: colors.bg, // Darker background creates inset effect
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.borderIdle),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
                 icon,
-                size: 22,
+                size: 28,
                 color: colors.ink,
               ),
-            ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: typography.caption.copyWith(
+                  color: colors.ink,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: textTheme.bodySmall?.copyWith(color: colors.ink),
-        ),
-      ],
+      ),
     );
   }
 }
