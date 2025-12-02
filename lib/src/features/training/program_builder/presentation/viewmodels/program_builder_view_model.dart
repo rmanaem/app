@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_program.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/program_split.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 
 /// Manages state for configuring a training program.
 class ProgramBuilderViewModel extends ChangeNotifier {
   /// Creates the view model.
-  ProgramBuilderViewModel();
+  ProgramBuilderViewModel(this._repository);
+
+  final ProgramBuilderRepository _repository;
 
   String _programName = '';
   ProgramSplit _selectedSplit = ProgramSplit.ppl;
@@ -34,6 +38,10 @@ class ProgramBuilderViewModel extends ChangeNotifier {
 
   /// Whether the configuration can be saved.
   bool get isValid => _programName.isNotEmpty && _schedule.containsValue(true);
+  DraftProgram? _draft;
+
+  /// The draft created after saving.
+  DraftProgram? get draft => _draft;
 
   /// Updates the program name.
   void setName(String name) {
@@ -57,9 +65,14 @@ class ProgramBuilderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Saves the program (placeholder).
-  void saveProgram() {
-    // TODO(app-team): Connect to repository to persist the plan.
+  /// Saves the program to the repository.
+  Future<void> saveProgram() async {
+    if (!isValid) return;
     unawaited(HapticFeedback.heavyImpact());
+    _draft = await _repository.createDraft(
+      name: _programName,
+      split: _selectedSplit,
+      schedule: _schedule,
+    );
   }
 }

@@ -1,0 +1,117 @@
+import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_program.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/entities/program_split.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
+import 'package:uuid/uuid.dart';
+
+/// Fake repository that seeds a draft program in memory.
+class ProgramBuilderRepositoryFake implements ProgramBuilderRepository {
+  DraftProgram? _currentDraft;
+
+  @override
+  Future<DraftProgram> createDraft({
+    required String name,
+    required ProgramSplit split,
+    required Map<int, bool> schedule,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+
+    final workouts = _generateDefaultsForSplit(split);
+
+    _currentDraft = DraftProgram(
+      id: const Uuid().v4(),
+      name: name,
+      split: split,
+      schedule: Map<int, bool>.from(schedule),
+      workouts: workouts,
+    );
+
+    return _currentDraft!;
+  }
+
+  @override
+  Future<DraftProgram?> getCurrentDraft() async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    return _currentDraft;
+  }
+
+  List<DraftWorkout> _generateDefaultsForSplit(ProgramSplit split) {
+    const uuid = Uuid();
+    switch (split) {
+      case ProgramSplit.ppl:
+        return [
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Push A',
+            description: 'Chest, Shoulders, Triceps',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Pull A',
+            description: 'Back, Rear Delts, Biceps',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Legs A',
+            description: 'Quads, Hamstrings, Calves',
+          ),
+        ];
+      case ProgramSplit.upperLower:
+        return [
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Upper A',
+            description: 'Upper Body focus',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Lower A',
+            description: 'Lower Body focus',
+          ),
+        ];
+      case ProgramSplit.fullBody:
+        return [
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Full Body A',
+            description: 'Compound movements',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Full Body B',
+            description: 'Accessory focus',
+          ),
+        ];
+      case ProgramSplit.broSplit:
+        return [
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Chest Day',
+            description: 'International chest day',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Back Day',
+            description: 'Wings',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Leg Day',
+            description: 'The Wheelhouse',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Arms',
+            description: 'Gun show',
+          ),
+          DraftWorkout(
+            id: uuid.v4(),
+            name: 'Shoulders',
+            description: 'Boulders',
+          ),
+        ];
+      case ProgramSplit.custom:
+        return [];
+    }
+  }
+}

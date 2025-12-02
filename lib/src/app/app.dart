@@ -29,12 +29,16 @@ import 'package:starter_app/src/features/today/data/repositories_impl/plan_repos
 import 'package:starter_app/src/features/today/domain/usecases/get_current_plan.dart';
 import 'package:starter_app/src/features/today/presentation/pages/today_page.dart';
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
+import 'package:starter_app/src/features/training/data/repositories_impl/program_builder_repository_fake.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/training_overview_repository_fake.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/pages/program_builder_page.dart';
+import 'package:starter_app/src/features/training/program_builder/presentation/pages/program_structure_page.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/viewmodels/program_builder_view_model.dart';
+import 'package:starter_app/src/features/training/program_builder/presentation/viewmodels/program_structure_view_model.dart';
 
 /// Root widget for the template application, wired with [GoRouter].
 class App extends StatelessWidget {
@@ -157,8 +161,42 @@ class App extends StatelessWidget {
             key: state.pageKey,
             fullscreenDialog: true,
             child: ChangeNotifierProvider(
-              create: (_) => ProgramBuilderViewModel(),
+              create: (context) => ProgramBuilderViewModel(
+                context.read<ProgramBuilderRepository>(),
+              ),
               child: const ProgramBuilderPage(),
+            ),
+            transitionsBuilder:
+                (
+                  context,
+                  animation,
+                  secondaryAnimation,
+                  child,
+                ) {
+                  const begin = Offset(0, 1);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutQuint;
+                  final tween = Tween(begin: begin, end: end).chain(
+                    CurveTween(curve: curve),
+                  );
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+          ),
+        ),
+        GoRoute(
+          path: '/training/builder/structure',
+          parentNavigatorKey: rootNavigatorKey,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            fullscreenDialog: true,
+            child: ChangeNotifierProvider(
+              create: (context) => ProgramStructureViewModel(
+                context.read<ProgramBuilderRepository>(),
+              ),
+              child: const ProgramStructurePage(),
             ),
             transitionsBuilder:
                 (
@@ -202,6 +240,9 @@ class App extends StatelessWidget {
         ),
         Provider<TrainingOverviewRepository>(
           create: (_) => const TrainingOverviewRepositoryFake(),
+        ),
+        Provider<ProgramBuilderRepository>(
+          create: (_) => ProgramBuilderRepositoryFake(),
         ),
         ChangeNotifierProvider(
           create: (context) => OnboardingVm(context.read<AnalyticsService>()),

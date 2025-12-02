@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/viewmodels/program_builder_view_model.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/widgets/sequence_toggle.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/widgets/split_dial.dart';
@@ -20,7 +21,9 @@ class ProgramBuilderPage extends StatelessWidget {
     final spacing = Theme.of(context).extension<AppSpacing>()!;
 
     return ChangeNotifierProvider(
-      create: (_) => ProgramBuilderViewModel(),
+      create: (context) => ProgramBuilderViewModel(
+        context.read<ProgramBuilderRepository>(),
+      ),
       child: Builder(
         builder: (context) {
           final vm = context.watch<ProgramBuilderViewModel>();
@@ -105,7 +108,16 @@ class ProgramBuilderPage extends StatelessWidget {
                     child: AppButton(
                       label: 'CONFIRM & BUILD WORKOUTS',
                       isPrimary: true,
-                      onTap: vm.isValid ? vm.saveProgram : null,
+                      onTap: vm.isValid
+                          ? () async {
+                              await vm.saveProgram();
+                              if (context.mounted) {
+                                await context.push(
+                                  '/training/builder/structure',
+                                );
+                              }
+                            }
+                          : null,
                     ),
                   ),
                 ],
