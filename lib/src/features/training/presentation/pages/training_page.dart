@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
@@ -106,7 +107,7 @@ class _TrainingContent extends StatelessWidget {
           _TrainingActions(
             hasProgram: state.hasProgram,
             onViewProgram: onViewProgram,
-            onCreateProgram: onCreateProgram,
+            onCreateProgram: () => context.push('/training/builder'),
             onViewHistory: onViewHistory,
           ),
           const SizedBox(height: 24),

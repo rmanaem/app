@@ -33,6 +33,8 @@ import 'package:starter_app/src/features/training/data/repositories_impl/trainin
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
+import 'package:starter_app/src/features/training/program_builder/presentation/pages/program_builder_page.dart';
+import 'package:starter_app/src/features/training/program_builder/presentation/viewmodels/program_builder_view_model.dart';
 
 /// Root widget for the template application, wired with [GoRouter].
 class App extends StatelessWidget {
@@ -147,6 +149,36 @@ class App extends StatelessWidget {
               ],
             ),
           ],
+        ),
+        GoRoute(
+          path: '/training/builder',
+          parentNavigatorKey: rootNavigatorKey,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            fullscreenDialog: true,
+            child: ChangeNotifierProvider(
+              create: (_) => ProgramBuilderViewModel(),
+              child: const ProgramBuilderPage(),
+            ),
+            transitionsBuilder:
+                (
+                  context,
+                  animation,
+                  secondaryAnimation,
+                  child,
+                ) {
+                  const begin = Offset(0, 1);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutQuint;
+                  final tween = Tween(begin: begin, end: end).chain(
+                    CurveTween(curve: curve),
+                  );
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+          ),
         ),
       ],
     );
