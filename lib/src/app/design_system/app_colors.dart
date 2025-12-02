@@ -122,9 +122,38 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Macro color representing fat.
   final Color macroFat;
 
-  // ---- LIGHT (Placeholder - Mapped to dark until roadmap updates)
-  /// Light palette.
-  static const AppColors light = AppColors.dark;
+  // ---- LIGHT (Paper & Steel Palette)
+  /// Light palette (matte white ceramics with steel accents).
+  static const AppColors light = AppColors(
+    bg: Color(0xFFF5F5F7),
+    surface: Color(0xFFFFFFFF),
+    surfaceHighlight: Color(0xFFF2F2F7),
+    surface2: Color(0xFFEFEFF4),
+    borderIdle: Color(0xFFD1D1D6),
+    borderActive: Color(0xFF1C1C1E),
+    ink: Color(0xFF0A0A0A),
+    inkSubtle: Color(0xFF4A4A4A),
+    accent: Color(0xFF1C1C1E),
+    accentMuted: Color(0xFF636366),
+    ringTrack: Color(0xFFE5E5EA),
+    ringActive: Color(0xFF1C1C1E),
+    ringActiveStart: Color(0xFF1C1C1E),
+    ringActiveEnd: Color(0xFF636366),
+    glassFill: Color(0xFFFFFFFF),
+    glassBorder: Color(0xFFD1D1D6),
+    success: Color(0xFF30D158),
+    warning: Color(0xFFFFD60A),
+    danger: Color(0xFFFF453A),
+    heroPositive: Color(0xFFF5F5F7),
+    heroNeutral: Color(0xFFFFFFFF),
+    heroChip: Color(0xFFE5E5EA),
+    gaugeAccent: Color(0xFF1C1C1E),
+    chartCalloutFill: Color(0xFF1C1C1E),
+    chartCalloutText: Color(0xFFFFFFFF),
+    macroProtein: Color(0xFFCD5C5C),
+    macroCarbs: Color(0xFF7CA0C0),
+    macroFat: Color(0xFFC8AA6E),
+  );
 
   // ---- DARK (The "Obsidian & Steel" Palette)
   /// Dark palette (Deep Onyx & Steel).
