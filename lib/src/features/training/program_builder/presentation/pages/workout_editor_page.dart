@@ -58,16 +58,20 @@ class WorkoutEditorPage extends StatelessWidget {
               children: [
                 Expanded(
                   child: vm.exercises.isEmpty
-                      ? _EmptyState(colors: colors, typography: typography)
+                      ? _EmptyState(
+                          colors: colors,
+                          typography: typography,
+                          onAdd: () => unawaited(vm.addExercises(context)),
+                        )
                       : ReorderableListView.builder(
-                          padding: EdgeInsets.fromLTRB(
-                            spacing.gutter,
-                            spacing.gutter,
-                            spacing.gutter,
-                            100,
-                          ),
-                          itemCount: vm.exercises.length,
-                          onReorder: vm.reorderExercises,
+                          padding: spacing.edgeAll(spacing.gutter),
+                          itemCount: vm.exercises.length + 1,
+                          onReorder: (oldIndex, newIndex) {
+                            if (newIndex >= vm.exercises.length) {
+                              newIndex = vm.exercises.length;
+                            }
+                            vm.reorderExercises(oldIndex, newIndex);
+                          },
                           proxyDecorator: (child, index, animation) {
                             return Material(
                               color: Colors.transparent,
@@ -77,6 +81,18 @@ class WorkoutEditorPage extends StatelessWidget {
                             );
                           },
                           itemBuilder: (context, index) {
+                            if (index == vm.exercises.length) {
+                              return Padding(
+                                key: const ValueKey('add_button'),
+                                padding: const EdgeInsets.only(top: 8),
+                                child: _AddExerciseRow(
+                                  onTap: () => unawaited(
+                                    vm.addExercises(context),
+                                  ),
+                                ),
+                              );
+                            }
+
                             final ex = vm.exercises[index];
                             return ExerciseModuleCard(
                               key: ValueKey(ex['name']),
@@ -95,7 +111,6 @@ class WorkoutEditorPage extends StatelessWidget {
                         ),
                 ),
                 Padding(
-                  // MATCHING PADDING from ProgramBuilderPage
                   padding: EdgeInsets.fromLTRB(
                     spacing.gutter,
                     0,
@@ -103,12 +118,9 @@ class WorkoutEditorPage extends StatelessWidget {
                     spacing.gutter + 20,
                   ),
                   child: AppButton(
-                    label: 'ADD EXERCISE',
-                    icon: Icons.add,
+                    label: 'CONFIRM WORKOUT',
                     isPrimary: true,
-                    onTap: () {
-                      unawaited(vm.addExercises(context));
-                    },
+                    onTap: () => context.pop(),
                   ),
                 ),
               ],
@@ -198,10 +210,15 @@ Future<void> _openTuner(
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.colors, required this.typography});
+  const _EmptyState({
+    required this.colors,
+    required this.typography,
+    required this.onAdd,
+  });
 
   final AppColors colors;
   final AppTypography typography;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -221,12 +238,70 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Add exercises to build the circuit.',
+            'Add exercises to build the workout.',
             style: typography.body.copyWith(
               color: colors.inkSubtle.withValues(alpha: 0.6),
             ),
           ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: onAdd,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colors.borderIdle),
+              ),
+              child: Text(
+                '+ ADD EXERCISE',
+                style: typography.button.copyWith(
+                  color: colors.ink,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _AddExerciseRow extends StatelessWidget {
+  const _AddExerciseRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          color: colors.bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.borderIdle),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, color: colors.inkSubtle, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'ADD EXERCISE',
+              style: typography.button.copyWith(
+                color: colors.ink,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
