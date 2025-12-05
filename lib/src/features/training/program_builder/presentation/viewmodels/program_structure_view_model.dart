@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_program.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 
@@ -36,5 +37,14 @@ class ProgramStructureViewModel extends ChangeNotifier {
   /// Placeholder hook for future workout editing navigation.
   void onEditWorkout(String workoutId) {
     // TODO(app-team): Navigate to Workout Editor Page
+  }
+
+  /// Publishes the program and exits the builder.
+  void publishProgram(BuildContext context) {
+    // TODO(app-team): Call repository.publish(_draft) here.
+
+    // Navigate out of the full-screen modal back to the Training tab.
+    // Using context.go('/training') ensures we clear the builder history.
+    context.go('/training');
   }
 }
