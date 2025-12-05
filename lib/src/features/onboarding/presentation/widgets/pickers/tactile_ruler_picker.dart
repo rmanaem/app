@@ -18,6 +18,7 @@ class TactileRulerPicker extends StatefulWidget {
     this.step = 1,
     this.minorTicksPerMajor = 10,
     this.valueFormatter,
+    this.showValueDisplay = true,
     super.key,
   });
 
@@ -44,6 +45,9 @@ class TactileRulerPicker extends StatefulWidget {
 
   /// Optional formatter for customizing the displayed number.
   final String Function(double)? valueFormatter;
+
+  /// Whether to render the large value display above the ruler.
+  final bool showValueDisplay;
 
   @override
   State<TactileRulerPicker> createState() => _TactileRulerPickerState();
@@ -109,43 +113,44 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 1. The Value Display
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  widget.valueFormatter != null
-                      ? widget.valueFormatter!(_currentValue)
-                      : _currentValue.toStringAsFixed(
-                          widget.step < 1 ? 1 : 0,
-                        ),
-                  // Reduce font size slightly to fit compact layouts
-                  style: typography.hero.copyWith(
-                    fontSize: 48,
-                    color: colors.ink,
-                    letterSpacing: -2,
-                    height: 1,
-                  ),
-                ),
-                if (widget.unitLabel.isNotEmpty) ...[
-                  const SizedBox(width: 8),
+            if (widget.showValueDisplay) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
                   Text(
-                    widget.unitLabel.toUpperCase(),
-                    style: typography.button.copyWith(
-                      color: colors.accent,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                    widget.valueFormatter != null
+                        ? widget.valueFormatter!(_currentValue)
+                        : _currentValue.toStringAsFixed(
+                            widget.step < 1 ? 1 : 0,
+                          ),
+                    // Reduce font size slightly to fit compact layouts
+                    style: typography.hero.copyWith(
+                      fontSize: 48,
+                      color: colors.ink,
+                      letterSpacing: -2,
+                      height: 1,
                     ),
                   ),
+                  if (widget.unitLabel.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.unitLabel.toUpperCase(),
+                      style: typography.button.copyWith(
+                        color: colors.accent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
+              ),
 
-            // 2. Responsive Spacer
-            // If constrained, use a smaller gap.
-            SizedBox(height: isConstrained ? 12 : 32),
+              // 2. Responsive Spacer
+              // If constrained, use a smaller gap.
+              SizedBox(height: isConstrained ? 12 : 32),
+            ],
 
             // 3. The Ruler
             if (isConstrained)
@@ -166,7 +171,8 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
   Widget _buildRuler(int tickCount, AppColors colors) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final centerPadding = constraints.maxWidth / 2;
+        // Align tick centers under the center indicator.
+        final centerPadding = (constraints.maxWidth / 2) - (_tickSpacing / 2);
         return Stack(
           alignment: Alignment.center,
           children: [
