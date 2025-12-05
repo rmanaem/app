@@ -52,6 +52,7 @@ class _InfiniteRulerState extends State<InfiniteRuler> {
   static const double _tickSpacing = 12;
   bool _isProgrammaticScroll = false;
   double _lastHapticValue = 0;
+  double _lastReportedValue = 0;
 
   @override
   void initState() {
@@ -60,6 +61,7 @@ class _InfiniteRulerState extends State<InfiniteRuler> {
         ((widget.value - widget.min) / widget.step) * _tickSpacing;
     _scrollController = ScrollController(initialScrollOffset: initialOffset);
     _lastHapticValue = widget.value;
+    _lastReportedValue = widget.value;
   }
 
   @override
@@ -69,9 +71,14 @@ class _InfiniteRulerState extends State<InfiniteRuler> {
       final targetOffset =
           ((widget.value - widget.min) / widget.step) * _tickSpacing;
       if (_scrollController.hasClients) {
+        _isProgrammaticScroll = true;
         _scrollController.jumpTo(targetOffset);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _isProgrammaticScroll = false;
+        });
       }
     }
+    _lastReportedValue = widget.value;
   }
 
   @override
@@ -81,10 +88,15 @@ class _InfiniteRulerState extends State<InfiniteRuler> {
   }
 
   void _handleScrollUpdate() {
+    if (_isProgrammaticScroll) return;
     if (!_scrollController.hasClients) return;
     final offset = _scrollController.offset;
     final rawValue = (offset / _tickSpacing) * widget.step + widget.min;
     final clampedValue = rawValue.clamp(widget.min, widget.max);
+
+    if ((clampedValue - _lastReportedValue).abs() < widget.step / 2) {
+      return;
+    }
 
     if (widget.integerHapticsOnly) {
       if (clampedValue.floor() != _lastHapticValue.floor()) {
@@ -97,6 +109,7 @@ class _InfiniteRulerState extends State<InfiniteRuler> {
     }
 
     _isProgrammaticScroll = true;
+    _lastReportedValue = clampedValue;
     widget.onChanged(clampedValue);
     _isProgrammaticScroll = false;
   }
