@@ -94,18 +94,33 @@ class WorkoutEditorPage extends StatelessWidget {
                             }
 
                             final ex = vm.exercises[index];
-                            return ExerciseModuleCard(
-                              key: ValueKey(ex['name']),
-                              index: index,
-                              exerciseName: ex['name'] as String,
-                              muscleGroup: ex['muscle'] as String,
-                              setCount: ex['sets'] as int,
-                              repRange: ex['reps'] as String,
-                              targetWeight: _formatWeight(ex['weight']),
-                              restTime: _formatRestDisplay(ex['rest']),
-                              onTap: () async {
-                                await _openTuner(context, vm, index, ex);
+                            return Dismissible(
+                              key: ValueKey(ex['_key'] as String),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 24),
+                                color: colors.danger,
+                                child: Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: colors.ink,
+                                ),
+                              ),
+                              onDismissed: (_) {
+                                vm.removeExercise(index);
                               },
+                              child: ExerciseModuleCard(
+                                index: index,
+                                exerciseName: ex['name'] as String,
+                                muscleGroup: ex['muscle'] as String,
+                                setCount: ex['sets'] as int,
+                                repRange: ex['reps'] as String,
+                                targetWeight: _formatWeight(ex['weight']),
+                                restTime: _formatRestDisplay(ex['rest']),
+                                onTap: () async {
+                                  await _openTuner(context, vm, index, ex);
+                                },
+                              ),
                             );
                           },
                         ),

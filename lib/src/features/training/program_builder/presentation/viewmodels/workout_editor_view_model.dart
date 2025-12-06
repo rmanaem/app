@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
+import 'package:uuid/uuid.dart';
 
-/// ViewModel for editing a single workout within a draft program.
+/// ViewModel for the Workout Editor page.
 class WorkoutEditorViewModel extends ChangeNotifier {
   /// Creates the view model.
   WorkoutEditorViewModel({
@@ -13,54 +14,77 @@ class WorkoutEditorViewModel extends ChangeNotifier {
     required String workoutId,
   }) : _repository = repository,
        _workoutId = workoutId {
-    unawaited(_loadWorkout());
+    _loadFuture = _loadWorkout();
   }
 
   final ProgramBuilderRepository _repository;
   final String _workoutId;
 
-  DraftWorkout? _workout;
   bool _isLoading = true;
+  DraftWorkout? _workout;
+  final List<Map<String, dynamic>> _exercises = [];
+  late final Future<void> _loadFuture;
 
-  // Temporary local state for the UI until real exercises exist.
-  List<Map<String, dynamic>> _exercises = <Map<String, dynamic>>[];
-
-  /// Current workout.
-  DraftWorkout? get workout => _workout;
-
-  /// Loading flag.
+  /// Whether the workout data is loading.
   bool get isLoading => _isLoading;
 
-  /// Exercises for the workout (placeholder structure).
-  List<Map<String, dynamic>> get exercises => _exercises;
+  /// The workout being edited.
+  DraftWorkout? get workout => _workout;
+
+  /// The list of exercises in this workout.
+  List<Map<String, dynamic>> get exercises => List.unmodifiable(_exercises);
+
+  /// Future that completes when the initial load is finished.
+  /// Exposed for testing purposes to avoid flaky delays.
+  @visibleForTesting
+  Future<void> get loadFuture => _loadFuture;
 
   Future<void> _loadWorkout() async {
-    _isLoading = true;
-    notifyListeners();
+    try {
+      final draft = await _repository.getCurrentDraft();
+      if (draft != null) {
+        _workout = draft.workouts.firstWhere(
+          (w) => w.id == _workoutId,
+          orElse: () => DraftWorkout(
+            id: _workoutId,
+            name: 'New Workout',
+            description: '',
+          ),
+        );
 
-    final draft = await _repository.getCurrentDraft();
-    if (draft != null) {
-      _workout = draft.workouts.firstWhere(
-        (w) => w.id == _workoutId,
-        orElse: () => const DraftWorkout(
-          id: '',
-          name: '',
-          description: '',
-        ),
-      );
-      if (_workout != null && _workout!.id.isNotEmpty && _exercises.isEmpty) {
-        _exercises = _seedMockExercises(_workout!.name);
+        // In a real app, we would load existing exercises from the draft here.
+        // For now, we seed mock data if empty.
+        if (_exercises.isEmpty) {
+          _exercises.addAll(_seedMockExercises(_workout!.name));
+        }
+
+        // Ensure all exercises have a unique key for UI stability
+        const uuid = Uuid();
+        for (var i = 0; i < _exercises.length; i++) {
+          if (_exercises[i]['_key'] == null) {
+            _exercises[i] = {
+              ..._exercises[i],
+              '_key': uuid.v4(),
+            };
+          }
+        }
       }
+    } on Exception catch (e) {
+      debugPrint('Error loading workout: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   List<Map<String, dynamic>> _seedMockExercises(String workoutName) {
+    final exercises = <Map<String, dynamic>>[];
+    const uuid = Uuid();
+
     if (workoutName.contains('Push')) {
-      return <Map<String, dynamic>>[
+      exercises.addAll([
         {
+          '_key': uuid.v4(),
           'name': 'Bench Press (Barbell)',
           'muscle': 'Chest',
           'sets': 3,
@@ -69,6 +93,7 @@ class WorkoutEditorViewModel extends ChangeNotifier {
           'rest': 180,
         },
         {
+          '_key': uuid.v4(),
           'name': 'Overhead Press',
           'muscle': 'Shoulders',
           'sets': 3,
@@ -77,6 +102,7 @@ class WorkoutEditorViewModel extends ChangeNotifier {
           'rest': 120,
         },
         {
+          '_key': uuid.v4(),
           'name': 'Incline Dumbbell Press',
           'muscle': 'Chest',
           'sets': 3,
@@ -84,11 +110,11 @@ class WorkoutEditorViewModel extends ChangeNotifier {
           'weight': 24.0,
           'rest': 90,
         },
-      ];
-    }
-    if (workoutName.contains('Pull')) {
-      return <Map<String, dynamic>>[
+      ]);
+    } else if (workoutName.contains('Pull')) {
+      exercises.addAll([
         {
+          '_key': uuid.v4(),
           'name': 'Deadlift',
           'muscle': 'Back',
           'sets': 3,
@@ -97,6 +123,7 @@ class WorkoutEditorViewModel extends ChangeNotifier {
           'rest': 300,
         },
         {
+          '_key': uuid.v4(),
           'name': 'Pull Ups',
           'muscle': 'Back',
           'sets': 3,
@@ -104,9 +131,9 @@ class WorkoutEditorViewModel extends ChangeNotifier {
           'weight': 0.0,
           'rest': 90,
         },
-      ];
+      ]);
     }
-    return <Map<String, dynamic>>[];
+    return exercises;
   }
 
   /// Reorders exercises in the local list.
@@ -131,9 +158,24 @@ class WorkoutEditorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Removes an exercise from the local list.
+  void removeExercise(int index) {
+    if (index < 0 || index >= _exercises.length) return;
+    _exercises.removeAt(index);
+    notifyListeners();
+  }
+
   /// Adds exercises returned from the selection page.
   void onExercisesAdded(List<Map<String, dynamic>> newExercises) {
-    _exercises.addAll(newExercises);
+    const uuid = Uuid();
+    final withKeys = newExercises.map((e) {
+      return {
+        ...e,
+        '_key': uuid.v4(),
+      };
+    }).toList();
+
+    _exercises.addAll(withKeys);
     notifyListeners();
   }
 
