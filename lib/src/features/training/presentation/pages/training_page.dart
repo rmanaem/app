@@ -68,7 +68,7 @@ class _TrainingContent extends StatelessWidget {
 
   final TrainingOverviewViewState state;
   final ValueChanged<DateTime> onSelectDate;
-  final VoidCallback onStartNextWorkout;
+  final void Function(BuildContext) onStartNextWorkout;
   final VoidCallback onOpenLastWorkout;
   final VoidCallback onViewProgram;
   final VoidCallback onCreateProgram;
@@ -100,7 +100,7 @@ class _TrainingContent extends StatelessWidget {
             state.nextWorkout != null
                 ? _SmartWorkoutCard(
                     workout: state.nextWorkout!,
-                    onStart: onStartNextWorkout,
+                    onStart: () => onStartNextWorkout(context),
                   )
                 : const _RestDayCard()
           else

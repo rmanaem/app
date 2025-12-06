@@ -32,7 +32,9 @@ import 'package:starter_app/src/features/today/presentation/viewmodels/today_vie
 import 'package:starter_app/src/features/training/data/repositories_impl/program_builder_repository_fake.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/training_overview_repository_fake.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
+import 'package:starter_app/src/features/training/presentation/pages/active_session_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
+import 'package:starter_app/src/features/training/presentation/viewmodels/active_session_view_model.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_selection_page.dart';
@@ -189,6 +191,33 @@ class App extends StatelessWidget {
                   );
                 },
           ),
+        ),
+        GoRoute(
+          path: '/training/session/:workoutId',
+          parentNavigatorKey: rootNavigatorKey,
+          pageBuilder: (context, state) {
+            final workoutId = state.pathParameters['workoutId']!;
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: ChangeNotifierProvider(
+                create: (_) => ActiveSessionViewModel(workoutId: workoutId),
+                child: const ActiveSessionPage(),
+              ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    const begin = Offset(0, 1);
+                    const end = Offset.zero;
+                    const curve = Curves.easeOutQuint;
+                    final tween = Tween(begin: begin, end: end).chain(
+                      CurveTween(curve: curve),
+                    );
+                    return SlideTransition(
+                      position: animation.drive(tween),
+                      child: child,
+                    );
+                  },
+            );
+          },
         ),
         GoRoute(
           path: '/training/builder/editor/select',

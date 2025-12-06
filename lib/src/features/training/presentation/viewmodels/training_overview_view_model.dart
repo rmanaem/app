@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/viewstate/training_overview_view_state.dart';
 
@@ -65,8 +66,10 @@ class TrainingOverviewViewModel extends ChangeNotifier {
   }
 
   /// Triggered when the user starts the next workout.
-  void onStartNextWorkout() {
-    // TODO(app-team): navigate to workout logging screen.
+  void onStartNextWorkout(BuildContext context) {
+    if (_state.nextWorkout != null) {
+      context.push('/training/session/${_state.nextWorkout!.id}');
+    }
   }
 
   /// Triggered when the user opens the last workout summary.
