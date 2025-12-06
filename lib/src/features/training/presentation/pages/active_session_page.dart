@@ -18,6 +18,18 @@ class ActiveSessionPage extends StatelessWidget {
   /// Creates an active session page.
   const ActiveSessionPage({super.key});
 
+  String _formatSessionTime(int seconds) {
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    final s = seconds % 60;
+    if (h > 0) {
+      return '${h.toString().padLeft(2, '0')}:'
+          '${m.toString().padLeft(2, '0')}:'
+          '${s.toString().padLeft(2, '0')}';
+    }
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
@@ -48,7 +60,7 @@ class ActiveSessionPage extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              '00:24:12',
+              _formatSessionTime(vm.sessionDurationSeconds),
               style: typography.body.copyWith(
                 fontFamily: 'monospace',
                 color: colors.ink,
@@ -58,7 +70,18 @@ class ActiveSessionPage extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => context.pop(),
+            onPressed: () {
+              // 1. Calculate Result
+              final result = vm.finishSession();
+
+              // 2. Navigate to Summary (Replacing Active Session)
+              // Using pushReplacement ensures Back button doesn't return
+              // to the workout.
+              context.pushReplacement(
+                '/training/session/summary',
+                extra: result,
+              );
+            },
             child: Text(
               'FINISH',
               style: typography.button.copyWith(color: colors.ink),

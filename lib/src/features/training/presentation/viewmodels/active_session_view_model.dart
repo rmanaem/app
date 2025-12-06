@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:starter_app/src/features/training/presentation/pages/session_summary_page.dart';
 
 /// ViewModel driving the Active Session experience.
 class ActiveSessionViewModel extends ChangeNotifier {
@@ -11,10 +12,18 @@ class ActiveSessionViewModel extends ChangeNotifier {
   }
 
   bool _isLoading = true;
+
+  // Session Timer (Total elapsed time)
+  Timer? _sessionTicker;
+  int _sessionDurationSeconds = 0;
+
+  // Rest Timer State
   bool _isTimerActive = false;
   int _restDurationSeconds = 90;
   int _timerSeconds = 90;
   int _timerTotalSeconds = 90;
+  Timer? _restTicker;
+
   int? _activeRestExerciseIndex;
   int? _activeRestSetIndex;
 
@@ -34,6 +43,9 @@ class ActiveSessionViewModel extends ChangeNotifier {
 
   /// The total duration of the timer in seconds.
   int get timerTotalSeconds => _timerTotalSeconds;
+
+  /// The total duration of the current session in seconds.
+  int get sessionDurationSeconds => _sessionDurationSeconds;
 
   /// The index of the exercise currently associated with the rest timer.
   int? get activeRestExerciseIndex => _activeRestExerciseIndex;
@@ -115,7 +127,44 @@ class ActiveSessionViewModel extends ChangeNotifier {
     ];
 
     _isLoading = false;
+    _startSessionTimer();
     notifyListeners();
+  }
+
+  void _startSessionTimer() {
+    _sessionTicker?.cancel();
+    _sessionTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _sessionDurationSeconds++;
+      notifyListeners();
+    });
+  }
+
+  /// Calculates the session result and returns it.
+  SessionResult finishSession() {
+    _sessionTicker?.cancel();
+    _restTicker?.cancel();
+
+    var totalVolume = 0;
+    var completedSets = 0;
+
+    for (final ex in _exercises) {
+      final sets = (ex['sets'] as List).cast<Map<String, dynamic>>();
+      for (final s in sets) {
+        if (s['done'] == true) {
+          completedSets++;
+          final weight = (s['weight'] as num).toDouble();
+          final reps = (s['reps'] as num).toInt();
+          totalVolume += (weight * reps).round();
+        }
+      }
+    }
+
+    return SessionResult(
+      durationSeconds: _sessionDurationSeconds,
+      totalVolume: totalVolume,
+      totalSets: completedSets,
+      prCount: 1, // Mocked for "Victory" feeling
+    );
   }
 
   /// Toggles the completion status of a set.
@@ -207,14 +256,12 @@ class ActiveSessionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Timer? _ticker;
-
   void _startTimer(int durationSeconds) {
     _timerTotalSeconds = durationSeconds;
     _timerSeconds = durationSeconds;
     _isTimerActive = true;
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _restTicker?.cancel();
+    _restTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timerSeconds > 0) {
         _timerSeconds--;
         notifyListeners();
@@ -225,7 +272,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
   }
 
   void _stopTimer() {
-    _ticker?.cancel();
+    _restTicker?.cancel();
     _isTimerActive = false;
     _activeRestExerciseIndex = null;
     _activeRestSetIndex = null;
@@ -361,7 +408,8 @@ class ActiveSessionViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _ticker?.cancel();
+    _sessionTicker?.cancel();
+    _restTicker?.cancel();
     super.dispose();
   }
 }
