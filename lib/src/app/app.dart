@@ -32,7 +32,9 @@ import 'package:starter_app/src/features/today/presentation/viewmodels/today_vie
 import 'package:starter_app/src/features/training/data/repositories_impl/program_builder_repository_fake.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/training_overview_repository_fake.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
+import 'package:starter_app/src/features/training/presentation/pages/active_session_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
+import 'package:starter_app/src/features/training/presentation/viewmodels/active_session_view_model.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_selection_page.dart';
@@ -191,82 +193,93 @@ class App extends StatelessWidget {
           ),
         ),
         GoRoute(
-          path: '/training/builder/editor/select',
+          path: '/training/session/:workoutId',
           parentNavigatorKey: rootNavigatorKey,
-          // TODO(app-team): Add regression test to ensure this concrete route
-          // is matched before the parameterized editor route so the Parts Bin
-          // opens (i.e., `/training/builder/editor/select` should render
-          // ExerciseSelectionPage, not WorkoutEditorPage).
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
-            key: state.pageKey,
-            fullscreenDialog: true,
-            child: ChangeNotifierProvider(
-              create: (context) {
-                final onAdd =
-                    state.extra
-                        as void Function(
-                          List<Map<String, dynamic>>,
-                        )?;
-                debugPrint(
-                  'AppRoute: /training/builder/editor/select onAdd provided=${onAdd != null}',
-                );
-                return ExerciseSelectionViewModel(
-                  onAdd: onAdd ?? (_) {},
-                );
-              },
-              child: const ExerciseSelectionPage(),
-            ),
-            transitionsBuilder:
-                (
-                  context,
-                  animation,
-                  secondaryAnimation,
-                  child,
-                ) {
-                  const begin = Offset(0, 1);
-                  const end = Offset.zero;
-                  const curve = Curves.easeOutQuint;
-                  final tween = Tween(begin: begin, end: end).chain(
-                    CurveTween(curve: curve),
-                  );
-                  return SlideTransition(
-                    position: animation.drive(tween),
-                    child: child,
-                  );
-                },
-          ),
+          pageBuilder: (context, state) {
+            final workoutId = state.pathParameters['workoutId']!;
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: ChangeNotifierProvider(
+                create: (_) => ActiveSessionViewModel(workoutId: workoutId),
+                child: const ActiveSessionPage(),
+              ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    const begin = Offset(0, 1);
+                    const end = Offset.zero;
+                    const curve = Curves.easeOutQuint;
+                    final tween = Tween(begin: begin, end: end).chain(
+                      CurveTween(curve: curve),
+                    );
+                    return SlideTransition(
+                      position: animation.drive(tween),
+                      child: child,
+                    );
+                  },
+            );
+          },
         ),
         GoRoute(
-          path: '/training/builder/structure',
+          path: '/training/builder/editor/select',
           parentNavigatorKey: rootNavigatorKey,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
-            key: state.pageKey,
-            fullscreenDialog: true,
-            child: ChangeNotifierProvider(
-              create: (context) => ProgramStructureViewModel(
-                context.read<ProgramBuilderRepository>(),
+          pageBuilder: (context, state) {
+            // ignore: omit_local_variable_types - needed for inference
+            void Function(List<Map<String, dynamic>>) onAdd = (_) {};
+            var isSingleSelect = false;
+            String? submitButtonText;
+
+            final extra = state.extra;
+            if (extra is Map<String, dynamic>) {
+              // New map-based params
+              if (extra.containsKey('callback')) {
+                onAdd =
+                    extra['callback']
+                        as void Function(List<Map<String, dynamic>>);
+              }
+              if (extra.containsKey('isSingleSelect')) {
+                isSingleSelect = extra['isSingleSelect'] as bool;
+              }
+              if (extra.containsKey('submitButtonText')) {
+                submitButtonText = extra['submitButtonText'] as String;
+              }
+            } else if (extra is void Function(List<Map<String, dynamic>>)) {
+              // Legacy callback support
+              onAdd = extra;
+            }
+
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              fullscreenDialog: true,
+              child: ChangeNotifierProvider(
+                create: (context) => ExerciseSelectionViewModel(
+                  onAdd: onAdd,
+                  isSingleSelect: isSingleSelect,
+                ),
+                child: ExerciseSelectionPage(
+                  isSingleSelect: isSingleSelect,
+                  submitButtonText: submitButtonText,
+                ),
               ),
-              child: const ProgramStructurePage(),
-            ),
-            transitionsBuilder:
-                (
-                  context,
-                  animation,
-                  secondaryAnimation,
-                  child,
-                ) {
-                  const begin = Offset(0, 1);
-                  const end = Offset.zero;
-                  const curve = Curves.easeOutQuint;
-                  final tween = Tween(begin: begin, end: end).chain(
-                    CurveTween(curve: curve),
-                  );
-                  return SlideTransition(
-                    position: animation.drive(tween),
-                    child: child,
-                  );
-                },
-          ),
+              transitionsBuilder:
+                  (
+                    context,
+                    animation,
+                    secondaryAnimation,
+                    child,
+                  ) {
+                    const begin = Offset(0, 1);
+                    const end = Offset.zero;
+                    const curve = Curves.easeOutQuint;
+                    final tween = Tween(begin: begin, end: end).chain(
+                      CurveTween(curve: curve),
+                    );
+                    return SlideTransition(
+                      position: animation.drive(tween),
+                      child: child,
+                    );
+                  },
+            );
+          },
         ),
         GoRoute(
           path: '/training/builder/editor/:workoutId',
@@ -315,48 +328,6 @@ class App extends StatelessWidget {
                 context.read<ProgramBuilderRepository>(),
               ),
               child: const ProgramStructurePage(),
-            ),
-            transitionsBuilder:
-                (
-                  context,
-                  animation,
-                  secondaryAnimation,
-                  child,
-                ) {
-                  const begin = Offset(0, 1);
-                  const end = Offset.zero;
-                  const curve = Curves.easeOutQuint;
-                  final tween = Tween(begin: begin, end: end).chain(
-                    CurveTween(curve: curve),
-                  );
-                  return SlideTransition(
-                    position: animation.drive(tween),
-                    child: child,
-                  );
-                },
-          ),
-        ),
-        GoRoute(
-          path: '/training/builder/editor/select',
-          parentNavigatorKey: rootNavigatorKey,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
-            key: state.pageKey,
-            fullscreenDialog: true,
-            child: ChangeNotifierProvider(
-              create: (context) {
-                final onAdd =
-                    state.extra
-                        as void Function(
-                          List<Map<String, dynamic>>,
-                        )?;
-                debugPrint(
-                  'AppRoute: /training/builder/editor/select onAdd provided=${onAdd != null}',
-                );
-                return ExerciseSelectionViewModel(
-                  onAdd: onAdd ?? (_) {},
-                );
-              },
-              child: const ExerciseSelectionPage(),
             ),
             transitionsBuilder:
                 (

@@ -117,6 +117,7 @@ class WorkoutEditorPage extends StatelessWidget {
                                 repRange: ex['reps'] as String,
                                 targetWeight: _formatWeight(ex['weight']),
                                 restTime: _formatRestDisplay(ex['rest']),
+                                rpe: _formatRpe(ex['rpe']),
                                 onTap: () async {
                                   await _openTuner(context, vm, index, ex);
                                 },
@@ -176,6 +177,14 @@ String? _formatWeight(dynamic weight) {
   final value = numeric.toDouble();
   final text = value.toStringAsFixed(1).replaceAll('.0', '');
   return '$text kg';
+}
+
+String _formatRpe(dynamic rpe) {
+  if (rpe == null) return '8';
+  final numeric = rpe is num ? rpe : num.tryParse(rpe.toString());
+  if (numeric == null) return '8';
+  final value = numeric.toDouble();
+  return value.toStringAsFixed(1).replaceAll('.0', '');
 }
 
 String _formatRestDisplay(dynamic rest) {

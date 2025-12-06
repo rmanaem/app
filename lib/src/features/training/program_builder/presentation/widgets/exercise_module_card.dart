@@ -12,6 +12,7 @@ class ExerciseModuleCard extends StatelessWidget {
     required this.muscleGroup,
     required this.setCount,
     required this.repRange,
+    required this.rpe,
     this.targetWeight,
     this.restTime = '90s', // Default or passed in
     this.onTap,
@@ -32,6 +33,9 @@ class ExerciseModuleCard extends StatelessWidget {
 
   /// Repetition range (e.g., "8-10").
   final String repRange;
+
+  /// RPE Target
+  final String rpe;
 
   /// Target load (e.g., "80kg"), nullable for bodyweight moves.
   final String? targetWeight;
@@ -174,8 +178,8 @@ class ExerciseModuleCard extends StatelessWidget {
                         child: _MetricColumn(label: 'REPS', value: repRange),
                       ),
                       _VerticalDivider(color: colors.borderIdle),
-                      const Expanded(
-                        child: _MetricColumn(label: 'RPE', value: '8'),
+                      Expanded(
+                        child: _MetricColumn(label: 'RPE', value: rpe),
                       ),
                       _VerticalDivider(color: colors.borderIdle),
                       Expanded(

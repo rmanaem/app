@@ -3,7 +3,13 @@ import 'package:flutter/foundation.dart';
 /// Manages selection of exercises for a workout (temporary mock data).
 class ExerciseSelectionViewModel extends ChangeNotifier {
   /// Creates the view model.
-  ExerciseSelectionViewModel({required this.onAdd});
+  ExerciseSelectionViewModel({
+    required this.onAdd,
+    this.isSingleSelect = false,
+  });
+
+  /// Whether to allow only one exercise to be selected.
+  final bool isSingleSelect;
 
   /// Callback invoked when exercises are confirmed.
   final void Function(List<Map<String, dynamic>>) onAdd;
@@ -51,6 +57,17 @@ class ExerciseSelectionViewModel extends ChangeNotifier {
   /// Count of selected exercises.
   int get selectedCount => _selectedIds.length;
 
+  /// Name of the single selected exercise (if any).
+  String? get singleSelectedName {
+    if (_selectedIds.isEmpty) return null;
+    final id = _selectedIds.first;
+    final exercise = _allExercises.firstWhere(
+      (e) => e['id'] == id,
+      orElse: () => <String, dynamic>{}, // Return empty map if not found
+    );
+    return exercise['name'] as String?;
+  }
+
   /// Updates the search query.
   void updateSearch(String query) {
     _searchQuery = query;
@@ -68,13 +85,16 @@ class ExerciseSelectionViewModel extends ChangeNotifier {
     if (_selectedIds.contains(id)) {
       _selectedIds.remove(id);
     } else {
+      if (isSingleSelect) {
+        _selectedIds.clear(); // Enforce single select
+      }
       _selectedIds.add(id);
     }
     notifyListeners();
   }
 
   /// Confirms selection and maps to default sets/reps.
-  void confirmSelection() {
+  List<Map<String, dynamic>> confirmSelection() {
     final selectedExercises = _allExercises
         .where((ex) => _selectedIds.contains(ex['id']))
         .map(
@@ -90,5 +110,6 @@ class ExerciseSelectionViewModel extends ChangeNotifier {
       'count=${selectedExercises.length}',
     );
     onAdd(selectedExercises);
+    return selectedExercises;
   }
 }

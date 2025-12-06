@@ -22,6 +22,7 @@ class ExerciseTunerSheet extends StatefulWidget {
     this.initialRestSeconds = 150, // 2:30 default rest
     this.initialRpe = 8.0,
     this.initialNotes,
+    this.allowRippleUpdate = false, // NEW: Show "Update Future Sets" toggle
     super.key,
   });
 
@@ -49,6 +50,9 @@ class ExerciseTunerSheet extends StatefulWidget {
   /// Existing notes for the exercise, if any.
   final String? initialNotes;
 
+  /// Whether to show the ripple update toggle.
+  final bool allowRippleUpdate;
+
   @override
   State<ExerciseTunerSheet> createState() => _ExerciseTunerSheetState();
 }
@@ -61,6 +65,9 @@ class _ExerciseTunerSheetState extends State<ExerciseTunerSheet> {
   late double _rpe;
   String? _currentNote;
 
+  // New State
+  bool _updateFutureSets = false;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +77,12 @@ class _ExerciseTunerSheetState extends State<ExerciseTunerSheet> {
     _rest = widget.initialRestSeconds.toDouble();
     _rpe = widget.initialRpe;
     _currentNote = widget.initialNotes;
+
+    // Auto-enable ripple if it's likely a correction (e.g. first set)
+    // For now, default to false to be safe, or true if passing a specific flag
+    if (widget.allowRippleUpdate) {
+      _updateFutureSets = true;
+    }
   }
 
   void _updateSets(int delta) {
@@ -392,6 +405,34 @@ class _ExerciseTunerSheetState extends State<ExerciseTunerSheet> {
 
                   SizedBox(height: spacing.xxl),
 
+                  // RIPPLE TOGGLE (New Feature)
+                  if (widget.allowRippleUpdate)
+                    Padding(
+                      padding: spacing.edgeH(spacing.gutter),
+                      child: SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        activeTrackColor: colors.accent,
+                        title: Text(
+                          'Update remaining sets',
+                          style: typography.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colors.ink,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Apply these targets to future sets',
+                          style: typography.caption.copyWith(
+                            color: colors.inkSubtle,
+                          ),
+                        ),
+                        value: _updateFutureSets,
+                        onChanged: (val) =>
+                            setState(() => _updateFutureSets = val),
+                      ),
+                    ),
+
+                  SizedBox(height: spacing.xxl),
+
                   // 7. NOTE (New Atom)
                   const _SectionLabel(label: 'NOTE'),
                   Padding(
@@ -426,6 +467,7 @@ class _ExerciseTunerSheetState extends State<ExerciseTunerSheet> {
                     'rest': _formatRestTime(_rest),
                     'rpe': _rpe,
                     'notes': _currentNote,
+                    'updateFutureSets': _updateFutureSets,
                   });
                 },
               ),

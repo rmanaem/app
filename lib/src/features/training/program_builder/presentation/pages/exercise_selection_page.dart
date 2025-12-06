@@ -10,7 +10,17 @@ import 'package:starter_app/src/presentation/atoms/app_button.dart';
 /// Modal for selecting exercises to add to a workout.
 class ExerciseSelectionPage extends StatelessWidget {
   /// Creates the selection page.
-  const ExerciseSelectionPage({super.key});
+  const ExerciseSelectionPage({
+    super.key,
+    this.isSingleSelect = false,
+    this.submitButtonText,
+  });
+
+  /// Whether to allow only one exercise to be selected.
+  final bool isSingleSelect;
+
+  /// Optional text to override the submit button label.
+  final String? submitButtonText;
 
   @override
   Widget build(BuildContext context) {
@@ -129,11 +139,15 @@ class ExerciseSelectionPage extends StatelessWidget {
               color: colors.bg,
               child: SafeArea(
                 child: AppButton(
-                  label: 'ADD (${vm.selectedCount})',
+                  label:
+                      submitButtonText ??
+                      (isSingleSelect
+                          ? 'SWAP WITH ${vm.singleSelectedName?.toUpperCase()}'
+                          : 'ADD (${vm.selectedCount})'),
                   isPrimary: true,
                   onTap: () {
-                    vm.confirmSelection();
-                    context.pop();
+                    final selected = vm.confirmSelection();
+                    context.pop(selected);
                   },
                 ),
               ),

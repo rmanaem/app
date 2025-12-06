@@ -48,6 +48,7 @@ void main() {
             'reps': '10',
             'weight': 50.0,
             'rest': 60,
+            'rpe': 9.0,
           },
           {
             'name': 'Exercise 2',
@@ -120,5 +121,14 @@ void main() {
     // Verify empty state is shown
     expect(find.text('NO EXERCISES'), findsOneWidget);
     expect(find.byType(ExerciseModuleCard), findsNothing);
+  });
+
+  testWidgets('displays correct RPE value', (tester) async {
+    await tester.pumpWidget(createSubject());
+    await tester.pumpAndSettle();
+
+    // The first exercise was seeded with RPE 9.0
+    // We expect the card to display '9'
+    expect(find.text('9'), findsOneWidget);
   });
 }
