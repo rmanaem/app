@@ -45,7 +45,7 @@ class ActiveSessionPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.close, color: colors.inkSubtle),
-          onPressed: () => context.pop(),
+          onPressed: () => _onExit(context),
         ),
         centerTitle: true,
         title: Column(
@@ -209,6 +209,50 @@ class ActiveSessionPage extends StatelessWidget {
               ],
             ),
     );
+  }
+
+  Future<void> _onExit(BuildContext context) async {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'CANCEL SESSION?',
+          style: typography.title.copyWith(fontSize: 18, color: colors.ink),
+        ),
+        content: Text(
+          'Are you sure you want to cancel? '
+          'This invalidates the current workout.',
+          style: typography.body.copyWith(color: colors.inkSubtle),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'RESUME',
+              style: typography.button.copyWith(color: colors.inkSubtle),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'CANCEL SESSION',
+              style: typography.button.copyWith(color: colors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldExit ?? false) {
+      if (context.mounted) {
+        context.pop();
+      }
+    }
   }
 }
 
