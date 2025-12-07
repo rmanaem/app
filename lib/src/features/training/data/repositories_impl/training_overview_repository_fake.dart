@@ -65,6 +65,7 @@ class TrainingOverviewRepositoryFake implements TrainingOverviewRepository {
       nextWorkout: nextWorkout,
       lastWorkout: lastWorkout,
       hasProgram: true,
+      activeProgramId: 'p1',
       completedWorkouts: 2,
       plannedWorkouts: 4,
     );

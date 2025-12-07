@@ -43,6 +43,7 @@ class TrainingOverviewViewModel extends ChangeNotifier {
           nextWorkout: overview.nextWorkout,
           lastWorkout: overview.lastWorkout,
           hasProgram: overview.hasProgram,
+          activeProgramId: overview.activeProgramId,
           completedWorkouts: overview.completedWorkouts,
           plannedWorkouts: overview.plannedWorkouts,
         ),

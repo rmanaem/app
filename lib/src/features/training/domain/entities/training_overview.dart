@@ -14,6 +14,7 @@ class TrainingOverview {
     required this.plannedWorkouts,
     this.nextWorkout,
     this.lastWorkout,
+    this.activeProgramId,
   });
 
   /// Anchor date (usually today) for the overview.
@@ -36,4 +37,7 @@ class TrainingOverview {
 
   /// Planned workouts count for the week.
   final int plannedWorkouts;
+
+  /// The ID of the currently active program, if any.
+  final String? activeProgramId;
 }

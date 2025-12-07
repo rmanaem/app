@@ -38,7 +38,14 @@ class TrainingPage extends StatelessWidget {
         onStartNextWorkout: vm.onStartNextWorkout,
         onOpenLastWorkout: vm.onOpenLastWorkout,
         onViewProgram: () => context.push('/training/library'),
-        onCreateProgram: () => context.push('/training/builder'),
+        onCreateProgram: () {
+          final programId = state.activeProgramId;
+          if (programId != null) {
+            unawaited(context.push('/training/builder/structure/$programId'));
+          } else {
+            unawaited(context.push('/training/builder'));
+          }
+        },
         onViewHistory: () => context.push('/training/history'),
         onQuickStart: () => context.push('/training/quick-start'),
       );

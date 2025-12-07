@@ -15,6 +15,7 @@ class TrainingOverviewViewState {
     required this.plannedWorkouts,
     this.nextWorkout,
     this.lastWorkout,
+    this.activeProgramId,
     this.errorMessage,
   });
 
@@ -58,6 +59,9 @@ class TrainingOverviewViewState {
   /// Planned workouts count for the week.
   final int plannedWorkouts;
 
+  /// The ID of the currently active program, if any.
+  final String? activeProgramId;
+
   /// True when [errorMessage] is non-null.
   bool get hasError => errorMessage != null;
 
@@ -73,6 +77,7 @@ class TrainingOverviewViewState {
     bool? hasProgram,
     int? completedWorkouts,
     int? plannedWorkouts,
+    String? activeProgramId,
   }) {
     return TrainingOverviewViewState(
       isLoading: isLoading ?? this.isLoading,
@@ -80,6 +85,7 @@ class TrainingOverviewViewState {
       weekDays: weekDays ?? this.weekDays,
       nextWorkout: nextWorkout ?? this.nextWorkout,
       lastWorkout: lastWorkout ?? this.lastWorkout,
+      activeProgramId: activeProgramId ?? this.activeProgramId,
       errorMessage: clearErrorMessage
           ? null
           : (errorMessage ?? this.errorMessage),
