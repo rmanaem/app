@@ -269,11 +269,11 @@ Future<void> _openContextSheet(
     backgroundColor: Colors.transparent,
     builder: (ctx) => ExerciseContextSheet(
       exerciseName: ex['name'] as String,
-      initialNote: ex['note'] as String?,
+      initialNotes: ex['notes'] as String?,
       initialRestSeconds: vm.restDurationSeconds,
       initialTab: initialTab,
       onSaveNote: (newNote) {
-        vm.updateExerciseNote(index, newNote);
+        vm.updateExerciseNotes(index, newNote);
       },
       onRemove: () {
         Navigator.pop(ctx);

@@ -59,7 +59,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
       return {
         'name': e['name'],
         'muscle': e['muscle'],
-        'note': e['notes'] ?? '',
+        'notes': e['notes'] ?? '',
         'rest': e['rest'],
         'sets': sets,
       };
@@ -82,7 +82,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
     _exercises = [
       {
         'name': 'Bench Press (Barbell)',
-        'note': '',
+        'notes': '',
         'sets': <Map<String, dynamic>>[
           {
             'weight': 100.0,
@@ -115,7 +115,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
       },
       {
         'name': 'Incline Dumbbell Press',
-        'note': 'Keep elbows tucked',
+        'notes': 'Keep elbows tucked',
         'sets': <Map<String, dynamic>>[
           {
             'weight': 32.0,
@@ -190,7 +190,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
       if (currentExerciseCompletedSets.isNotEmpty) {
         completedExercises.add({
           'name': ex['name'],
-          'note': ex['note'],
+          'notes': ex['notes'],
           'sets': currentExerciseCompletedSets,
         });
       }
@@ -432,11 +432,11 @@ class ActiveSessionViewModel extends ChangeNotifier {
   }
 
   /// Updates the note for a specific exercise.
-  void updateExerciseNote(int exerciseIndex, String note) {
+  void updateExerciseNotes(int exerciseIndex, String notes) {
     if (exerciseIndex < 0 || exerciseIndex >= _exercises.length) return;
 
     final updatedExercise = Map<String, dynamic>.from(_exercises[exerciseIndex])
-      ..['note'] = note;
+      ..['notes'] = notes;
 
     _exercises[exerciseIndex] = updatedExercise;
     notifyListeners();
@@ -483,7 +483,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
     _exercises.add({
       'name': config['name'], // From Selection
       'muscle': config['muscle'], // From Selection
-      'note': config['notes'] ?? '', // From Tuner
+      'notes': config['notes'] ?? '', // From Tuner
       'rest': config['rest'], // From Tuner
       'sets': sets,
     });
@@ -527,7 +527,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
     _exercises[index] = {
       'name': config['name'],
       'muscle': config['muscle'],
-      'note': config['notes'] ?? '',
+      'notes': config['notes'] ?? '',
       'rest': config['rest'],
       'sets': newSets,
     };

@@ -93,7 +93,7 @@ class _HistoryDetailContent extends StatelessWidget {
             return _ReadOnlyExerciseCard(
               name: ex['name'] as String,
               sets: (ex['sets'] as List).cast<Map<String, dynamic>>(),
-              note: ex['note'] as String?,
+              notes: ex['notes'] as String?,
             );
           }),
       ],
@@ -231,11 +231,11 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
   const _ReadOnlyExerciseCard({
     required this.name,
     required this.sets,
-    this.note,
+    this.notes,
   });
   final String name;
   final List<Map<String, dynamic>> sets;
-  final String? note;
+  final String? notes;
 
   @override
   Widget build(BuildContext context) {
@@ -263,7 +263,7 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
                   style: typography.title.copyWith(fontSize: 18),
                 ),
                 // EXERCISE NOTE (New)
-                if (note != null && note!.isNotEmpty) ...[
+                if (notes != null && notes!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -285,7 +285,7 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            note!,
+                            notes!,
                             style: typography.body.copyWith(
                               fontSize: 12,
                               color: colors.inkSubtle,

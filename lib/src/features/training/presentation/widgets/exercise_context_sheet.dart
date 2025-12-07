@@ -30,7 +30,7 @@ class ExerciseContextSheet extends StatefulWidget {
     required this.onSwap,
     required this.onSaveNote,
     required this.onUpdateRest,
-    this.initialNote,
+    this.initialNotes,
     this.initialRestSeconds = 90,
     this.initialTab = ContextTab.edit,
     super.key,
@@ -40,7 +40,7 @@ class ExerciseContextSheet extends StatefulWidget {
   final String exerciseName;
 
   /// The initial note content.
-  final String? initialNote;
+  final String? initialNotes;
 
   /// The initial rest time in seconds.
   final int initialRestSeconds;
@@ -77,7 +77,7 @@ class _ExerciseContextSheetState extends State<ExerciseContextSheet> {
     super.initState();
     _currentTab = widget.initialTab;
     _restSeconds = widget.initialRestSeconds.toDouble();
-    _noteController = TextEditingController(text: widget.initialNote)
+    _noteController = TextEditingController(text: widget.initialNotes)
       ..addListener(_onTextChanged);
   }
 

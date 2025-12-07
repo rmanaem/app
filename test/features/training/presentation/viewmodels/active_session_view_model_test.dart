@@ -279,7 +279,7 @@ void main() {
       expect(vm.exercises.length, 3);
       final newEx = vm.exercises.last;
       expect(newEx['name'], 'New Exercise');
-      expect(newEx['note'], 'Some notes');
+      expect(newEx['notes'], 'Some notes');
       expect((newEx['sets'] as List).length, 4);
 
       final firstSet = (newEx['sets'] as List)[0] as Map;
