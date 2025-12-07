@@ -74,8 +74,10 @@ class TrainingOverviewViewModel extends ChangeNotifier {
   }
 
   /// Triggered when the user opens the last workout summary.
-  void onOpenLastWorkout() {
-    // TODO(app-team): open last workout details/history.
+  void onOpenLastWorkout(BuildContext context) {
+    if (_state.lastWorkout != null) {
+      unawaited(context.push('/training/history/${_state.lastWorkout!.id}'));
+    }
   }
 
   /// Triggered when the user wants to view the current program.

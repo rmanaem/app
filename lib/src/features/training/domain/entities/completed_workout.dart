@@ -10,6 +10,7 @@ class CompletedWorkout {
     required this.prCount,
     required this.exerciseCount,
     required this.totalSets,
+    this.exercises = const [],
     this.note,
   });
 
@@ -40,6 +41,9 @@ class CompletedWorkout {
   /// Total sets completed.
   final int totalSets;
 
+  /// List of exercises performed in this session.
+  final List<Map<String, dynamic>> exercises;
+
   /// Formatted duration string (e.g. "1h 12m").
   String get formattedDuration {
     final h = durationSeconds ~/ 3600;
@@ -68,6 +72,7 @@ class CompletedWorkout {
       exerciseCount: exerciseCount,
       totalSets: totalSets,
       note: note ?? this.note,
+      exercises: exercises,
     );
   }
 }

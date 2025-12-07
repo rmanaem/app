@@ -66,6 +66,7 @@ class _HistoryDetailContent extends StatelessWidget {
 
     final workout = vm.workout!;
     final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
     return ListView(
       padding: spacing.edgeAll(spacing.gutter),
@@ -74,30 +75,27 @@ class _HistoryDetailContent extends StatelessWidget {
         _SessionHeader(workout: workout),
         SizedBox(height: spacing.xxl),
 
-        // 2. Session Note (if any)
-        const _SessionNoteSection(
-          note: 'Felt strong today. Increased volume on bench.',
-        ),
-        SizedBox(height: spacing.xxl),
+        if (workout.note != null && workout.note!.isNotEmpty) ...[
+          _SessionNoteSection(note: workout.note!),
+          SizedBox(height: spacing.xxl),
+        ],
 
         // 3. Exercise List
-        const _ReadOnlyExerciseCard(
-          name: 'Bench Press (Barbell)',
-          sets: [
-            {'kg': 100.0, 'reps': 5, 'rpe': 8.0},
-            {'kg': 100.0, 'reps': 5, 'rpe': 8.5},
-            {'kg': 100.0, 'reps': 5, 'rpe': 9.0},
-          ],
-        ),
-        SizedBox(height: spacing.lg),
-        const _ReadOnlyExerciseCard(
-          name: 'Incline Dumbbell Press',
-          note: 'Keep elbows tucked. 32kg felt heavy.',
-          sets: [
-            {'kg': 32.0, 'reps': 10, 'rpe': 8.0},
-            {'kg': 32.0, 'reps': 10, 'rpe': 8.0},
-          ],
-        ),
+        if (workout.exercises.isEmpty)
+          Center(
+            child: Text(
+              'No exercises recorded.',
+              style: typography.body.copyWith(color: colors.inkSubtle),
+            ),
+          )
+        else
+          ...workout.exercises.map((ex) {
+            return _ReadOnlyExerciseCard(
+              name: ex['name'] as String,
+              sets: (ex['sets'] as List).cast<Map<String, dynamic>>(),
+              note: ex['note'] as String?,
+            );
+          }),
       ],
     );
   }

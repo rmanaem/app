@@ -78,7 +78,7 @@ class _TrainingContent extends StatelessWidget {
   final TrainingOverviewViewState state;
   final ValueChanged<DateTime> onSelectDate;
   final void Function(BuildContext) onStartNextWorkout;
-  final VoidCallback onOpenLastWorkout;
+  final void Function(BuildContext) onOpenLastWorkout;
   final VoidCallback onViewProgram;
   final VoidCallback onCreateProgram;
   final VoidCallback onViewHistory;
@@ -122,7 +122,7 @@ class _TrainingContent extends StatelessWidget {
             SizedBox(height: spacing.lg),
             _LastSessionTile(
               workout: state.lastWorkout!,
-              onTap: onOpenLastWorkout,
+              onTap: () => onOpenLastWorkout(context),
             ),
           ],
           if (state.hasProgram) ...[

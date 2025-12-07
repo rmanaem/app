@@ -65,6 +65,57 @@ class HistoryRepositoryFake implements HistoryRepository {
         totalSets: 16,
         exerciseCount: 5,
       ),
+      CompletedWorkout(
+        id: 'last-1',
+        name: 'Lower B',
+        completedAt: DateTime.now().subtract(const Duration(days: 2)),
+        durationSeconds: 2520, // 42 min
+        totalVolumeKg: 10500,
+        prCount: 1,
+        totalSets: 12,
+        exerciseCount: 4,
+        note: 'Focus on bracing on squats.',
+        exercises: [
+          {
+            'name': 'Back Squat',
+            'muscle': 'Legs',
+            'note': 'Beltless. Felt good depth.',
+            'sets': [
+              {'kg': 100.0, 'reps': 5, 'rpe': 7.0},
+              {'kg': 105.0, 'reps': 5, 'rpe': 8.0},
+              {'kg': 105.0, 'reps': 5, 'rpe': 8.5},
+            ],
+          },
+          {
+            'name': 'Romanian Deadlift',
+            'muscle': 'Legs',
+            'sets': [
+              {'kg': 120.0, 'reps': 8, 'rpe': 8.0},
+              {'kg': 120.0, 'reps': 8, 'rpe': 8.5},
+              {'kg': 120.0, 'reps': 8, 'rpe': 9.0},
+            ],
+          },
+          {
+            'name': 'Leg Extension',
+            'muscle': 'Legs',
+            'note': 'Slow eccentric.',
+            'sets': [
+              {'kg': 60.0, 'reps': 12, 'rpe': 9.0},
+              {'kg': 60.0, 'reps': 12, 'rpe': 9.5},
+              {'kg': 60.0, 'reps': 12, 'rpe': 10.0},
+            ],
+          },
+          {
+            'name': 'Calf Raise',
+            'muscle': 'Legs',
+            'sets': [
+              {'kg': 80.0, 'reps': 15, 'rpe': 8.0},
+              {'kg': 80.0, 'reps': 15, 'rpe': 8.5},
+              {'kg': 80.0, 'reps': 15, 'rpe': 9.0},
+            ],
+          },
+        ],
+      ),
     ];
   }
 }
