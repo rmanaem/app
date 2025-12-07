@@ -39,7 +39,8 @@ class TrainingPage extends StatelessWidget {
         onOpenLastWorkout: vm.onOpenLastWorkout,
         onViewProgram: () => context.push('/training/library'),
         onCreateProgram: () => context.push('/training/builder'),
-        onViewHistory: vm.onViewHistory,
+        onViewHistory: () => context.push('/training/history'),
+        onQuickStart: () => context.push('/training/quick-start'),
       );
     }
 
@@ -64,6 +65,7 @@ class _TrainingContent extends StatelessWidget {
     required this.onViewProgram,
     required this.onCreateProgram,
     required this.onViewHistory,
+    required this.onQuickStart,
   });
 
   final TrainingOverviewViewState state;
@@ -73,6 +75,7 @@ class _TrainingContent extends StatelessWidget {
   final VoidCallback onViewProgram;
   final VoidCallback onCreateProgram;
   final VoidCallback onViewHistory;
+  final VoidCallback onQuickStart;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +107,10 @@ class _TrainingContent extends StatelessWidget {
                   )
                 : const _RestDayCard()
           else
-            _GhostProgramCard(onCreate: onCreateProgram),
+            _GhostProgramCard(
+              onCreate: onCreateProgram,
+              onQuickStart: onQuickStart,
+            ),
           if (state.hasProgram && state.lastWorkout != null) ...[
             SizedBox(height: spacing.lg),
             _LastSessionTile(
@@ -406,48 +412,93 @@ class _SmartWorkoutCard extends StatelessWidget {
 }
 
 class _GhostProgramCard extends StatelessWidget {
-  const _GhostProgramCard({required this.onCreate});
+  const _GhostProgramCard({required this.onCreate, required this.onQuickStart});
 
   final VoidCallback onCreate;
+  final VoidCallback onQuickStart;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
 
-    return GestureDetector(
-      onTap: onCreate,
-      child: Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: colors.bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colors.borderIdle),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add_circle_outline, size: 40, color: colors.inkSubtle),
-              const SizedBox(height: 16),
-              Text(
-                'INITIALIZE PROTOCOL',
-                style: typography.button.copyWith(
-                  color: colors.ink,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Build your training engine.',
-                style: typography.body.copyWith(
-                  color: colors.inkSubtle,
-                  fontSize: 13,
-                ),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      decoration: BoxDecoration(
+        color: colors.bg,
+        borderRadius: BorderRadius.circular(20),
+
+        border: Border.all(color: colors.borderIdle),
+      ),
+      child: Column(
+        children: [
+          // 1. The Empty State Icon
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.surfaceHighlight.withValues(alpha: 0.5),
+            ),
+            child: Icon(Icons.grid_view, size: 32, color: colors.inkSubtle),
           ),
-        ),
+          SizedBox(height: spacing.md),
+
+          // 2. The Prompt
+          Text(
+            'NO ACTIVE PROTOCOL',
+            style: typography.caption.copyWith(
+              letterSpacing: 2,
+              color: colors.inkSubtle,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'System idle. Initialize training engine.',
+            textAlign: TextAlign.center,
+            style: typography.body.copyWith(
+              color: colors.inkSubtle.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
+          ),
+
+          SizedBox(height: spacing.xl),
+
+          // 3. Primary Action: Build
+          AppButton(
+            label: 'BUILD PROGRAM',
+            icon: Icons.add,
+            isPrimary: true, // Prominent
+            onTap: onCreate,
+          ),
+
+          SizedBox(height: spacing.md),
+
+          // 4. Secondary Action: Freestyle
+          InkWell(
+            onTap: onQuickStart,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.bolt, size: 16, color: colors.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    'QUICK FREESTYLE SESSION',
+                    style: typography.button.copyWith(
+                      color: colors.accent,
+                      fontSize: 12,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -215,4 +215,25 @@ class WorkoutEditorViewModel extends ChangeNotifier {
 
     await _repository.updateWorkout(_workoutId, updated);
   }
+
+  /// Launches a freestyle session with the current exercises.
+  void startFreestyleSession(BuildContext context) {
+    if (_workout == null && _exercises.isEmpty) return;
+
+    // Create a temporary draft for the session
+    final workout = DraftWorkout(
+      id: 'freestyle_${DateTime.now().millisecondsSinceEpoch}',
+      name: _workout?.name ?? 'Freestyle Workout',
+      description: 'Quick Start Session',
+      exercises: List.from(_exercises),
+    );
+
+    // Navigate directly to Active Session, passing the object
+    unawaited(
+      context.push(
+        '/training/session/freestyle',
+        extra: workout,
+      ),
+    );
+  }
 }

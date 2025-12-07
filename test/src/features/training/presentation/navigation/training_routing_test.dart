@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:starter_app/src/app/app.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/welcome_page.dart';
+import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
 import 'package:starter_app/src/features/training/presentation/pages/active_session_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/session_summary_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
@@ -19,11 +20,15 @@ void main() {
       final context = tester.element(find.byType(WelcomePage));
 
       // We need to pass the extra object as required by the route
-      final result = SessionResult(
+      final result = CompletedWorkout(
+        id: '1',
+        name: 'Test Workout',
+        completedAt: DateTime.now(),
         durationSeconds: 60,
-        totalVolume: 1000,
+        totalVolumeKg: 1000,
         totalSets: 5,
         prCount: 1,
+        exerciseCount: 1,
       );
 
       context.go('/training/session/summary', extra: result);
@@ -61,10 +66,15 @@ void main() {
 
       // 1. Start at Summary Page
       final context = tester.element(find.byType(WelcomePage));
-      final result = SessionResult(
+      final result = CompletedWorkout(
+        id: '1',
+        name: 'Test Workout',
+        completedAt: DateTime.now(),
         durationSeconds: 10,
-        totalVolume: 100,
+        totalVolumeKg: 100,
         totalSets: 1,
+        prCount: 0,
+        exerciseCount: 1,
       );
       context.go('/training/session/summary', extra: result);
       await tester.pumpAndSettle();
@@ -72,7 +82,9 @@ void main() {
       expect(find.byType(SessionSummaryPage), findsOneWidget);
 
       // 2. Tap Return to Dashboard
-      await tester.tap(find.text('RETURN TO DASHBOARD'));
+      final buttonFinder = find.text('RETURN TO DASHBOARD');
+      await tester.scrollUntilVisible(buttonFinder, 500);
+      await tester.tap(buttonFinder);
       await tester.pumpAndSettle();
 
       // 3. Verify Navigation

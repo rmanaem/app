@@ -30,19 +30,27 @@ import 'package:starter_app/src/features/today/data/repositories_impl/plan_repos
 import 'package:starter_app/src/features/today/domain/usecases/get_current_plan.dart';
 import 'package:starter_app/src/features/today/presentation/pages/today_page.dart';
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
+import 'package:starter_app/src/features/training/data/repositories_impl/history_repository_fake.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/program_builder_repository_fake.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/program_repository_fake.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/training_overview_repository_fake.dart';
+import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
+import 'package:starter_app/src/features/training/domain/repositories/history_repository.dart';
 import 'package:starter_app/src/features/training/domain/repositories/program_repository.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/pages/active_session_page.dart';
+import 'package:starter_app/src/features/training/presentation/pages/history_detail_page.dart';
+import 'package:starter_app/src/features/training/presentation/pages/history_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/program_detail_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/program_library_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/session_summary_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/active_session_view_model.dart';
+
+import 'package:starter_app/src/features/training/presentation/viewmodels/history_view_model.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/program_library_view_model.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_selection_page.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/pages/program_builder_page.dart';
@@ -203,10 +211,10 @@ class App extends StatelessWidget {
           path: '/training/session/summary',
           parentNavigatorKey: rootNavigatorKey,
           pageBuilder: (context, state) {
-            final result = state.extra! as SessionResult;
+            final result = state.extra! as CompletedWorkout;
             return CustomTransitionPage<void>(
               key: state.pageKey,
-              child: SessionSummaryPage(result: result),
+              child: SessionSummaryPage(workout: result),
               transitionsBuilder:
                   (context, animation, secondaryAnimation, child) {
                     const begin = Offset(0, 1);
@@ -228,10 +236,17 @@ class App extends StatelessWidget {
           parentNavigatorKey: rootNavigatorKey,
           pageBuilder: (context, state) {
             final workoutId = state.pathParameters['workoutId']!;
+            // Check if we passed a DraftWorkout object
+            final extra = state.extra;
+            final adHocWorkout = extra is DraftWorkout ? extra : null;
+
             return CustomTransitionPage<void>(
               key: state.pageKey,
               child: ChangeNotifierProvider(
-                create: (_) => ActiveSessionViewModel(workoutId: workoutId),
+                create: (_) => ActiveSessionViewModel(
+                  workoutId: workoutId,
+                  adHocWorkout: adHocWorkout,
+                ),
                 child: const ActiveSessionPage(),
               ),
               transitionsBuilder:
@@ -249,6 +264,37 @@ class App extends StatelessWidget {
                   },
             );
           },
+        ),
+        // 1. Quick Start Editor Route
+        GoRoute(
+          path: '/training/quick-start',
+          parentNavigatorKey: rootNavigatorKey,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            fullscreenDialog: true,
+            child: ChangeNotifierProvider(
+              // Initialize with empty/default state
+              create: (context) => WorkoutEditorViewModel(
+                repository: context.read<ProgramBuilderRepository>(),
+                workoutId: 'new_freestyle', // Dummy ID
+              ),
+              // Pass the flag
+              child: const WorkoutEditorPage(isQuickStart: true),
+            ),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(0, 1);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutQuint;
+                  final tween = Tween(begin: begin, end: end).chain(
+                    CurveTween(curve: curve),
+                  );
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+          ),
         ),
         GoRoute(
           path: '/training/builder/editor/select',
@@ -436,6 +482,26 @@ class App extends StatelessWidget {
             );
           },
         ),
+        GoRoute(
+          path: '/training/history',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) {
+            return ChangeNotifierProvider(
+              create: (context) => HistoryViewModel(
+                context.read<HistoryRepository>(),
+              ),
+              child: const HistoryPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/training/history/:workoutId',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) {
+            final workoutId = state.pathParameters['workoutId']!;
+            return HistoryDetailPage(workoutId: workoutId);
+          },
+        ),
       ],
     );
 
@@ -461,6 +527,9 @@ class App extends StatelessWidget {
         ),
         Provider<TrainingOverviewRepository>(
           create: (_) => const TrainingOverviewRepositoryFake(),
+        ),
+        Provider<HistoryRepository>(
+          create: (_) => HistoryRepositoryFake(),
         ),
         Provider<ProgramBuilderRepository>(
           create: (context) => ProgramBuilderRepositoryFake(

@@ -14,7 +14,10 @@ import 'package:starter_app/src/presentation/atoms/app_button.dart';
 /// Editor for a single workout's exercise list.
 class WorkoutEditorPage extends StatelessWidget {
   /// Creates the editor page.
-  const WorkoutEditorPage({super.key});
+  const WorkoutEditorPage({this.isQuickStart = false, super.key});
+
+  /// Whether this editor is being used for a quick start session.
+  final bool isQuickStart;
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +35,16 @@ class WorkoutEditorPage extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colors.ink),
           onPressed: () async {
-            await vm.save();
+            if (!isQuickStart) {
+              await vm.save();
+            }
             if (context.mounted) context.pop();
           },
         ),
         title: Column(
           children: [
             Text(
-              'EDIT WORKOUT',
+              isQuickStart ? 'QUICK START' : 'EDIT WORKOUT',
               style: typography.caption.copyWith(
                 fontSize: 10,
                 letterSpacing: 2,
@@ -48,7 +53,7 @@ class WorkoutEditorPage extends StatelessWidget {
             ),
             if (!vm.isLoading && vm.workout != null)
               Text(
-                vm.workout!.name.toUpperCase(),
+                isQuickStart ? 'FREESTYLE' : vm.workout!.name.toUpperCase(),
                 style: typography.title.copyWith(fontSize: 16),
               ),
           ],
@@ -137,11 +142,16 @@ class WorkoutEditorPage extends StatelessWidget {
                     spacing.gutter + 20,
                   ),
                   child: AppButton(
-                    label: 'CONFIRM WORKOUT',
+                    label: isQuickStart ? 'START SESSION' : 'CONFIRM WORKOUT',
+                    icon: isQuickStart ? Icons.play_arrow_rounded : null,
                     isPrimary: true,
                     onTap: () async {
-                      await vm.save();
-                      if (context.mounted) context.pop();
+                      if (isQuickStart) {
+                        vm.startFreestyleSession(context);
+                      } else {
+                        await vm.save();
+                        if (context.mounted) context.pop();
+                      }
                     },
                   ),
                 ),

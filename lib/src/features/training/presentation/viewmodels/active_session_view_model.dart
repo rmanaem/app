@@ -1,17 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:starter_app/src/features/training/presentation/pages/session_summary_page.dart';
+import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
+import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
 
 /// ViewModel driving the Active Session experience.
 class ActiveSessionViewModel extends ChangeNotifier {
   /// Creates an active session view model.
-  ActiveSessionViewModel({required String workoutId}) {
-    // ignore: discarded_futures - initialization logic in constructor
-    _loadSession(workoutId);
+  ActiveSessionViewModel({
+    String? workoutId,
+    DraftWorkout? adHocWorkout,
+  }) {
+    if (adHocWorkout != null) {
+      _initAdHocSession(adHocWorkout);
+    } else if (workoutId != null) {
+      unawaited(_loadSession(workoutId));
+    }
   }
 
   bool _isLoading = true;
+  String _sessionName = 'Workout'; // Track the name
 
   // Session Timer (Total elapsed time)
   Timer? _sessionTicker;
@@ -28,6 +36,52 @@ class ActiveSessionViewModel extends ChangeNotifier {
   int? _activeRestSetIndex;
 
   List<Map<String, dynamic>> _exercises = [];
+
+  void _initAdHocSession(DraftWorkout workout) {
+    _isLoading = true;
+    _sessionName = workout.name; // Capture name
+    notifyListeners();
+
+    _exercises = workout.exercises.map((e) {
+      final setsCount = e['sets'] is int
+          ? e['sets'] as int
+          : int.tryParse(e['sets'].toString()) ?? 3;
+      final weight = e['weight'] is num
+          ? (e['weight'] as num).toDouble()
+          : double.tryParse(e['weight'].toString()) ?? 20.0;
+      final reps = e['reps'] is int
+          ? e['reps'] as int
+          : int.tryParse(e['reps'].toString()) ?? 10;
+      final rpe = e['rpe'] is num
+          ? (e['rpe'] as num).toDouble()
+          : double.tryParse(e['rpe'].toString()) ?? 8.0;
+
+      final sets = List.generate(
+        setsCount,
+        (index) => <String, dynamic>{
+          'weight': weight,
+          'targetWeight': weight,
+          'reps': reps,
+          'targetReps': reps,
+          'rpe': rpe,
+          'targetRpe': rpe,
+          'done': false,
+        },
+      );
+
+      return {
+        'name': e['name'],
+        'muscle': e['muscle'],
+        'note': e['notes'] ?? '',
+        'rest': e['rest'],
+        'sets': sets,
+      };
+    }).toList();
+
+    _isLoading = false;
+    _startSessionTimer();
+    notifyListeners();
+  }
 
   /// Whether the session is currently loading.
   bool get isLoading => _isLoading;
@@ -62,8 +116,9 @@ class ActiveSessionViewModel extends ChangeNotifier {
     await Future<void>.delayed(const Duration(milliseconds: 500));
 
     // MOCK DATA: Separating Targets vs Actuals
+    _sessionName = 'Upper Body Power'; // Mock name
     // 'weight' = Actual (User Input)
-    // 'targetWeight' = Plan (Read Only Context)
+    // 'targetWeight' = Plan
     _exercises = [
       {
         'name': 'Bench Press (Barbell)',
@@ -139,8 +194,8 @@ class ActiveSessionViewModel extends ChangeNotifier {
     });
   }
 
-  /// Calculates the session result and returns it.
-  SessionResult finishSession() {
+  /// Finishes the session and returns a [CompletedWorkout] entity.
+  CompletedWorkout finishSession() {
     _sessionTicker?.cancel();
     _restTicker?.cancel();
 
@@ -159,11 +214,15 @@ class ActiveSessionViewModel extends ChangeNotifier {
       }
     }
 
-    return SessionResult(
+    return CompletedWorkout(
+      id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate ID
+      name: _sessionName,
+      completedAt: DateTime.now(),
       durationSeconds: _sessionDurationSeconds,
-      totalVolume: totalVolume,
+      totalVolumeKg: totalVolume,
       totalSets: completedSets,
-      prCount: 1, // Mocked for "Victory" feeling
+      prCount: 1, // Mocked logic
+      exerciseCount: _exercises.length,
     );
   }
 
