@@ -10,6 +10,7 @@ class DraftProgram {
     required this.split,
     required this.schedule,
     required this.workouts,
+    this.description = '',
   });
 
   /// Unique identifier for the draft.
@@ -17,6 +18,9 @@ class DraftProgram {
 
   /// Program name.
   final String name;
+
+  /// Program description.
+  final String description;
 
   /// Selected split type.
   final ProgramSplit split;

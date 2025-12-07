@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,12 +31,17 @@ import 'package:starter_app/src/features/today/domain/usecases/get_current_plan.
 import 'package:starter_app/src/features/today/presentation/pages/today_page.dart';
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/program_builder_repository_fake.dart';
+import 'package:starter_app/src/features/training/data/repositories_impl/program_repository_fake.dart';
 import 'package:starter_app/src/features/training/data/repositories_impl/training_overview_repository_fake.dart';
+import 'package:starter_app/src/features/training/domain/repositories/program_repository.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/pages/active_session_page.dart';
+import 'package:starter_app/src/features/training/presentation/pages/program_detail_page.dart';
+import 'package:starter_app/src/features/training/presentation/pages/program_library_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/session_summary_page.dart';
 import 'package:starter_app/src/features/training/presentation/pages/training_page.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/active_session_view_model.dart';
+import 'package:starter_app/src/features/training/presentation/viewmodels/program_library_view_model.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/training_overview_view_model.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_selection_page.dart';
@@ -374,6 +380,62 @@ class App extends StatelessWidget {
                 },
           ),
         ),
+        GoRoute(
+          path: '/training/builder/structure/:programId',
+          parentNavigatorKey: rootNavigatorKey,
+          pageBuilder: (context, state) {
+            final programId = state.pathParameters['programId'];
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              fullscreenDialog: true,
+              child: ChangeNotifierProvider(
+                create: (context) {
+                  final vm = ProgramStructureViewModel(
+                    context.read<ProgramBuilderRepository>(),
+                  );
+                  // Trigger load immediately
+                  if (programId != null) {
+                    unawaited(vm.loadProgram(programId));
+                  }
+                  return vm;
+                },
+                child: const ProgramStructurePage(),
+              ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    const begin = Offset(0, 1);
+                    const end = Offset.zero;
+                    const curve = Curves.easeOutQuint;
+                    final tween = Tween(begin: begin, end: end).chain(
+                      CurveTween(curve: curve),
+                    );
+                    return SlideTransition(
+                      position: animation.drive(tween),
+                      child: child,
+                    );
+                  },
+            );
+          },
+        ),
+        GoRoute(
+          path: '/training/program/:programId',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) {
+            final programId = state.pathParameters['programId']!;
+            return ProgramDetailPage(programId: programId);
+          },
+        ),
+        GoRoute(
+          path: '/training/library',
+          builder: (context, state) {
+            return ChangeNotifierProvider(
+              create: (context) => ProgramLibraryViewModel(
+                context.read<ProgramRepository>(),
+              ),
+              child: const ProgramLibraryPage(),
+            );
+          },
+        ),
       ],
     );
 
@@ -394,11 +456,16 @@ class App extends StatelessWidget {
         Provider<GetCurrentPlan>(
           create: (_) => const GetCurrentPlan(PlanRepositoryFake()),
         ),
+        Provider<ProgramRepository>(
+          create: (_) => ProgramRepositoryFake(),
+        ),
         Provider<TrainingOverviewRepository>(
           create: (_) => const TrainingOverviewRepositoryFake(),
         ),
         Provider<ProgramBuilderRepository>(
-          create: (_) => ProgramBuilderRepositoryFake(),
+          create: (context) => ProgramBuilderRepositoryFake(
+            programRepository: context.read<ProgramRepository>(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (context) => OnboardingVm(context.read<AnalyticsService>()),

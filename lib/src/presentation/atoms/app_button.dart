@@ -11,6 +11,9 @@ class AppButton extends StatelessWidget {
     this.leading,
     this.isPrimary = false,
     this.isLoading = false,
+    this.backgroundColor,
+    this.foregroundColor,
+    this.borderColor,
     super.key,
   });
 
@@ -32,20 +35,29 @@ class AppButton extends StatelessWidget {
   /// Whether to display the loading spinner.
   final bool isLoading;
 
+  /// Optional override for background color.
+  final Color? backgroundColor;
+
+  /// Optional override for content color (text/icon).
+  final Color? foregroundColor;
+
+  /// Optional override for border color.
+  final Color? borderColor;
+
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).extension<AppColors>()!;
     final isDisabled = onTap == null;
 
-    final backgroundColor = isDisabled
-        ? c.surface
-        : (isPrimary ? c.accent : c.surface);
-    final borderColor = isDisabled
-        ? c.borderIdle
-        : (isPrimary ? c.accent : c.borderIdle);
-    final foregroundColor = isDisabled
-        ? c.inkSubtle
-        : (isPrimary ? c.bg : c.ink);
+    final effectiveBackgroundColor =
+        backgroundColor ??
+        (isDisabled ? c.surface : (isPrimary ? c.accent : c.surface));
+    final effectiveBorderColor =
+        borderColor ??
+        (isDisabled ? c.borderIdle : (isPrimary ? c.accent : c.borderIdle));
+    final effectiveForegroundColor =
+        foregroundColor ??
+        (isDisabled ? c.inkSubtle : (isPrimary ? c.bg : c.ink));
 
     return Material(
       color: Colors.transparent,
@@ -59,13 +71,15 @@ class AppButton extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           height: 56,
           decoration: BoxDecoration(
-            color: backgroundColor,
+            color: effectiveBackgroundColor,
             borderRadius: BorderRadius.circular(100),
-            border: Border.all(color: borderColor),
+            border: Border.all(color: effectiveBorderColor),
             boxShadow: (isPrimary && !isDisabled)
                 ? [
                     BoxShadow(
-                      color: c.accent.withValues(alpha: 0.1),
+                      color: (backgroundColor ?? c.accent).withValues(
+                        alpha: 0.1,
+                      ),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -79,7 +93,7 @@ class AppButton extends StatelessWidget {
                   width: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: foregroundColor,
+                    color: effectiveForegroundColor,
                   ),
                 )
               : Row(
@@ -92,7 +106,7 @@ class AppButton extends StatelessWidget {
                     ] else if (icon != null) ...[
                       Icon(
                         icon,
-                        color: foregroundColor,
+                        color: effectiveForegroundColor,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -100,7 +114,7 @@ class AppButton extends StatelessWidget {
                     Text(
                       label,
                       style: TextStyle(
-                        color: foregroundColor,
+                        color: effectiveForegroundColor,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1,

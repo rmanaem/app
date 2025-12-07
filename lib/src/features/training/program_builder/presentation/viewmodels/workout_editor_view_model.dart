@@ -52,9 +52,13 @@ class WorkoutEditorViewModel extends ChangeNotifier {
           ),
         );
 
-        // In a real app, we would load existing exercises from the draft here.
-        // For now, we seed mock data if empty.
-        if (_exercises.isEmpty) {
+        // Load existing exercises from draft if available
+        if (_workout!.exercises.isNotEmpty) {
+          _exercises
+            ..clear()
+            ..addAll(_workout!.exercises);
+        } else if (_exercises.isEmpty) {
+          // Otherwise seed mock data
           _exercises.addAll(_seedMockExercises(_workout!.name));
         }
 
@@ -193,5 +197,22 @@ class WorkoutEditorViewModel extends ChangeNotifier {
     } on Exception catch (e) {
       debugPrint('Navigation failed: $e');
     }
+  }
+
+  /// Saves the current workout state to the repository.
+  Future<void> save() async {
+    if (_workout == null) return;
+
+    final updated = DraftWorkout(
+      id: _workout!.id,
+      name: _workout!.name,
+      description: _workout!.description,
+      exercises: List.from(_exercises),
+    );
+
+    // Optimistic update local
+    _workout = updated;
+
+    await _repository.updateWorkout(_workoutId, updated);
   }
 }

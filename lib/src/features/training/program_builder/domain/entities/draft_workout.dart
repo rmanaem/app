@@ -5,6 +5,7 @@ class DraftWorkout {
     required this.id,
     required this.name,
     required this.description,
+    this.exercises = const [],
   });
 
   /// Unique identifier for the workout.
@@ -15,4 +16,7 @@ class DraftWorkout {
 
   /// Short description of focus areas.
   final String description;
+
+  /// List of exercises in this workout (persisted as JSON-like maps for now).
+  final List<Map<String, dynamic>> exercises;
 }

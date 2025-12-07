@@ -31,7 +31,10 @@ class WorkoutEditorPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colors.ink),
-          onPressed: () => context.pop(),
+          onPressed: () async {
+            await vm.save();
+            if (context.mounted) context.pop();
+          },
         ),
         title: Column(
           children: [
@@ -136,7 +139,10 @@ class WorkoutEditorPage extends StatelessWidget {
                   child: AppButton(
                     label: 'CONFIRM WORKOUT',
                     isPrimary: true,
-                    onTap: () => context.pop(),
+                    onTap: () async {
+                      await vm.save();
+                      if (context.mounted) context.pop();
+                    },
                   ),
                 ),
               ],

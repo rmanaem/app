@@ -37,7 +37,7 @@ class TrainingPage extends StatelessWidget {
         onSelectDate: vm.onSelectDate,
         onStartNextWorkout: vm.onStartNextWorkout,
         onOpenLastWorkout: vm.onOpenLastWorkout,
-        onViewProgram: vm.onViewProgram,
+        onViewProgram: () => context.push('/training/library'),
         onCreateProgram: () => context.push('/training/builder'),
         onViewHistory: vm.onViewHistory,
       );

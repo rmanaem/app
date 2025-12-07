@@ -75,11 +75,14 @@ class ProgramStructurePage extends StatelessWidget {
                           isRestDay: !dayActive,
                           workout: workout,
                           onTap: workout != null
-                              ? () => unawaited(
-                                  context.push(
+                              ? () async {
+                                  await context.push(
                                     '/training/builder/editor/${workout.id}',
-                                  ),
-                                )
+                                  );
+                                  if (context.mounted) {
+                                    unawaited(vm.refresh());
+                                  }
+                                }
                               : null,
                         );
                       }),

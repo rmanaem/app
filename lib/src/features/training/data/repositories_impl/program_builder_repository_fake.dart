@@ -1,3 +1,4 @@
+import 'package:starter_app/src/features/training/domain/repositories/program_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_program.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/program_split.dart';
@@ -6,6 +7,13 @@ import 'package:uuid/uuid.dart';
 
 /// Fake repository that seeds a draft program in memory.
 class ProgramBuilderRepositoryFake implements ProgramBuilderRepository {
+  /// Creates a fake builder repository.
+  ///
+  /// Optionally injected with a [ProgramRepository] to fetch existing programs.
+  ProgramBuilderRepositoryFake({ProgramRepository? programRepository})
+    : _programRepository = programRepository;
+
+  final ProgramRepository? _programRepository;
   DraftProgram? _currentDraft;
 
   @override
@@ -33,6 +41,81 @@ class ProgramBuilderRepositoryFake implements ProgramBuilderRepository {
   Future<DraftProgram?> getCurrentDraft() async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     return _currentDraft;
+  }
+
+  @override
+  Future<DraftProgram?> getProgramById(String id) async {
+    // 1. Check if it's the current working draft
+    if (_currentDraft?.id == id) {
+      return _currentDraft;
+    }
+
+    // 2. Try fetching from the main program repository
+    if (_programRepository != null) {
+      final existingProgram = await _programRepository.getProgramDetails(id);
+      if (existingProgram != null) {
+        // Set this as the working draft
+        _currentDraft = existingProgram;
+        return existingProgram;
+      }
+    }
+
+    // 3. Fallback to mock data for 'p1' (if not found in repo)
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+
+    if (id == 'p1') {
+      return const DraftProgram(
+        id: 'p1',
+        name: 'Winter Bulk',
+        split: ProgramSplit.ppl,
+        schedule: {
+          0: true,
+          1: true,
+          2: true,
+          3: false,
+          4: true,
+          5: true,
+          6: false,
+        },
+        workouts: [
+          DraftWorkout(id: 'w1', name: 'Push A', description: 'C,S,T'),
+          DraftWorkout(id: 'w2', name: 'Pull A', description: 'B,RD,Bi'),
+          DraftWorkout(id: 'w3', name: 'Legs A', description: 'Q,H,C'),
+        ],
+      );
+    }
+    return null;
+  }
+
+  @override
+  Future<void> updateWorkout(String workoutId, DraftWorkout workout) async {
+    if (_currentDraft == null) return;
+
+    final newWorkouts = _currentDraft!.workouts.map((w) {
+      return w.id == workoutId ? workout : w;
+    }).toList();
+
+    _currentDraft = DraftProgram(
+      id: _currentDraft!.id,
+      name: _currentDraft!.name,
+      split: _currentDraft!.split,
+      schedule: _currentDraft!.schedule,
+      workouts: newWorkouts,
+      description: _currentDraft!.description,
+    );
+  }
+
+  @override
+  Future<void> publishProgram(DraftProgram draft) async {
+    // Sync current draft if it matches
+    if (_currentDraft?.id == draft.id) {
+      _currentDraft = draft;
+    }
+
+    // Call main repo update
+    if (_programRepository != null) {
+      await _programRepository.updateProgram(draft);
+    }
   }
 
   List<DraftWorkout> _generateDefaultsForSplit(ProgramSplit split) {
