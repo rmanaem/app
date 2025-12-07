@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
 import 'package:starter_app/src/features/training/domain/entities/training_overview.dart';
+import 'package:starter_app/src/features/training/domain/entities/workout_summary.dart';
 import 'package:starter_app/src/features/training/domain/repositories/history_repository.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/active_session_view_model.dart';
@@ -24,6 +25,12 @@ class MockHistoryRepository implements HistoryRepository {
 class MockTrainingOverviewRepository implements TrainingOverviewRepository {
   String? completedWorkoutId;
   String? markedAsCompletedId;
+  WorkoutSummary? latestCompletedWorkout;
+
+  @override
+  Future<TrainingOverview> getOverviewForWeek(DateTime anchorDate) async {
+    throw UnimplementedError();
+  }
 
   @override
   Future<void> markWorkoutAsCompleted(
@@ -35,12 +42,12 @@ class MockTrainingOverviewRepository implements TrainingOverviewRepository {
   }
 
   @override
-  Future<TrainingOverview> getOverviewForWeek(DateTime anchorDate) async {
-    throw UnimplementedError();
-  }
+  Future<void> refresh() async {}
 
   @override
-  Future<void> refresh() async {}
+  Future<void> setLatestCompletedWorkout(WorkoutSummary workout) async {
+    latestCompletedWorkout = workout;
+  }
 }
 
 void main() {

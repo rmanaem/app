@@ -47,7 +47,10 @@ class TrainingPage extends StatelessWidget {
           }
         },
         onViewHistory: () => context.push('/training/history'),
-        onQuickStart: () => context.push('/training/quick-start'),
+        onQuickStart: () {
+          // ignore: discarded_futures - fire and forget
+          vm.onStartFreestyle(context);
+        },
       );
     }
 
@@ -112,7 +115,7 @@ class _TrainingContent extends StatelessWidget {
             onSelect: onSelectDate,
           ),
           SizedBox(height: spacing.xxl),
-          if (state.hasProgram)
+          if (state.hasProgram) ...[
             if (state.nextWorkout != null)
               if (isNextCompleted)
                 _CompletedSessionMainCard(
@@ -135,8 +138,8 @@ class _TrainingContent extends StatelessWidget {
                   onStart: () => onStartNextWorkout(context),
                 )
             else
-              const _RestDayCard()
-          else
+              const _RestDayCard(),
+          ] else
             _GhostProgramCard(
               onCreate: onCreateProgram,
               onQuickStart: onQuickStart,
@@ -156,6 +159,7 @@ class _TrainingContent extends StatelessWidget {
               onViewProgram: onViewProgram,
               onHistory: onViewHistory,
               onEdit: onCreateProgram,
+              onQuickStart: onQuickStart,
             ),
           ],
           SizedBox(height: spacing.xxl),
@@ -500,7 +504,7 @@ class _SmartWorkoutCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Icon(Icons.bolt, color: colors.accent, size: 24),
+                Icon(Icons.fitness_center, color: colors.accent, size: 24),
               ],
             ),
           ),
@@ -623,29 +627,60 @@ class _LastSessionTile extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
 
+    // Check if the workout was completed today
+    // We can assume 'completedAt' or similar data is used to populate this
+    // summary. However, WorkoutSummary doesn't strictly have a DateTime field
+    // visible here yet found in the interface. Ideally, we'd check
+    // `workout.completedAt` if available, or rely on `dayLabel`.
+    // The fake repo populates dayLabel. Let's assume for now we can infer from
+    // `dayLabel` == 'TODAY'
+    // or if we need to check the ID/Metadata.
+    // But wait, the fake repo logic for "Implicit Rolling" said:
+    // "If a Freestyle workout was done Today: Shows COMPLETED TODAY".
+
+    // If [timeLabel] says "DONE" or [dayLabel] says "TODAY" and it's
+    // completed? Actually, let's look at what the Fake Repo provides for the
+    // Context Tile. The Fake Repo returns `lastWorkout`.
+    // If we want "COMPLETED TODAY", the Repo should probably set the label to
+    // "TODAY".
+
+    final isToday = workout.dayLabel == 'TODAY';
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colors.surfaceHighlight.withValues(alpha: 0.5),
+          // Use a slightly more active background if it's today?
+          color: isToday
+              ? colors.surfaceHighlight.withValues(alpha: 0.8)
+              : colors.surfaceHighlight.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.borderIdle.withValues(alpha: 0.5)),
+          border: Border.all(
+            color: isToday
+                ? colors.accent.withValues(alpha: 0.3)
+                : colors.borderIdle.withValues(alpha: 0.5),
+          ),
         ),
         child: Row(
           children: [
-            Icon(Icons.history, color: colors.inkSubtle, size: 20),
+            Icon(
+              isToday ? Icons.check_circle : Icons.history,
+              color: isToday ? colors.accent : colors.inkSubtle,
+              size: 20,
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'PREVIOUS SESSION',
+                    isToday ? 'COMPLETED TODAY' : 'PREVIOUS SESSION',
                     style: typography.caption.copyWith(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
+                      color: isToday ? colors.accent : colors.inkSubtle,
                     ),
                   ),
                   Text(
@@ -658,10 +693,12 @@ class _LastSessionTile extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              '48h ago',
-              style: typography.caption.copyWith(color: colors.inkSubtle),
-            ),
+            if (!isToday)
+              Text(
+                '48h ago',
+                // TODO(app-team): Real relative time
+                style: typography.caption.copyWith(color: colors.inkSubtle),
+              ),
           ],
         ),
       ),
@@ -710,34 +747,60 @@ class _ProgramControls extends StatelessWidget {
     required this.onViewProgram,
     required this.onHistory,
     required this.onEdit,
+    required this.onQuickStart,
   });
 
   final VoidCallback onViewProgram;
   final VoidCallback onHistory;
   final VoidCallback onEdit;
+  final VoidCallback onQuickStart;
 
   @override
   Widget build(BuildContext context) {
     final spacing = Theme.of(context).extension<AppSpacing>()!;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+
+    // Using a Column of two Rows to create a 2x2 Grid
+    // Using Expanded ensures buttons are equal width
+    return Column(
       children: [
-        _ControlPill(
-          label: 'Program',
-          icon: Icons.grid_view,
-          onTap: onViewProgram,
+        Row(
+          children: [
+            Expanded(
+              child: _ControlPill(
+                label: 'Library', // "Program" -> Library (Clearer)
+                icon: Icons.grid_view,
+                onTap: onViewProgram,
+              ),
+            ),
+            SizedBox(width: spacing.sm),
+            Expanded(
+              child: _ControlPill(
+                label: 'History',
+                icon: Icons.history,
+                onTap: onHistory,
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: spacing.sm),
-        _ControlPill(
-          label: 'History',
-          icon: Icons.history,
-          onTap: onHistory,
-        ),
-        SizedBox(width: spacing.sm),
-        _ControlPill(
-          label: 'Edit',
-          icon: Icons.tune,
-          onTap: onEdit,
+        SizedBox(height: spacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _ControlPill(
+                label: 'Freestyle',
+                icon: Icons.bolt,
+                onTap: onQuickStart,
+              ),
+            ),
+            SizedBox(width: spacing.sm),
+            Expanded(
+              child: _ControlPill(
+                label: 'Structure', // "Edit" -> Structure (Clearer)
+                icon: Icons.tune,
+                onTap: onEdit,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -764,12 +827,15 @@ class _ControlPill extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: colors.borderIdle),
         ),
+        // Changed to MainAxisAlignment.center to handle Expanded width
+        // gracefully
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 16, color: colors.ink),
             const SizedBox(width: 8),

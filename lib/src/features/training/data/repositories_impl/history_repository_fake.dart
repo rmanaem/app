@@ -29,8 +29,9 @@ class HistoryRepositoryFake implements HistoryRepository {
 
   @override
   Future<void> saveWorkout(CompletedWorkout workout) async {
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    _workouts.add(workout);
+    _workouts
+      ..removeWhere((w) => w.id == workout.id)
+      ..add(workout);
   }
 
   List<CompletedWorkout> _initialMockWorkouts() {

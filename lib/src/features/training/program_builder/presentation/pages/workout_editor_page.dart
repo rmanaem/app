@@ -147,7 +147,7 @@ class WorkoutEditorPage extends StatelessWidget {
                     isPrimary: true,
                     onTap: () async {
                       if (isQuickStart) {
-                        vm.startFreestyleSession(context);
+                        await vm.startFreestyleSession(context);
                       } else {
                         await vm.save();
                         if (context.mounted) context.pop();

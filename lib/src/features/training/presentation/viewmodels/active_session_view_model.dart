@@ -1,7 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
+import 'package:starter_app/src/features/training/domain/entities/workout_summary.dart';
 import 'package:starter_app/src/features/training/domain/repositories/history_repository.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
@@ -25,6 +25,7 @@ class ActiveSessionViewModel extends ChangeNotifier {
 
   void _initAdHocSession(DraftWorkout workout) {
     _isLoading = true;
+    _isFreestyle = true;
     _sessionName = workout.name; // Capture name
     notifyListeners();
 
@@ -258,6 +259,8 @@ class ActiveSessionViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> get exercises => _exercises;
   // ... (rest of class)
 
+  bool _isFreestyle = false;
+
   /// Saves the session to the repository.
   Future<void> saveSession(CompletedWorkout workout) async {
     // 1. Persist the actual rich data to history
@@ -266,10 +269,28 @@ class ActiveSessionViewModel extends ChangeNotifier {
     }
 
     // 2. Mark the plan item as completed, linking the ID
-    if (_repository != null) {
+    // ONLY if this is NOT a freestyle session.
+    if (!_isFreestyle && _repository != null) {
       await _repository.markWorkoutAsCompleted(
         'next-1', // Assuming ID 'next-1' for the plan item being completed
         completedWorkoutId: workout.id,
+      );
+    }
+
+    // 3. If it IS freestyle, we notify the repo to update the "latest
+    // completed" pointer for the dashboard context tile without advancing the
+    // plan.
+    if (_isFreestyle && _repository != null) {
+      await _repository.setLatestCompletedWorkout(
+        // Linter: remove ! because checked above
+        WorkoutSummary(
+          id: workout.id,
+          name: workout.name,
+          dayLabel: 'TODAY', // Explicitly mark as completed today
+          timeLabel: '${workout.durationSeconds ~/ 60} min',
+          meta: '${workout.exerciseCount} exercises',
+          isCompleted: true,
+        ),
       );
     }
   }

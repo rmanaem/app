@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -217,7 +218,7 @@ class WorkoutEditorViewModel extends ChangeNotifier {
   }
 
   /// Launches a freestyle session with the current exercises.
-  void startFreestyleSession(BuildContext context) {
+  Future<void> startFreestyleSession(BuildContext context) async {
     if (_workout == null && _exercises.isEmpty) return;
 
     // Create a temporary draft for the session
@@ -229,11 +230,22 @@ class WorkoutEditorViewModel extends ChangeNotifier {
     );
 
     // Navigate directly to Active Session, passing the object
-    unawaited(
-      context.push(
-        '/training/session/freestyle',
-        extra: workout,
-      ),
+    // Wait for result to handle summary flow
+    final result = await context.push<Object?>(
+      '/training/session/freestyle',
+      extra: workout,
     );
+
+    // If session completed successfully...
+    if (result is CompletedWorkout && context.mounted) {
+      // 1. Show Summary
+      await context.push('/training/session/summary', extra: result);
+
+      // 2. After Summary closes (user returns to dashboard),
+      // close the editor to return to the calling page (Dashboard)
+      if (context.mounted) {
+        context.pop(result);
+      }
+    }
   }
 }

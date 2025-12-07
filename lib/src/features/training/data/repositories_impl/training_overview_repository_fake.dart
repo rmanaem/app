@@ -76,15 +76,19 @@ class TrainingOverviewRepositoryFake implements TrainingOverviewRepository {
             meta: '3 exercises · ~45 min',
           );
 
-    // The "Last Workout" remains the ACTUAL previous session (yesterday etc)
-    const lastWorkout = WorkoutSummary(
-      id: 'last-1',
-      name: 'Lower B',
-      dayLabel: 'Mon',
-      timeLabel: '42 min',
-      meta: '4 exercises · 50 min',
-      notePreview: 'Focus on bracing on squats.',
-    );
+    // The "Last Workout" logic for Implicit Rolling:
+    // If we have a _latestCompletedWorkout (from a freestyle update), use it.
+    // Otherwise fallback to the mock static "Lower B".
+    final lastWorkout =
+        _latestCompletedWorkout ??
+        const WorkoutSummary(
+          id: 'last-1',
+          name: 'Lower B',
+          dayLabel: 'Mon',
+          timeLabel: '42 min',
+          meta: '4 exercises · 50 min',
+          notePreview: 'Focus on bracing on squats.',
+        );
 
     return TrainingOverview(
       anchorDate: today,
@@ -103,6 +107,8 @@ class TrainingOverviewRepositoryFake implements TrainingOverviewRepository {
     await Future<void>.delayed(Duration.zero);
   }
 
+  static WorkoutSummary? _latestCompletedWorkout;
+
   @override
   Future<void> markWorkoutAsCompleted(
     String workoutId, {
@@ -111,5 +117,13 @@ class TrainingOverviewRepositoryFake implements TrainingOverviewRepository {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     _isNextWorkoutCompleted = true;
     _lastCompletedWorkoutId = completedWorkoutId;
+  }
+
+  // New method to manually inject the context tile update (for Freestyle)
+  // This allows the dashboard to reflect "Done Today" without advancing the
+  // plan.
+  @override
+  Future<void> setLatestCompletedWorkout(WorkoutSummary workout) async {
+    _latestCompletedWorkout = workout;
   }
 }

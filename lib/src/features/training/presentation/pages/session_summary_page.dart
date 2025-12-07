@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
+import 'package:starter_app/src/features/training/domain/repositories/history_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/widgets/atoms/note_input_tile.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
 import 'package:starter_app/src/presentation/atoms/app_text_field.dart';
@@ -136,13 +139,13 @@ class _SessionSummaryPageState extends State<SessionSummaryPage> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: colors.accent.withValues(alpha: 0.1),
+                          color: colors.ink,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.check,
                           size: 48,
-                          color: colors.accent,
+                          color: colors.bg,
                         ),
                       ),
                     ),
@@ -232,17 +235,21 @@ class _SessionSummaryPageState extends State<SessionSummaryPage> {
                       label: 'RETURN TO DASHBOARD',
                       isPrimary: true,
                       onTap: () {
-                        // TODO(User): Here is where you would call the
-                        // repository to save.
-                        // final finalWorkout = widget.workout.copyWith(
-                        //   note: _noteController.text,
-                        // );
-                        // context.read<HistoryRepository>()
-                        //     .saveWorkout(finalWorkout);
+                        // Save any notes to the repository
+                        final finalWorkout = widget.workout.copyWith(
+                          note: _noteController.text,
+                        );
+                        unawaited(
+                          context.read<HistoryRepository>().saveWorkout(
+                            finalWorkout,
+                          ),
+                        );
 
                         // Return to dashboard (popping ensures the awaiting VM
                         // reloads)
-                        context.pop();
+                        if (context.mounted) {
+                          context.pop();
+                        }
                       },
                     ),
                     const SizedBox(height: 20),

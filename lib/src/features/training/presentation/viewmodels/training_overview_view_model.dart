@@ -88,6 +88,28 @@ class TrainingOverviewViewModel extends ChangeNotifier {
     }
   }
 
+  /// Triggered when the user starts a freestyle/quick start workout.
+  Future<void> onStartFreestyle(BuildContext context) async {
+    try {
+      // 1. Open the Quick Start / Editor flow
+      // We pass 'extra' or just use the route. The result will be passed back
+      // if the session completes successfully and wraps up.
+      final result = await context.push<Object?>('/training/quick-start');
+
+      // 2. If we got a CompletedWorkout back, it means the entire flow
+      // (Editor -> Active -> Summary) finished and we are back at Dashboard.
+      if (result is CompletedWorkout) {
+        // We might want to show a toast or just reload.
+        // The summary page was already shown in the flow.
+      }
+
+      // 3. Always reload to ensure "Completed Today" card updates
+      await load();
+    } on Exception catch (_) {
+      // Handle error
+    }
+  }
+
   /// Triggered when the user opens the last workout summary.
   void onOpenLastWorkout(BuildContext context) {
     if (_state.lastWorkout != null) {
