@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_layout.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
@@ -85,6 +86,7 @@ class _HistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
     final dayNum = DateFormat('d').format(workout.completedAt);
     final dayName = DateFormat('E').format(workout.completedAt).toUpperCase();
@@ -99,7 +101,7 @@ class _HistoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.borderIdle),
+          border: Border.all(color: colors.borderIdle, width: layout.strokeMd),
         ),
         child: Column(
           children: [

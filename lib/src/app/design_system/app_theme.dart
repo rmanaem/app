@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_layout.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 
@@ -22,6 +23,7 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
 
   final type = AppTypography.from(tokens);
   const spacing = AppSpacing.base;
+  const layout = AppLayout.base;
 
   return base.copyWith(
     colorScheme: colorScheme,
@@ -110,6 +112,7 @@ ThemeData makeTheme(AppColors tokens, {required bool dark}) {
       tokens,
       spacing,
       type,
+      layout,
     ],
   );
 }

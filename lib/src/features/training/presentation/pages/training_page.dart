@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_layout.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/training/domain/entities/training_day_overview.dart';
@@ -382,6 +383,7 @@ class _DayKey extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
     var statusColor = Colors.transparent;
     if (status == TrainingDayStatus.completed) statusColor = colors.accent;
@@ -400,7 +402,7 @@ class _DayKey extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isActive ? colors.borderActive : colors.borderIdle,
-            width: isActive ? 1.5 : 1,
+            width: isActive ? layout.strokeLg : layout.strokeMd,
           ),
           boxShadow: isActive
               ? [
@@ -459,12 +461,13 @@ class _SmartWorkoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.borderIdle),
+        border: Border.all(color: colors.borderIdle, width: layout.strokeLg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -534,6 +537,7 @@ class _GhostProgramCard extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
     final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
@@ -541,7 +545,7 @@ class _GhostProgramCard extends StatelessWidget {
         color: colors.bg,
         borderRadius: BorderRadius.circular(20),
 
-        border: Border.all(color: colors.borderIdle),
+        border: Border.all(color: colors.borderIdle, width: layout.strokeSm),
       ),
       child: Column(
         children: [
@@ -626,6 +630,7 @@ class _LastSessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
     // Check if the workout was completed today
     // We can assume 'completedAt' or similar data is used to populate this
@@ -661,6 +666,7 @@ class _LastSessionTile extends StatelessWidget {
             color: isToday
                 ? colors.accent.withValues(alpha: 0.3)
                 : colors.borderIdle.withValues(alpha: 0.5),
+            width: layout.strokeSm,
           ),
         ),
         child: Row(
@@ -713,13 +719,14 @@ class _RestDayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: colors.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.borderIdle),
+        border: Border.all(color: colors.borderIdle, width: layout.strokeSm),
       ),
       child: Center(
         child: Column(
@@ -822,6 +829,7 @@ class _ControlPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
     return InkWell(
       onTap: onTap,
@@ -830,7 +838,7 @@ class _ControlPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colors.borderIdle),
+          border: Border.all(color: colors.borderIdle, width: layout.strokeMd),
         ),
         // Changed to MainAxisAlignment.center to handle Expanded width
         // gracefully
