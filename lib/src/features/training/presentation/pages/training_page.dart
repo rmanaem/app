@@ -88,6 +88,9 @@ class _TrainingContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = Theme.of(context).extension<AppSpacing>()!;
 
+    // Check if the next workout is marked as completed
+    final isNextCompleted = state.nextWorkout?.isCompleted ?? false;
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -95,11 +98,14 @@ class _TrainingContent extends StatelessWidget {
           SizedBox(height: spacing.lg),
           const _TrainingHeader(dateLabel: 'MONDAY, DEC 12'),
           SizedBox(height: spacing.xl),
-          _VolumeGauge(
-            completed: state.completedWorkouts,
-            planned: state.plannedWorkouts,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _VolumeGauge(
+              completed: state.completedWorkouts,
+              planned: state.plannedWorkouts,
+            ),
           ),
-          SizedBox(height: spacing.xl),
+          SizedBox(height: spacing.lg),
           _WeekStrip(
             days: state.weekDays,
             selectedDate: state.selectedDate,
@@ -107,17 +113,36 @@ class _TrainingContent extends StatelessWidget {
           ),
           SizedBox(height: spacing.xxl),
           if (state.hasProgram)
-            state.nextWorkout != null
-                ? _SmartWorkoutCard(
-                    workout: state.nextWorkout!,
-                    onStart: () => onStartNextWorkout(context),
-                  )
-                : const _RestDayCard()
+            if (state.nextWorkout != null)
+              if (isNextCompleted)
+                _CompletedSessionMainCard(
+                  workout: state.nextWorkout!,
+                  onView: () {
+                    // Navigate to history detail for this specific completed
+                    // session. Since it's 'next-1', we assume history handles
+                    // it. For this task, I'll direct it to history via push
+                    // directly.
+                    unawaited(
+                      context.push(
+                        '/training/history/${state.nextWorkout!.id}',
+                      ),
+                    );
+                  },
+                )
+              else
+                _SmartWorkoutCard(
+                  workout: state.nextWorkout!,
+                  onStart: () => onStartNextWorkout(context),
+                )
+            else
+              const _RestDayCard()
           else
             _GhostProgramCard(
               onCreate: onCreateProgram,
               onQuickStart: onQuickStart,
             ),
+
+          // Always show the "Previous Session" tile if it exists
           if (state.hasProgram && state.lastWorkout != null) ...[
             SizedBox(height: spacing.lg),
             _LastSessionTile(
@@ -134,6 +159,82 @@ class _TrainingContent extends StatelessWidget {
             ),
           ],
           SizedBox(height: spacing.xxl),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompletedSessionMainCard extends StatelessWidget {
+  const _CompletedSessionMainCard({
+    required this.workout,
+    required this.onView,
+  });
+
+  final WorkoutSummary workout;
+  final VoidCallback onView;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.borderIdle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "TODAY'S SESSION",
+                      style: typography.caption.copyWith(
+                        color: colors.accent,
+                        letterSpacing: 2,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      workout.name,
+                      style: typography.display.copyWith(fontSize: 28),
+                    ),
+                    Text(
+                      workout.meta,
+                      style: typography.body.copyWith(color: colors.inkSubtle),
+                    ),
+                  ],
+                ),
+                Icon(Icons.check_circle, color: colors.accent, size: 24),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: AppButton(
+              label: 'VIEW DETAILS',
+              isPrimary: true, // Matches "Start Session" style
+              onTap: onView,
+            ),
+          ),
         ],
       ),
     );
@@ -541,7 +642,7 @@ class _LastSessionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'LAST COMPLETED',
+                    'PREVIOUS SESSION',
                     style: typography.caption.copyWith(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,

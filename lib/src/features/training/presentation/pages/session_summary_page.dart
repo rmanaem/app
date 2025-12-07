@@ -240,8 +240,9 @@ class _SessionSummaryPageState extends State<SessionSummaryPage> {
                         // context.read<HistoryRepository>()
                         //     .saveWorkout(finalWorkout);
 
-                        // For now, clear stack and go home
-                        context.go('/training');
+                        // Return to dashboard (popping ensures the awaiting VM
+                        // reloads)
+                        context.pop();
                       },
                     ),
                     const SizedBox(height: 20),

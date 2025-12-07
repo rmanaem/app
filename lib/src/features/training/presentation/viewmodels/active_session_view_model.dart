@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
+import 'package:starter_app/src/features/training/domain/repositories/history_repository.dart';
+import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/domain/entities/draft_workout.dart';
 
 /// ViewModel driving the Active Session experience.
@@ -10,32 +12,16 @@ class ActiveSessionViewModel extends ChangeNotifier {
   ActiveSessionViewModel({
     String? workoutId,
     DraftWorkout? adHocWorkout,
-  }) {
+    TrainingOverviewRepository? repository,
+    HistoryRepository? historyRepository,
+  }) : _repository = repository,
+       _historyRepository = historyRepository {
     if (adHocWorkout != null) {
       _initAdHocSession(adHocWorkout);
     } else if (workoutId != null) {
       unawaited(_loadSession(workoutId));
     }
   }
-
-  bool _isLoading = true;
-  String _sessionName = 'Workout'; // Track the name
-
-  // Session Timer (Total elapsed time)
-  Timer? _sessionTicker;
-  int _sessionDurationSeconds = 0;
-
-  // Rest Timer State
-  bool _isTimerActive = false;
-  int _restDurationSeconds = 90;
-  int _timerSeconds = 90;
-  int _timerTotalSeconds = 90;
-  Timer? _restTicker;
-
-  int? _activeRestExerciseIndex;
-  int? _activeRestSetIndex;
-
-  List<Map<String, dynamic>> _exercises = [];
 
   void _initAdHocSession(DraftWorkout workout) {
     _isLoading = true;
@@ -83,40 +69,13 @@ class ActiveSessionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Whether the session is currently loading.
-  bool get isLoading => _isLoading;
-
-  /// Whether the global timer is currently active.
-  bool get isTimerActive => _isTimerActive;
-
-  /// The duration of the rest timer in seconds.
-  int get restDurationSeconds => _restDurationSeconds;
-
-  /// The current value of the timer in seconds.
-  int get timerSeconds => _timerSeconds;
-
-  /// The total duration of the timer in seconds.
-  int get timerTotalSeconds => _timerTotalSeconds;
-
-  /// The total duration of the current session in seconds.
-  int get sessionDurationSeconds => _sessionDurationSeconds;
-
-  /// The index of the exercise currently associated with the rest timer.
-  int? get activeRestExerciseIndex => _activeRestExerciseIndex;
-
-  /// The index of the set currently associated with the rest timer.
-  int? get activeRestSetIndex => _activeRestSetIndex;
-
-  /// The list of exercises in the active session.
-  List<Map<String, dynamic>> get exercises => _exercises;
-
   Future<void> _loadSession(String workoutId) async {
     _isLoading = true;
     notifyListeners();
     await Future<void>.delayed(const Duration(milliseconds: 500));
 
     // MOCK DATA: Separating Targets vs Actuals
-    _sessionName = 'Upper Body Power'; // Mock name
+    _sessionName = 'Upper A'; // Mock name matches Dashboard
     // 'weight' = Actual (User Input)
     // 'targetWeight' = Plan
     _exercises = [
@@ -142,8 +101,6 @@ class ActiveSessionViewModel extends ChangeNotifier {
             'targetRpe': 8.0,
             'done': false,
           },
-          // Example of Deviation: User planned 100, but did 90 last time?
-          // Usually starts matched.
           {
             'weight': 100.0,
             'targetWeight': 100.0,
@@ -201,16 +158,40 @@ class ActiveSessionViewModel extends ChangeNotifier {
 
     var totalVolume = 0;
     var completedSets = 0;
+    final completedExercises = <Map<String, dynamic>>[];
 
     for (final ex in _exercises) {
       final sets = (ex['sets'] as List).cast<Map<String, dynamic>>();
+      final currentExerciseCompletedSets =
+          <Map<String, dynamic>>[]; // Scoped to exercise
+
       for (final s in sets) {
         if (s['done'] == true) {
           completedSets++;
           final weight = (s['weight'] as num).toDouble();
           final reps = (s['reps'] as num).toInt();
+          final rpe = (s['rpe'] as num).toDouble();
+
           totalVolume += (weight * reps).round();
+          currentExerciseCompletedSets.add({
+            'kg': weight,
+            'reps': reps,
+            'rpe': rpe,
+          });
         }
+      }
+
+      // Only add exercise if at least one set was completed (or should we show
+      // attempted?) For now, let's include it if there are completed sets to
+      // avoid empty cards, OR maybe we want to see what we skipped?
+      // The user complaint says "doesn't show the exercise and sets".
+      // Let's include it if completedSets is not empty.
+      if (currentExerciseCompletedSets.isNotEmpty) {
+        completedExercises.add({
+          'name': ex['name'],
+          'note': ex['note'],
+          'sets': currentExerciseCompletedSets,
+        });
       }
     }
 
@@ -222,8 +203,75 @@ class ActiveSessionViewModel extends ChangeNotifier {
       totalVolumeKg: totalVolume,
       totalSets: completedSets,
       prCount: 1, // Mocked logic
-      exerciseCount: _exercises.length,
+      exerciseCount: completedExercises.length,
+      exercises: completedExercises,
     );
+  }
+
+  final TrainingOverviewRepository? _repository;
+  final HistoryRepository? _historyRepository;
+
+  bool _isLoading = true;
+  String _sessionName = 'Workout'; // Track the name
+
+  // Session Timer (Total elapsed time)
+  Timer? _sessionTicker;
+  int _sessionDurationSeconds = 0;
+
+  // Rest Timer State
+  bool _isTimerActive = false;
+  int _restDurationSeconds = 90;
+  int _timerSeconds = 90;
+  int _timerTotalSeconds = 90;
+  Timer? _restTicker;
+
+  int? _activeRestExerciseIndex;
+  int? _activeRestSetIndex;
+
+  List<Map<String, dynamic>> _exercises = [];
+
+  /// Whether the session is currently loading.
+  bool get isLoading => _isLoading;
+
+  /// Whether the global timer is currently active.
+  bool get isTimerActive => _isTimerActive;
+
+  /// The duration of the rest timer in seconds.
+  int get restDurationSeconds => _restDurationSeconds;
+
+  /// The current value of the timer in seconds.
+  int get timerSeconds => _timerSeconds;
+
+  /// The total duration of the timer in seconds.
+  int get timerTotalSeconds => _timerTotalSeconds;
+
+  /// The total duration of the current session in seconds.
+  int get sessionDurationSeconds => _sessionDurationSeconds;
+
+  /// The index of the exercise currently associated with the rest timer.
+  int? get activeRestExerciseIndex => _activeRestExerciseIndex;
+
+  /// The index of the set currently associated with the rest timer.
+  int? get activeRestSetIndex => _activeRestSetIndex;
+
+  /// The list of exercises in the active session.
+  List<Map<String, dynamic>> get exercises => _exercises;
+  // ... (rest of class)
+
+  /// Saves the session to the repository.
+  Future<void> saveSession(CompletedWorkout workout) async {
+    // 1. Persist the actual rich data to history
+    if (_historyRepository != null) {
+      await _historyRepository.saveWorkout(workout);
+    }
+
+    // 2. Mark the plan item as completed, linking the ID
+    if (_repository != null) {
+      await _repository.markWorkoutAsCompleted(
+        'next-1', // Assuming ID 'next-1' for the plan item being completed
+        completedWorkoutId: workout.id,
+      );
+    }
   }
 
   /// Toggles the completion status of a set.

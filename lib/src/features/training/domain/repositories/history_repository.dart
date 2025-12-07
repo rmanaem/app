@@ -7,4 +7,7 @@ abstract class HistoryRepository {
 
   /// Returns a specific completed workout by [id].
   Future<CompletedWorkout?> getCompletedWorkoutById(String id);
+
+  /// Saves a completed workout to the history.
+  Future<void> saveWorkout(CompletedWorkout workout);
 }

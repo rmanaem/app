@@ -11,6 +11,7 @@ class WorkoutSummary {
     required this.timeLabel,
     required this.meta,
     this.notePreview,
+    this.isCompleted = false,
   });
 
   /// Unique identifier for linking to detail/log screens.
@@ -30,4 +31,7 @@ class WorkoutSummary {
 
   /// Optional preview of user notes from last session.
   final String? notePreview;
+
+  /// Whether this specific workout has been marked as completed.
+  final bool isCompleted;
 }

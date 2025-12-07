@@ -1,12 +1,63 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
+import 'package:starter_app/src/features/training/domain/entities/training_overview.dart';
+import 'package:starter_app/src/features/training/domain/repositories/history_repository.dart';
+import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/active_session_view_model.dart';
+
+// Mocks
+class MockHistoryRepository implements HistoryRepository {
+  CompletedWorkout? savedWorkout;
+
+  @override
+  Future<void> saveWorkout(CompletedWorkout workout) async {
+    savedWorkout = workout;
+  }
+
+  @override
+  Future<List<CompletedWorkout>> getHistory() async => [];
+
+  @override
+  Future<CompletedWorkout?> getCompletedWorkoutById(String id) async => null;
+}
+
+class MockTrainingOverviewRepository implements TrainingOverviewRepository {
+  String? completedWorkoutId;
+  String? markedAsCompletedId;
+
+  @override
+  Future<void> markWorkoutAsCompleted(
+    String workoutId, {
+    String? completedWorkoutId,
+  }) async {
+    markedAsCompletedId = workoutId;
+    this.completedWorkoutId = completedWorkoutId;
+  }
+
+  @override
+  Future<TrainingOverview> getOverviewForWeek(DateTime anchorDate) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> refresh() async {}
+}
 
 void main() {
   group('ActiveSessionViewModel', () {
     late ActiveSessionViewModel vm;
+    late MockHistoryRepository mockHistoryRepository;
+    late MockTrainingOverviewRepository mockTrainingOverviewRepository;
 
     setUp(() async {
-      vm = ActiveSessionViewModel(workoutId: '123');
+      mockHistoryRepository = MockHistoryRepository();
+      mockTrainingOverviewRepository = MockTrainingOverviewRepository();
+
+      vm = ActiveSessionViewModel(
+        workoutId: '123',
+        historyRepository: mockHistoryRepository,
+        repository: mockTrainingOverviewRepository,
+      );
       // Wait for mock data load
       await Future<void>.delayed(const Duration(milliseconds: 600));
     });
@@ -15,6 +66,85 @@ void main() {
       expect(vm.isLoading, false);
       expect(vm.exercises.length, 2);
       expect(vm.restDurationSeconds, 90);
+    });
+
+    // ... (existing tests)
+
+    test('saveSession saves to history and marks as completed', () async {
+      final workout = CompletedWorkout(
+        id: 'test-id',
+        name: 'Test Workout',
+        completedAt: DateTime.now(),
+        durationSeconds: 3600,
+        totalVolumeKg: 10000,
+        totalSets: 10,
+        prCount: 0,
+        exerciseCount: 5,
+      );
+
+      await vm.saveSession(workout);
+
+      // Verify History Repo called
+      expect(mockHistoryRepository.savedWorkout, workout);
+      // Ensure exercises are preserved if we passed them (though the test above
+      // creates the object manually)
+    });
+
+    test('finishSession maps exercises correctly', () {
+      // 1. Setup a session with some data
+      // (The VM starts with data from _loadSession in constructor, wait for it)
+      expect(vm.exercises.length, 2);
+
+      // 2. Mark some sets as done
+      vm
+        ..toggleSet(0, 0) // Ex 1, Set 1
+        ..toggleSet(1, 0); // Ex 2, Set 1
+
+      // 3. Finish
+      final result = vm.finishSession();
+
+      // 4. Verify
+      expect(result.exerciseCount, 2);
+      expect(result.exercises.length, 2);
+
+      // Check first exercise mapping
+      final ex1 = result.exercises[0];
+      expect(ex1['name'], 'Bench Press (Barbell)');
+      expect((ex1['sets'] as List).length, 1);
+
+      final firstSet = (ex1['sets'] as List)[0] as Map<String, dynamic>;
+      expect(
+        firstSet['kg'],
+        100.0,
+      ); // Check key mapping 'weight' -> 'kg'
+
+      // Check total volume
+      // Ex 1 Set 1: 100 * 5 = 500
+      // Ex 2 Set 1: 32 * 10 = 320
+      // Total = 820
+      expect(result.totalVolumeKg, 820);
+    });
+
+    test('saveSession saves to history and marks as completed', () async {
+      final workout = CompletedWorkout(
+        id: 'test-id',
+        name: 'Test Workout',
+        completedAt: DateTime.now(),
+        durationSeconds: 3600,
+        totalVolumeKg: 10000,
+        totalSets: 10,
+        prCount: 0,
+        exerciseCount: 5,
+      );
+
+      await vm.saveSession(workout);
+
+      // Verify History Repo called
+      expect(mockHistoryRepository.savedWorkout, workout);
+
+      // Verify Overview Repo called with correct IDs
+      expect(mockTrainingOverviewRepository.markedAsCompletedId, 'next-1');
+      expect(mockTrainingOverviewRepository.completedWorkoutId, 'test-id');
     });
 
     test('toggleSet starts and stops timer correctly', () {

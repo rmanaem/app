@@ -246,6 +246,8 @@ class App extends StatelessWidget {
                 create: (_) => ActiveSessionViewModel(
                   workoutId: workoutId,
                   adHocWorkout: adHocWorkout,
+                  repository: context.read<TrainingOverviewRepository>(),
+                  historyRepository: context.read<HistoryRepository>(),
                 ),
                 child: const ActiveSessionPage(),
               ),
@@ -527,7 +529,7 @@ class App extends StatelessWidget {
           create: (_) => ProgramRepositoryFake(),
         ),
         Provider<TrainingOverviewRepository>(
-          create: (_) => const TrainingOverviewRepositoryFake(),
+          create: (_) => TrainingOverviewRepositoryFake(),
         ),
         Provider<HistoryRepository>(
           create: (_) => HistoryRepositoryFake(),

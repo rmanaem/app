@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/viewstate/training_overview_view_state.dart';
 
@@ -67,9 +68,23 @@ class TrainingOverviewViewModel extends ChangeNotifier {
   }
 
   /// Triggered when the user starts the next workout.
-  void onStartNextWorkout(BuildContext context) {
+  Future<void> onStartNextWorkout(BuildContext context) async {
     if (_state.nextWorkout != null) {
-      unawaited(context.push('/training/session/${_state.nextWorkout!.id}'));
+      try {
+        final result = await context.push<Object?>(
+          '/training/session/${_state.nextWorkout!.id}',
+        );
+
+        if (result is CompletedWorkout) {
+          if (context.mounted) {
+            await context.push('/training/session/summary', extra: result);
+          }
+        }
+
+        await load();
+      } on Exception catch (_) {
+        // Handle error silently or show toast
+      }
     }
   }
 

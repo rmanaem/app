@@ -3,23 +3,37 @@ import 'package:starter_app/src/features/training/domain/repositories/history_re
 
 /// Fake implementation of [HistoryRepository] with mock data.
 class HistoryRepositoryFake implements HistoryRepository {
+  /// Creates a [HistoryRepositoryFake] and populates it with initial data.
+  HistoryRepositoryFake() {
+    _workouts.addAll(_initialMockWorkouts());
+  }
+
+  final List<CompletedWorkout> _workouts = [];
+
   @override
   Future<List<CompletedWorkout>> getHistory() async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
-    return _getMockWorkouts();
+    // Return copy sorted by date desc
+    return List.of(_workouts)
+      ..sort((a, b) => b.completedAt.compareTo(a.completedAt));
   }
 
   @override
   Future<CompletedWorkout?> getCompletedWorkoutById(String id) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
-    final workouts = _getMockWorkouts();
-    return workouts.cast<CompletedWorkout?>().firstWhere(
+    return _workouts.cast<CompletedWorkout?>().firstWhere(
       (w) => w?.id == id,
       orElse: () => null,
     );
   }
 
-  List<CompletedWorkout> _getMockWorkouts() {
+  @override
+  Future<void> saveWorkout(CompletedWorkout workout) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    _workouts.add(workout);
+  }
+
+  List<CompletedWorkout> _initialMockWorkouts() {
     // Mock Data: A rich history of gains
     return [
       CompletedWorkout(

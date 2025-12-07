@@ -70,17 +70,17 @@ class ActiveSessionPage extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               // 1. Calculate Result
               final result = vm.finishSession();
 
-              // 2. Navigate to Summary (Replacing Active Session)
-              // Using pushReplacement ensures Back button doesn't return
-              // to the workout.
-              context.pushReplacement(
-                '/training/session/summary',
-                extra: result,
-              );
+              // 2. Save Session
+              await vm.saveSession(result);
+
+              if (context.mounted) {
+                // Return result to trigger reload
+                context.pop(result);
+              }
             },
             child: Text(
               'FINISH',

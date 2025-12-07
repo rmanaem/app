@@ -7,4 +7,14 @@ abstract class TrainingOverviewRepository {
 
   /// Hint that underlying data should refresh (no-op for the fake repo).
   Future<void> refresh();
+
+  /// Marks a specific workout as completed for the day.
+  /// Marks a specific workout (from the plan) as completed.
+  ///
+  /// [completedWorkoutId] is the ID of the actual session record in history,
+  /// used for linking.
+  Future<void> markWorkoutAsCompleted(
+    String workoutId, {
+    String? completedWorkoutId,
+  });
 }
