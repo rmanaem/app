@@ -16,6 +16,49 @@ class ProgramBuilderRepositoryFake implements ProgramBuilderRepository {
   final ProgramRepository? _programRepository;
   DraftProgram? _currentDraft;
 
+  // Mock Database of Exercises
+  final List<Map<String, dynamic>> _exerciseDatabase = [
+    {'id': '1', 'name': 'Bench Press (Barbell)', 'muscle': 'Chest'},
+    {'id': '2', 'name': 'Bench Press (Dumbbell)', 'muscle': 'Chest'},
+    {'id': '3', 'name': 'Incline Bench Press', 'muscle': 'Chest'},
+    {'id': '4', 'name': 'Cable Fly', 'muscle': 'Chest'},
+    {'id': '5', 'name': 'Squat (Barbell)', 'muscle': 'Legs'},
+    {'id': '6', 'name': 'Leg Press', 'muscle': 'Legs'},
+    {'id': '7', 'name': 'Bulgarian Split Squat', 'muscle': 'Legs'},
+    {'id': '8', 'name': 'Deadlift (Conventional)', 'muscle': 'Back'},
+    {'id': '9', 'name': 'Pull Up', 'muscle': 'Back'},
+    {'id': '10', 'name': 'Lat Pulldown', 'muscle': 'Back'},
+    {'id': '11', 'name': 'Overhead Press', 'muscle': 'Shoulders'},
+    {'id': '12', 'name': 'Lateral Raise', 'muscle': 'Shoulders'},
+    {'id': '13', 'name': 'Tricep Extension', 'muscle': 'Arms'},
+    {'id': '14', 'name': 'Bicep Curl', 'muscle': 'Arms'},
+  ];
+
+  @override
+  Future<Map<String, dynamic>> createCustomExercise({
+    required String name,
+    required String muscle,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+
+    final newExercise = {
+      'id': 'custom_${DateTime.now().millisecondsSinceEpoch}',
+      'name': name,
+      'muscle': muscle,
+      'isCustom': true,
+    };
+
+    _exerciseDatabase.add(newExercise);
+    return newExercise;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getAllExercises() async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    // Return a copy to be safe
+    return List.from(_exerciseDatabase);
+  }
+
   @override
   Future<DraftProgram> createDraft({
     required String name,

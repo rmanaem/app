@@ -330,6 +330,7 @@ class App extends StatelessWidget {
               child: ChangeNotifierProvider(
                 create: (context) => ExerciseSelectionViewModel(
                   onAdd: onAdd,
+                  repository: context.read<ProgramBuilderRepository>(),
                   isSingleSelect: isSingleSelect,
                 ),
                 child: ExerciseSelectionPage(

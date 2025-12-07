@@ -23,4 +23,13 @@ abstract class ProgramBuilderRepository {
 
   /// Publishes the current draft to the main program library.
   Future<void> publishProgram(DraftProgram draft);
+
+  /// Creates a new custom exercise and adds it to the user's library.
+  Future<Map<String, dynamic>> createCustomExercise({
+    required String name,
+    required String muscle,
+  });
+
+  /// Fetches all available exercises (System + Custom).
+  Future<List<Map<String, dynamic>>> getAllExercises();
 }

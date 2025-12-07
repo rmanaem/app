@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_theme.dart';
 
+import 'package:starter_app/src/features/training/program_builder/domain/repositories/program_builder_repository.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_selection_page.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/viewmodels/exercise_selection_view_model.dart';
 
@@ -45,7 +46,20 @@ class MockExerciseSelectionViewModel extends ChangeNotifier
   List<Map<String, dynamic>> confirmSelection() => [];
 
   @override
+  String get searchQuery => '';
+
+  @override
   void Function(List<Map<String, dynamic>>) get onAdd => (_) {};
+
+  @override
+  Future<void> createCustomExercise(String name, String muscle) async {}
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  // TODO(Mock): implement repository
+  ProgramBuilderRepository get repository => throw UnimplementedError();
 }
 
 void main() {
