@@ -21,10 +21,14 @@ class NutritionDayViewState {
     this.errorMessage,
     this.isAddingEntry = false,
     this.addEntryErrorMessage,
+    this.weekDays = const [],
   });
 
   /// Formatted date label (e.g. "Sat, Nov 22").
   final String dateLabel;
+
+  /// Days of the week centered on the selected date.
+  final List<DateTime> weekDays;
 
   /// The selected calendar date.
   final DateTime selectedDate;
@@ -91,6 +95,7 @@ class NutritionDayViewState {
     String? errorMessage,
     bool? isAddingEntry,
     String? addEntryErrorMessage,
+    List<DateTime>? weekDays,
   }) {
     return NutritionDayViewState(
       dateLabel: dateLabel ?? this.dateLabel,
@@ -108,6 +113,7 @@ class NutritionDayViewState {
       errorMessage: errorMessage ?? this.errorMessage,
       isAddingEntry: isAddingEntry ?? this.isAddingEntry,
       addEntryErrorMessage: addEntryErrorMessage ?? this.addEntryErrorMessage,
+      weekDays: weekDays ?? this.weekDays,
     );
   }
 }

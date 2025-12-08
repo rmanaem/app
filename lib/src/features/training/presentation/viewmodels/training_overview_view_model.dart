@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:starter_app/src/features/training/domain/entities/completed_workout.dart';
 import 'package:starter_app/src/features/training/domain/repositories/training_overview_repository.dart';
 import 'package:starter_app/src/features/training/presentation/viewstate/training_overview_view_state.dart';
@@ -40,6 +41,7 @@ class TrainingOverviewViewModel extends ChangeNotifier {
         TrainingOverviewViewState(
           isLoading: false,
           selectedDate: overview.anchorDate,
+          dateLabel: _formatDate(overview.anchorDate),
           weekDays: overview.weekDays,
           nextWorkout: overview.nextWorkout,
           lastWorkout: overview.lastWorkout,
@@ -64,7 +66,18 @@ class TrainingOverviewViewModel extends ChangeNotifier {
   /// Updates the selected day in the week strip.
   void onSelectDate(DateTime date) {
     final normalized = DateTime(date.year, date.month, date.day);
-    _emit(_state.copyWith(selectedDate: normalized));
+    _emit(
+      _state.copyWith(
+        selectedDate: normalized,
+        dateLabel: _formatDate(normalized),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    // Format: MONDAY, DEC 12
+    final formatter = DateFormat('EEEE, MMM d');
+    return formatter.format(date).toUpperCase();
   }
 
   /// Triggered when the user starts the next workout.

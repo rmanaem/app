@@ -113,6 +113,14 @@ class NutritionDayViewModel extends ChangeNotifier {
           fatConsumed: totals.fat,
           fatTarget: plan?.fatGrams ?? 0,
           meals: meals,
+          weekDays: List.generate(
+            7,
+            (index) => DateTime(
+              _selectedDate.year,
+              _selectedDate.month,
+              _selectedDate.day - 3 + index,
+            ),
+          ),
         ),
       );
     } on Exception catch (_) {
@@ -181,8 +189,8 @@ class NutritionDayViewModel extends ChangeNotifier {
   }
 
   String _formatDate(DateTime date) {
-    final formatter = DateFormat('E, MMM d');
-    return formatter.format(date);
+    final formatter = DateFormat('EEEE, MMM d');
+    return formatter.format(date).toUpperCase();
   }
 
   DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);

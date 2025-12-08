@@ -100,7 +100,7 @@ class _TrainingContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(height: spacing.lg),
-          const _TrainingHeader(dateLabel: 'MONDAY, DEC 12'),
+          _TrainingHeader(dateLabel: state.dateLabel),
           SizedBox(height: spacing.xl),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),

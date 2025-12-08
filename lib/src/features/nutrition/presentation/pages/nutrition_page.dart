@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_layout.dart';
@@ -123,14 +124,18 @@ class _NutritionDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Header (Day Strip)
-          _DaySelectorStrip(
-            selectedDate: state.selectedDate,
-            onDateSelected: onDateSelected,
-          ),
+          // 1. Header (Aligned with Training)
+          _NutritionHeader(dateLabel: state.dateLabel),
           SizedBox(height: spacing.xl),
+          // 2. Week Strip (Aligned with Training)
+          _WeekStrip(
+            days: state.weekDays,
+            selectedDate: state.selectedDate,
+            onSelect: onDateSelected,
+          ),
+          SizedBox(height: spacing.xxl),
 
-          // 2. Hero (Reactor)
+          // 3. Hero (Reactor)
           _CalorieReactorCard(
             consumed: state.caloriesConsumed,
             target: state.caloriesTarget,
@@ -143,7 +148,7 @@ class _NutritionDashboard extends StatelessWidget {
           ),
           SizedBox(height: spacing.xxl),
 
-          // 3. Meals List (Ghost Slots)
+          // 4. Meals List
           ...state.meals.map((meal) {
             final isGhost = meal.subtitle == 'Ghost';
             return Padding(
@@ -165,14 +170,93 @@ class _NutritionDashboard extends StatelessWidget {
 // -----------------------------------------------------------------------------
 // 1. DAY SELECTOR STRIP (Match Training Tab)
 // -----------------------------------------------------------------------------
-class _DaySelectorStrip extends StatelessWidget {
-  const _DaySelectorStrip({
+class _NutritionHeader extends StatelessWidget {
+  const _NutritionHeader({required this.dateLabel});
+
+  final String dateLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'FOOD LOG', // Context-specific label
+          style: typography.caption.copyWith(
+            color: colors.inkSubtle,
+            letterSpacing: 2,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          dateLabel,
+          style: typography.display.copyWith(
+            fontSize: 24,
+            color: colors.ink,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WeekStrip extends StatelessWidget {
+  const _WeekStrip({
+    required this.days,
     required this.selectedDate,
-    required this.onDateSelected,
+    required this.onSelect,
   });
 
+  final List<DateTime> days;
   final DateTime selectedDate;
-  final ValueChanged<DateTime> onDateSelected;
+  final ValueChanged<DateTime> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: days.map((date) {
+        final isSelected =
+            date.year == selectedDate.year &&
+            date.month == selectedDate.month &&
+            date.day == selectedDate.day;
+
+        final label = dayLabels[date.weekday - 1];
+
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _DayKey(
+              label: label,
+              date: date.day.toString(),
+              isActive: isSelected,
+              onTap: () => onSelect(date),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _DayKey extends StatelessWidget {
+  const _DayKey({
+    required this.label,
+    required this.date,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final String date;
+  final bool isActive;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -180,119 +264,56 @@ class _DaySelectorStrip extends StatelessWidget {
     final typography = Theme.of(context).extension<AppTypography>()!;
     final layout = Theme.of(context).extension<AppLayout>()!;
 
-    // Generate 7 days centered on today
-    final today = DateTime.now();
-    final days = List<DateTime>.generate(
-      7,
-      (index) => DateTime(today.year, today.month, today.day - 3 + index),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'FOOD LOG',
-          style: typography.caption.copyWith(
-            color: colors.inkSubtle,
-            letterSpacing: 2,
-            fontWeight: FontWeight.w700,
+    return GestureDetector(
+      onTap: () {
+        unawaited(HapticFeedback.selectionClick());
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 64,
+        decoration: BoxDecoration(
+          color: isActive ? colors.surface : colors.bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive ? colors.borderActive : colors.borderIdle,
+            width: isActive ? layout.strokeLg : layout.strokeMd,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _formatHeaderDate(selectedDate),
-          style: typography.display.copyWith(fontSize: 24, color: colors.ink),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: days.map((date) {
-            final isSelected =
-                date.year == selectedDate.year &&
-                date.month == selectedDate.month &&
-                date.day == selectedDate.day;
-
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: GestureDetector(
-                  onTap: () => onDateSelected(date),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: isSelected ? colors.surface : colors.bg,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected ? colors.ink : colors.borderIdle,
-                        width: isSelected ? layout.strokeMd : layout.strokeSm,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: colors.ink.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _weekdayLetter(date),
-                          style: typography.caption.copyWith(
-                            fontSize: 10,
-                            color: isSelected
-                                ? colors.inkSubtle
-                                : colors.inkSubtle.withValues(alpha: 0.5),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          date.day.toString(),
-                          style: typography.title.copyWith(
-                            fontSize: 16,
-                            color: isSelected ? colors.ink : colors.inkSubtle,
-                          ),
-                        ),
-                      ],
-                    ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: colors.accent.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-              ),
-            );
-          }).toList(),
+                ]
+              : null,
         ),
-      ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: typography.caption.copyWith(
+                fontSize: 9,
+                color: isActive
+                    ? colors.inkSubtle
+                    : colors.inkSubtle.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              date,
+              style: typography.title.copyWith(
+                fontSize: 16,
+                color: isActive ? colors.ink : colors.inkSubtle,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
-  }
-
-  String _formatHeaderDate(DateTime date) {
-    // Simple formatter "Sun, Dec 7"
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
-  }
-
-  String _weekdayLetter(DateTime date) {
-    const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    return letters[date.weekday - 1];
   }
 }
 
