@@ -53,11 +53,13 @@ class NutritionDayViewModel extends ChangeNotifier {
     );
 
     final entry = FoodEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: (input.title ?? '').isEmpty ? input.mealLabel : input.title!,
       calories: input.calories,
       proteinGrams: input.proteinGrams ?? 0,
       carbGrams: input.carbGrams ?? 0,
       fatGrams: input.fatGrams ?? 0,
+      slot: input.mealLabel,
     );
 
     try {
@@ -94,15 +96,7 @@ class NutritionDayViewModel extends ChangeNotifier {
       final log = await _foodLogRepository.getLogForDate(_selectedDate);
       final plan = await _planRepository.getCurrentPlan();
 
-      final meals = log.entries
-          .map(
-            (entry) => MealSummaryVm(
-              title: entry.title,
-              subtitle: _mealSubtitle(entry),
-            ),
-          )
-          .toList(growable: false);
-
+      final meals = _generateMealSlots(log);
       final totals = _totals(log);
 
       _updateState(
@@ -131,6 +125,42 @@ class NutritionDayViewModel extends ChangeNotifier {
     }
   }
 
+  List<MealSummaryVm> _generateMealSlots(DayFoodLog log) {
+    final slots = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+    final result = <MealSummaryVm>[];
+
+    for (final slotName in slots) {
+      final entriesInSlot = log.entries.where((e) {
+        // Fallback to title matching for legacy data or if slot is null
+        final effectiveSlot = e.slot ?? e.title;
+        return effectiveSlot.toLowerCase() == slotName.toLowerCase();
+      }).toList();
+
+      if (entriesInSlot.isNotEmpty) {
+        var totalCals = 0;
+        for (final e in entriesInSlot) {
+          totalCals += e.calories;
+        }
+
+        result.add(
+          MealSummaryVm(
+            title: slotName,
+            subtitle: '${entriesInSlot.length} items · $totalCals kcal',
+            entries: entriesInSlot,
+          ),
+        );
+      } else {
+        result.add(
+          MealSummaryVm(
+            title: slotName,
+            subtitle: 'Ghost',
+          ),
+        );
+      }
+    }
+    return result;
+  }
+
   _LogTotals _totals(DayFoodLog log) {
     var calories = 0;
     var protein = 0;
@@ -148,13 +178,6 @@ class NutritionDayViewModel extends ChangeNotifier {
       carbs: carbs,
       fat: fat,
     );
-  }
-
-  String _mealSubtitle(FoodEntry entry) {
-    final items = entry.itemsCount != null
-        ? '${entry.itemsCount} items · '
-        : '';
-    return '$items${entry.calories} kcal';
   }
 
   String _formatDate(DateTime date) {

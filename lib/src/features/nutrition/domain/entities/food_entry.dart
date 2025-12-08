@@ -10,8 +10,13 @@ class FoodEntry {
     required this.proteinGrams,
     required this.carbGrams,
     required this.fatGrams,
+    this.id,
     this.itemsCount,
+    this.slot,
   });
+
+  /// Unique identifier (optional for compatibility).
+  final String? id;
 
   /// Name of the meal or entry (e.g. "Breakfast", "Chicken Bowl").
   final String title;
@@ -30,4 +35,7 @@ class FoodEntry {
 
   /// Optional count of sub-items (e.g. number of foods).
   final int? itemsCount;
+
+  /// The meal slot this entry belongs to (e.g. "Breakfast", "Lunch").
+  final String? slot;
 }

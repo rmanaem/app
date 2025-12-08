@@ -3,23 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_layout.dart';
+import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewstate/nutrition_day_view_state.dart';
 import 'package:starter_app/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart';
 
-/// Main Nutrition tab page.
-///
-/// Displays a daily summary of calories and macros, a list of meals,
-/// and a date selector.
+/// Primary page for the Nutrition feature.
 class NutritionPage extends StatefulWidget {
-  /// Creates the Nutrition page.
-  const NutritionPage({
-    this.showQuickAddSheet = false,
-    super.key,
-  });
+  /// Creates the nutrition page.
+  const NutritionPage({super.key, this.showQuickAddSheet = false});
 
-  /// Whether to trigger the quick-add sheet once the page is built.
+  /// Whether to automatically show the quick add sheet.
   final bool showQuickAddSheet;
 
   @override
@@ -56,30 +52,6 @@ class _NutritionPageState extends State<NutritionPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final vm = context.watch<NutritionDayViewModel>();
-    final state = vm.state;
-
-    return Scaffold(
-      backgroundColor: colors.bg,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: state.isLoading
-              ? Center(child: CircularProgressIndicator(color: colors.ink))
-              : state.hasError
-              ? _ErrorState(message: state.errorMessage!)
-              : _NutritionContent(
-                  state: state,
-                  onDateSelected: vm.onDateSelected,
-                ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _showQuickAddSheet(NutritionDayViewModel vm) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -103,73 +75,116 @@ class _NutritionPageState extends State<NutritionPage> {
       },
     );
   }
-}
-
-class _NutritionContent extends StatelessWidget {
-  const _NutritionContent({
-    required this.state,
-    required this.onDateSelected,
-  });
-
-  final NutritionDayViewState state;
-  final ValueChanged<DateTime> onDateSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _DaySelector(
-          selectedDate: state.selectedDate,
-          selectedDateLabel: state.dateLabel,
-          onDateSelected: onDateSelected,
-        ),
-        const SizedBox(height: 24),
-        _DailySummaryCard(
-          caloriesConsumed: state.caloriesConsumed,
-          caloriesTarget: state.caloriesTarget,
-          proteinConsumed: state.proteinConsumed,
-          proteinTarget: state.proteinTarget,
-          carbsConsumed: state.carbsConsumed,
-          carbsTarget: state.carbsTarget,
-          fatConsumed: state.fatConsumed,
-          fatTarget: state.fatTarget,
-        ),
-        const SizedBox(height: 24),
-        Expanded(
-          child: _MealListSection(meals: state.meals),
-        ),
-      ],
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final vm = context.watch<NutritionDayViewModel>();
+    final state = vm.state;
+
+    return Scaffold(
+      backgroundColor: colors.bg,
+      body: SafeArea(
+        child: state.isLoading
+            ? Center(child: CircularProgressIndicator(color: colors.ink))
+            : state.hasError
+            ? Center(child: Text(state.errorMessage ?? 'Error'))
+            : _NutritionDashboard(
+                state: state,
+                onDateSelected: vm.onDateSelected,
+                onAddMeal: (slotName) {
+                  // Trigger Quick Add with pre-filled slot?
+                  // For now, just open the sheet.
+                  unawaited(_showQuickAddSheet(vm));
+                },
+              ),
+      ),
     );
   }
 }
 
-/// Horizontal day selector using standard buttons.
-class _DaySelector extends StatelessWidget {
-  const _DaySelector({
+class _NutritionDashboard extends StatelessWidget {
+  const _NutritionDashboard({
+    required this.state,
+    required this.onDateSelected,
+    required this.onAddMeal,
+  });
+
+  final NutritionDayViewState state;
+  final ValueChanged<DateTime> onDateSelected;
+  final void Function(String slot) onAddMeal;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
+
+    return SingleChildScrollView(
+      padding: spacing.edgeAll(spacing.gutter),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Header (Day Strip)
+          _DaySelectorStrip(
+            selectedDate: state.selectedDate,
+            onDateSelected: onDateSelected,
+          ),
+          SizedBox(height: spacing.xl),
+
+          // 2. Hero (Reactor)
+          _CalorieReactorCard(
+            consumed: state.caloriesConsumed,
+            target: state.caloriesTarget,
+            protein: state.proteinConsumed,
+            proteinTarget: state.proteinTarget,
+            carbs: state.carbsConsumed,
+            carbsTarget: state.carbsTarget,
+            fat: state.fatConsumed,
+            fatTarget: state.fatTarget,
+          ),
+          SizedBox(height: spacing.xxl),
+
+          // 3. Meals List (Ghost Slots)
+          ...state.meals.map((meal) {
+            final isGhost = meal.subtitle == 'Ghost';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: isGhost
+                  ? _GhostMealSlot(
+                      label: meal.title,
+                      onTap: () => onAddMeal(meal.title),
+                    )
+                  : _MealLogTile(meal: meal),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 1. DAY SELECTOR STRIP (Match Training Tab)
+// -----------------------------------------------------------------------------
+class _DaySelectorStrip extends StatelessWidget {
+  const _DaySelectorStrip({
     required this.selectedDate,
-    required this.selectedDateLabel,
     required this.onDateSelected,
   });
 
   final DateTime selectedDate;
-  final String selectedDateLabel;
   final ValueChanged<DateTime> onDateSelected;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
-    final today = DateTime.now();
     // Generate 7 days centered on today
+    final today = DateTime.now();
     final days = List<DateTime>.generate(
       7,
-      (index) => DateTime(
-        today.year,
-        today.month,
-        today.day - 3 + index,
-      ),
+      (index) => DateTime(today.year, today.month, today.day - 3 + index),
     );
 
     return Column(
@@ -180,185 +195,238 @@ class _DaySelector extends StatelessWidget {
           style: typography.caption.copyWith(
             color: colors.inkSubtle,
             letterSpacing: 2,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          selectedDateLabel,
-          style: typography.display.copyWith(color: colors.ink),
+          _formatHeaderDate(selectedDate),
+          style: typography.display.copyWith(fontSize: 24, color: colors.ink),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 72,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: days.length,
-            separatorBuilder: (context, _) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final date = days[index];
-              final isSelected = _isSameDay(date, selectedDate);
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: days.map((date) {
+            final isSelected =
+                date.year == selectedDate.year &&
+                date.month == selectedDate.month &&
+                date.day == selectedDate.day;
 
-              final backgroundColor = isSelected ? colors.ink : colors.surface;
-              final borderColor = isSelected ? colors.ink : colors.borderIdle;
-              final textColor = isSelected ? colors.bg : colors.ink;
-              final subtitleColor = isSelected
-                  ? colors.bg.withValues(alpha: 0.7)
-                  : colors.inkSubtle;
-
-              return GestureDetector(
-                onTap: () => onDateSelected(date),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: 50,
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: const BorderRadius.all(Radius.circular(8)),
-                    border: Border.all(color: borderColor),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _weekdayLetter(date),
-                        style: typography.caption.copyWith(
-                          color: subtitleColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: GestureDetector(
+                  onTap: () => onDateSelected(date),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: isSelected ? colors.surface : colors.bg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected ? colors.ink : colors.borderIdle,
+                        width: isSelected ? layout.strokeMd : layout.strokeSm,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        date.day.toString(),
-                        style: typography.title.copyWith(
-                          color: textColor,
-                          height: 1,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: colors.ink.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _weekdayLetter(date),
+                          style: typography.caption.copyWith(
+                            fontSize: 10,
+                            color: isSelected
+                                ? colors.inkSubtle
+                                : colors.inkSubtle.withValues(alpha: 0.5),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          date.day.toString(),
+                          style: typography.title.copyWith(
+                            fontSize: 16,
+                            color: isSelected ? colors.ink : colors.inkSubtle,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
+  }
+
+  String _formatHeaderDate(DateTime date) {
+    // Simple formatter "Sun, Dec 7"
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 
   String _weekdayLetter(DateTime date) {
     const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return letters[date.weekday - 1];
   }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
 }
 
-/// Summary card displaying remaining calories and macro progress bars.
-/// Uses a solid background color to differentiate from the list.
-class _DailySummaryCard extends StatelessWidget {
-  const _DailySummaryCard({
-    required this.caloriesConsumed,
-    required this.caloriesTarget,
-    required this.proteinConsumed,
+// -----------------------------------------------------------------------------
+// 2. HERO: CALORIE REACTOR CARD
+// -----------------------------------------------------------------------------
+class _CalorieReactorCard extends StatelessWidget {
+  const _CalorieReactorCard({
+    required this.consumed,
+    required this.target,
+    required this.protein,
     required this.proteinTarget,
-    required this.carbsConsumed,
+    required this.carbs,
     required this.carbsTarget,
-    required this.fatConsumed,
+    required this.fat,
     required this.fatTarget,
   });
 
-  final int caloriesConsumed;
-  final int caloriesTarget;
-  final int proteinConsumed;
+  final int consumed;
+  final int target;
+  final int protein;
   final int proteinTarget;
-  final int carbsConsumed;
+  final int carbs;
   final int carbsTarget;
-  final int fatConsumed;
+  final int fat;
   final int fatTarget;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
 
-    final remainingCalories = (caloriesTarget - caloriesConsumed).clamp(
-      0,
-      caloriesTarget,
-    );
+    final remaining = (target - consumed).clamp(0, 9999);
+    final progress = target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0.0;
 
     return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        border: Border.all(color: colors.borderIdle),
-      ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      // No decoration here to keep it integrated with the background
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'ENERGY',
-                style: typography.caption.copyWith(
-                  color: colors.inkSubtle,
-                  letterSpacing: 1.5,
+          // The Reactor Ring
+          SizedBox(
+            width: 220, // Slightly larger for impact
+            height: 220,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Background Track: Visible Structure (Dark Steel)
+                const CircularProgressIndicator(
+                  value: 1,
+                  color: Color(
+                    0xFF333333,
+                  ), // Explicit Dark Grey (Visible)
+                  strokeWidth: 16,
+                  strokeCap: StrokeCap.butt, // Mechanical cut
                 ),
-              ),
-              Text(
-                '$caloriesConsumed / $caloriesTarget KCAL',
-                style: typography.caption.copyWith(color: colors.inkSubtle),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            remainingCalories.toString(),
-            style: typography.hero.copyWith(
-              color: colors.ink,
-              fontSize: 56,
-              height: 1,
-            ),
-          ),
-          Text(
-            'KCAL REMAINING',
-            style: typography.caption.copyWith(
-              color: colors.inkSubtle,
-              letterSpacing: 2,
-              fontSize: 10,
+                // Fill Track: The Fuel (Pure White)
+                CircularProgressIndicator(
+                  value: progress,
+                  color: colors.ink,
+                  strokeWidth: 16,
+                  strokeCap: StrokeCap.round,
+                ),
+                // Center Data
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$remaining',
+                        style: typography.display.copyWith(
+                          fontSize: 56, // Larger
+                          height: 1,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -2,
+                          color: colors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'KCAL LEFT',
+                        style: typography.caption.copyWith(
+                          color: colors.inkSubtle,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2,
+                          fontSize: 10,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$consumed / $target',
+                        style: typography.caption.copyWith(
+                          color: colors.inkSubtle.withValues(alpha: 0.5),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 32),
+
+          // Macro Gauges
           Row(
             children: [
+              // Using colors directly for pop
               Expanded(
-                child: _MacroProgressBar(
+                child: _MacroGauge(
                   label: 'PROTEIN',
-                  consumed: proteinConsumed,
+                  val: protein,
                   target: proteinTarget,
-                  color: colors.macroProtein,
+                  color: const Color(0xFF9E9E9E),
                 ),
-              ),
-              const SizedBox(width: 16),
+              ), // Silver
+              const SizedBox(width: 12),
               Expanded(
-                child: _MacroProgressBar(
+                child: _MacroGauge(
                   label: 'CARBS',
-                  consumed: carbsConsumed,
+                  val: carbs,
                   target: carbsTarget,
-                  color: colors.macroCarbs,
+                  color: const Color(0xFF616161),
                 ),
-              ),
-              const SizedBox(width: 16),
+              ), // Dark Grey
+              const SizedBox(width: 12),
               Expanded(
-                child: _MacroProgressBar(
+                child: _MacroGauge(
                   label: 'FAT',
-                  consumed: fatConsumed,
+                  val: fat,
                   target: fatTarget,
-                  color: colors.macroFat,
+                  color: const Color(0xFF424242),
                 ),
-              ),
+              ), // Charcoal
             ],
           ),
         ],
@@ -367,16 +435,15 @@ class _DailySummaryCard extends StatelessWidget {
   }
 }
 
-class _MacroProgressBar extends StatelessWidget {
-  const _MacroProgressBar({
+class _MacroGauge extends StatelessWidget {
+  const _MacroGauge({
     required this.label,
-    required this.consumed,
+    required this.val,
     required this.target,
     required this.color,
   });
-
   final String label;
-  final int consumed;
+  final int val;
   final int target;
   final Color color;
 
@@ -384,124 +451,34 @@ class _MacroProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
-
-    final progress = target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0.0;
+    final progress = target > 0 ? (val / target).clamp(0.0, 1.0) : 0.0;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: typography.caption.copyWith(
-                fontSize: 10,
-                color: colors.inkSubtle,
-              ),
+        SizedBox(
+          height: 4,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: colors.surfaceHighlight,
+              color: color,
             ),
-            Text(
-              '${consumed}g',
-              style: typography.caption.copyWith(
-                fontSize: 10,
-                color: colors.ink,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(2),
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: colors.surfaceHighlight,
-            color: color,
-            minHeight: 4,
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// A vertical list of meals.
-/// Uses a transparent background with a border to reduce visual weight.
-class _MealListSection extends StatelessWidget {
-  const _MealListSection({
-    required this.meals,
-  });
-
-  final List<MealSummaryVm> meals;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-
-    if (meals.isEmpty) {
-      return const _EmptyMealState();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        const SizedBox(height: 8),
         Text(
-          'TIMELINE',
+          '$val/$target',
+          style: typography.caption.copyWith(
+            color: colors.ink,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
           style: typography.caption.copyWith(
             color: colors.inkSubtle,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: ListView.separated(
-            itemCount: meals.length,
-            separatorBuilder: (context, _) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final meal = meals[index];
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: const BorderRadius.all(Radius.circular(12)),
-                  border: Border.all(color: colors.borderIdle),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          meal.title.toUpperCase(),
-                          style: typography.title.copyWith(
-                            color: colors.ink,
-                            fontSize: 14,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          meal.subtitle,
-                          style: typography.caption.copyWith(
-                            color: colors.inkSubtle,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      size: 20,
-                      color: colors.borderIdle,
-                    ),
-                  ],
-                ),
-              );
-            },
+            fontSize: 10,
           ),
         ),
       ],
@@ -509,61 +486,203 @@ class _MealListSection extends StatelessWidget {
   }
 }
 
-class _EmptyMealState extends StatelessWidget {
-  const _EmptyMealState();
+// -----------------------------------------------------------------------------
+// 3. MEAL TILES (Ghost vs Filled)
+// -----------------------------------------------------------------------------
+class _GhostMealSlot extends StatelessWidget {
+  const _GhostMealSlot({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
+    final layout = Theme.of(context).extension<AppLayout>()!;
 
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.grid_3x3,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          color: colors.bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
             color: colors.borderIdle,
-            size: 48,
+            width: layout.strokeSm,
+
+            // Dashed is hard in Flutter without package.
+            // Solid thin is fine for "Ghost" if dim.
           ),
-          const SizedBox(height: 16),
-          Text(
-            'NO DATA LOGGED',
-            style: typography.title.copyWith(
-              color: colors.ink,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Use the add button to log a meal.',
-            textAlign: TextAlign.center,
-            style: typography.body.copyWith(
+        ),
+        child: Center(
+          child: Text(
+            '+ LOG ${label.toUpperCase()}',
+            style: typography.caption.copyWith(
               color: colors.inkSubtle,
-              fontSize: 14,
+              letterSpacing: 1.5,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
+class _MealLogTile extends StatefulWidget {
+  const _MealLogTile({required this.meal});
 
-  final String message;
+  final MealSummaryVm meal;
+
+  @override
+  State<_MealLogTile> createState() => _MealLogTileState();
+}
+
+class _MealLogTileState extends State<_MealLogTile> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
 
-    return Center(
-      child: Text(
-        message,
-        style: typography.body.copyWith(color: colors.ink),
-        textAlign: TextAlign.center,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: colors.surface, // Solid Matte Grey
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          // THE FIX: High Contrast White Border for Filled Items
+          color: colors.ink.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          // Subtle drop shadow for lift
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header is brighter now
+                      Text(
+                        widget.meal.title.toUpperCase(),
+                        style: typography.caption.copyWith(
+                          color: colors.ink.withValues(alpha: 0.8), // Brighter
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.meal.subtitle,
+                        style: typography.body.copyWith(
+                          color: colors.ink,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Chevron indicates interaction
+                  Icon(
+                    _isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: colors.ink,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ... (AnimatedCrossFade content remains the same)
+          AnimatedCrossFade(
+            firstChild: const SizedBox(height: 0, width: double.infinity),
+            secondChild: Column(
+              children: [
+                Divider(
+                  height: 1,
+                  color: colors.borderIdle.withValues(alpha: 0.3),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    children: widget.meal.entries.map((entry) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20, // Match header padding
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: colors.ink, // White bullet
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                entry.title,
+                                style: typography.body.copyWith(
+                                  fontSize: 15,
+                                  color: colors.ink, // Bright text
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${entry.calories}',
+                              style: typography.caption.copyWith(
+                                fontFamily: 'monospace',
+                                fontWeight: FontWeight.bold,
+                                color: colors.ink,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              ' kcal',
+                              style: typography.caption.copyWith(
+                                fontSize: 10,
+                                color: colors.inkSubtle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+            crossFadeState: _isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 300),
+          ),
+        ],
       ),
     );
   }

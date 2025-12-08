@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import 'package:starter_app/src/features/nutrition/domain/entities/food_entry.dart';
 
 /// UI-ready view state for a single day's nutrition log.
 @immutable
@@ -118,6 +119,7 @@ class MealSummaryVm {
   const MealSummaryVm({
     required this.title,
     required this.subtitle,
+    this.entries = const [],
   });
 
   /// Meal title (e.g. "Breakfast").
@@ -125,4 +127,7 @@ class MealSummaryVm {
 
   /// Short subtitle (e.g. "2 items · 430 kcal").
   final String subtitle;
+
+  /// List of food entries in this meal.
+  final List<FoodEntry> entries;
 }
