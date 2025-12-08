@@ -9,6 +9,7 @@ class TrainingOverviewViewState {
   const TrainingOverviewViewState({
     required this.isLoading,
     required this.selectedDate,
+    required this.dateLabel,
     required this.weekDays,
     required this.hasProgram,
     required this.completedWorkouts,
@@ -25,6 +26,7 @@ class TrainingOverviewViewState {
     return TrainingOverviewViewState(
       isLoading: true,
       selectedDate: anchor,
+      dateLabel: '',
       weekDays: const [],
       hasProgram: false,
       completedWorkouts: 0,
@@ -37,6 +39,9 @@ class TrainingOverviewViewState {
 
   /// Currently selected day in the week strip.
   final DateTime selectedDate;
+
+  /// Formatted label for the selected date (e.g. "MONDAY, DEC 12").
+  final String dateLabel;
 
   /// Seven-day overview entries.
   final List<TrainingDayOverview> weekDays;
@@ -69,6 +74,7 @@ class TrainingOverviewViewState {
   TrainingOverviewViewState copyWith({
     bool? isLoading,
     DateTime? selectedDate,
+    String? dateLabel,
     List<TrainingDayOverview>? weekDays,
     WorkoutSummary? nextWorkout,
     WorkoutSummary? lastWorkout,
@@ -82,6 +88,7 @@ class TrainingOverviewViewState {
     return TrainingOverviewViewState(
       isLoading: isLoading ?? this.isLoading,
       selectedDate: selectedDate ?? this.selectedDate,
+      dateLabel: dateLabel ?? this.dateLabel,
       weekDays: weekDays ?? this.weekDays,
       nextWorkout: nextWorkout ?? this.nextWorkout,
       lastWorkout: lastWorkout ?? this.lastWorkout,

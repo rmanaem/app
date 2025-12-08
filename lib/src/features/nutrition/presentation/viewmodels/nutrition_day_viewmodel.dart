@@ -181,8 +181,8 @@ class NutritionDayViewModel extends ChangeNotifier {
   }
 
   String _formatDate(DateTime date) {
-    final formatter = DateFormat('E, MMM d');
-    return formatter.format(date);
+    final formatter = DateFormat('EEEE, MMM d');
+    return formatter.format(date).toUpperCase();
   }
 
   DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
