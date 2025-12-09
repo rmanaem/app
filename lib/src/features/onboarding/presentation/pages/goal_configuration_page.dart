@@ -14,10 +14,10 @@ import 'package:starter_app/src/features/onboarding/domain/value_objects/unit_sy
 import 'package:starter_app/src/features/onboarding/presentation/navigation/onboarding_summary_arguments.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/goal_configuration_vm.dart';
 import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onboarding_vm.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/tactile_ruler_picker.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/safety_warning_banner.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
 import 'package:starter_app/src/presentation/atoms/fader_slider.dart';
+import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
 
 /// Screen that lets members configure their target weight and pacing.
 class GoalConfigurationPage extends StatefulWidget {

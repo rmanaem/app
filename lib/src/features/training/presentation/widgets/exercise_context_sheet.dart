@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/tactile_ruler_picker.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
 import 'package:starter_app/src/presentation/atoms/app_text_field.dart';
 import 'package:starter_app/src/presentation/atoms/segmented_toggle.dart';
+import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
 
 /// Tabs available in the exercise context sheet.
 enum ContextTab {

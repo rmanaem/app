@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/tactile_ruler_picker.dart';
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
+import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
 
 /// Daily dashboard showing nutrition, actions, and progress.
 class TodayPage extends StatelessWidget {

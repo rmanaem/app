@@ -15,9 +15,9 @@ import 'package:starter_app/src/features/onboarding/presentation/viewmodels/onbo
 import 'package:starter_app/src/features/onboarding/presentation/widgets/bento_stat_tile.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/activity_mode_dial.dart';
 import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/date_picker_sheet.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/tactile_ruler_picker.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
 import 'package:starter_app/src/presentation/atoms/segmented_toggle.dart';
+import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
 
 /// Onboarding step for capturing personal stats via picker sheets.
 class OnboardingStatsPage extends StatefulWidget {

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/tactile_ruler_picker.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
+import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
 
 /// A focused modal for adjusting a single metric (Weight, Reps, or RPE).
 class MicroTunerSheet extends StatefulWidget {
@@ -99,11 +99,11 @@ class _MicroTunerSheetState extends State<MicroTunerSheet> {
             SizedBox(
               height: 140,
               child: TactileRulerPicker(
+                initialValue: _currentValue,
                 min: widget.min,
                 max: widget.max,
-                step: widget.step,
-                initialValue: _currentValue,
                 unitLabel: widget.unit,
+                step: widget.step,
                 valueFormatter: (val) => widget.isInteger
                     ? val.toStringAsFixed(0)
                     : val.toStringAsFixed(1).replaceAll('.0', ''),

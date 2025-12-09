@@ -19,6 +19,7 @@ class TactileRulerPicker extends StatefulWidget {
     this.minorTicksPerMajor = 10,
     this.valueFormatter,
     this.showValueDisplay = true,
+    this.fadeColor,
     super.key,
   });
 
@@ -48,6 +49,9 @@ class TactileRulerPicker extends StatefulWidget {
 
   /// Whether to render the large value display above the ruler.
   final bool showValueDisplay;
+
+  /// Custom color for the edge fades (defaults to colors.bg).
+  final Color? fadeColor;
 
   @override
   State<TactileRulerPicker> createState() => _TactileRulerPickerState();
@@ -244,10 +248,10 @@ class _TactileRulerPickerState extends State<TactileRulerPicker> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        colors.bg,
-                        colors.bg.withValues(alpha: 0),
-                        colors.bg.withValues(alpha: 0),
-                        colors.bg,
+                        widget.fadeColor ?? colors.bg,
+                        (widget.fadeColor ?? colors.bg).withValues(alpha: 0),
+                        (widget.fadeColor ?? colors.bg).withValues(alpha: 0),
+                        widget.fadeColor ?? colors.bg,
                       ],
                       stops: const [0, 0.2, 0.8, 1],
                     ),

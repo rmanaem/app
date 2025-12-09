@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
-import 'package:starter_app/src/features/onboarding/presentation/widgets/pickers/tactile_ruler_picker.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/widgets/atoms/note_input_tile.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
 import 'package:starter_app/src/presentation/atoms/app_text_field.dart';
+import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
 
 /// The "Calibration Station" modal for tuning an exercise configuration.
 class ExerciseTunerSheet extends StatefulWidget {
@@ -383,7 +383,7 @@ class _ExerciseTunerSheetState extends State<ExerciseTunerSheet> {
                       initialValue: _rest,
                       step: 15,
                       valueFormatter: _formatRestTime,
-                      onChanged: (val) => _rest = val,
+                      onChanged: (val) => setState(() => _rest = val),
                     ),
                   ),
 
