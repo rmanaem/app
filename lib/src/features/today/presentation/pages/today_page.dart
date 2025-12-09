@@ -5,11 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
-import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
-import 'package:starter_app/src/presentation/atoms/app_button.dart';
-import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
+import 'package:starter_app/src/features/today/presentation/widgets/log_weight_sheet.dart';
 
 /// Daily dashboard showing nutrition, actions, and progress.
 class TodayPage extends StatelessWidget {
@@ -34,6 +32,7 @@ class TodayPage extends StatelessWidget {
     );
   }
 
+  // ...
   Widget _buildContent(BuildContext context, TodayViewModel vm) {
     final state = vm.state;
     final now = DateTime.now();
@@ -95,60 +94,20 @@ class TodayPage extends StatelessWidget {
   }
 
   Future<void> _onLogWeightTap(BuildContext context, TodayViewModel vm) async {
-    final colors = Theme.of(context).extension<AppColors>()!;
     // Use last logged weight or default to 75
-    var currentVal = vm.state.lastWeightKg ?? 75.0;
+    final initialWeight = vm.state.lastWeightKg ?? 75.0;
 
-    await showModalBottomSheet<void>(
+    final result = await showModalBottomSheet<double>(
       context: context,
-      backgroundColor: colors.surface,
+      backgroundColor: Colors.transparent, // Sheet handles its own bg/radius
       isScrollControlled: true,
-      builder: (ctx) {
-        final typography = Theme.of(context).extension<AppTypography>()!;
-        return Container(
-          height: 500,
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            children: [
-              Text(
-                'LOG WEIGHT',
-                style: typography.caption.copyWith(
-                  color: colors.inkSubtle,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                height: 150,
-                child: TactileRulerPicker(
-                  min: 30,
-                  max: 200,
-                  initialValue: currentVal,
-                  unitLabel: 'KG',
-                  step: 0.1,
-                  fadeColor: colors.surface,
-                  onChanged: (val) {
-                    currentVal = val;
-                  },
-                ),
-              ),
-              const Spacer(),
-              AppButton(
-                label: 'CONFIRM LOG',
-                isPrimary: true,
-                onTap: () {
-                  // TODO(arman): Wire up save logic in VM
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
+      builder: (ctx) => LogWeightSheet(initialWeight: initialWeight),
     );
+
+    if (result != null) {
+      // TODO(arman): Wire up save logic in VM, for now just log
+      // vm.updateWeight(result);
+    }
   }
 }
 

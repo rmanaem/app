@@ -182,7 +182,7 @@ class AppShellPage extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return const LogWeightSheet();
+        return const LogWeightSheet(initialWeight: 75);
       },
     );
     if (!context.mounted || weight == null) return;

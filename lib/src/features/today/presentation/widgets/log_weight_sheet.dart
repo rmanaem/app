@@ -12,8 +12,14 @@ import 'package:starter_app/src/presentation/atoms/app_button.dart';
 /// Features a horizontal scrolling ruler for precise value selection
 /// and a high-contrast digital display.
 class LogWeightSheet extends StatefulWidget {
-  /// Creates the log weight sheet.
-  const LogWeightSheet({super.key});
+  /// Creates a log weight sheet.
+  const LogWeightSheet({
+    required this.initialWeight,
+    super.key,
+  });
+
+  /// The initial weight value to display.
+  final double initialWeight;
 
   @override
   State<LogWeightSheet> createState() => _LogWeightSheetState();
