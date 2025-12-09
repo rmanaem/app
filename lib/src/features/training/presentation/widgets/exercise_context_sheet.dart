@@ -120,7 +120,7 @@ class _ExerciseContextSheetState extends State<ExerciseContextSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: colors.bg,
+        color: colors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: colors.borderIdle)),
       ),
@@ -256,6 +256,7 @@ class _EditTab extends StatelessWidget {
               max: 300,
               initialValue: restSeconds,
               step: 15,
+              fadeColor: colors.surface,
               valueFormatter: restFormatter,
               onChanged: onRestChanged,
             ),

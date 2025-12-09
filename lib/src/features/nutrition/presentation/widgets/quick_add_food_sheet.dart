@@ -171,7 +171,7 @@ class _QuickAddFoodSheetState extends State<QuickAddFoodSheet> {
                       decoration: BoxDecoration(
                         color: colors.bg,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colors.borderIdle),
+                        border: Border.all(color: colors.inkSubtle),
                       ),
                       child: Row(
                         children: [

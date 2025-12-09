@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
+import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
@@ -100,46 +101,53 @@ class TodayPage extends StatelessWidget {
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: colors.bg,
+      backgroundColor: colors.surface,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        height: 450,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Text(
-              'LOG WEIGHT',
-              style: TextStyle(
-                color: colors.ink,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
+      builder: (ctx) {
+        final typography = Theme.of(context).extension<AppTypography>()!;
+        return Container(
+          height: 500,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            children: [
+              Text(
+                'LOG WEIGHT',
+                style: typography.caption.copyWith(
+                  color: colors.inkSubtle,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const Spacer(),
-            SizedBox(
-              height: 150,
-              child: TactileRulerPicker(
-                min: 30,
-                max: 200,
-                initialValue: currentVal,
-                unitLabel: 'KG',
-                step: 0.1,
-                onChanged: (val) => currentVal = val,
+              const SizedBox(height: 32),
+              SizedBox(
+                height: 150,
+                child: TactileRulerPicker(
+                  min: 30,
+                  max: 200,
+                  initialValue: currentVal,
+                  unitLabel: 'KG',
+                  step: 0.1,
+                  fadeColor: colors.surface,
+                  onChanged: (val) {
+                    currentVal = val;
+                  },
+                ),
               ),
-            ),
-            const Spacer(),
-            AppButton(
-              label: 'CONFIRM LOG',
-              isPrimary: true,
-              onTap: () {
-                // TODO(arman): Wire up save logic in VM
-                Navigator.pop(ctx);
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+              const Spacer(),
+              AppButton(
+                label: 'CONFIRM LOG',
+                isPrimary: true,
+                onTap: () {
+                  // TODO(arman): Wire up save logic in VM
+                  Navigator.pop(ctx);
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
     );
   }
 }

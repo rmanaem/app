@@ -61,7 +61,7 @@ class _MicroTunerSheetState extends State<MicroTunerSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: colors.bg,
+        color: colors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: colors.borderIdle)),
       ),
@@ -104,6 +104,7 @@ class _MicroTunerSheetState extends State<MicroTunerSheet> {
                 max: widget.max,
                 unitLabel: widget.unit,
                 step: widget.step,
+                fadeColor: colors.surface,
                 valueFormatter: (val) => widget.isInteger
                     ? val.toStringAsFixed(0)
                     : val.toStringAsFixed(1).replaceAll('.0', ''),
