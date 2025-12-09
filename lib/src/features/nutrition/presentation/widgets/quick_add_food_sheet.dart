@@ -321,27 +321,36 @@ class _QuickAddFoodSheetState extends State<QuickAddFoodSheet> {
                 ),
                 const SizedBox(height: 16),
               ],
-              AppButton(
-                label: 'LOG ENTRY',
-                isPrimary: true,
-                isLoading: widget.isSubmitting,
-                onTap: () async {
-                  if (widget.isSubmitting) return;
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _titleController,
+                builder: (context, value, _) {
+                  final isValid = value.text.trim().isNotEmpty && _calories > 0;
 
-                  final input = QuickFoodEntryInput(
-                    title: _titleController.text,
-                    mealLabel: _selectedSlot,
-                    calories: _calories.round(),
-                    proteinGrams: _protein.round(),
-                    carbGrams: _carbs.round(),
-                    fatGrams: _fat.round(),
+                  return AppButton(
+                    label: 'LOG ENTRY',
+                    isPrimary: true,
+                    isLoading: widget.isSubmitting,
+                    onTap: isValid
+                        ? () async {
+                            if (widget.isSubmitting) return;
+
+                            final input = QuickFoodEntryInput(
+                              title: _titleController.text,
+                              mealLabel: _selectedSlot,
+                              calories: _calories.round(),
+                              proteinGrams: _protein.round(),
+                              carbGrams: _carbs.round(),
+                              fatGrams: _fat.round(),
+                            );
+
+                            final success = await widget.onSubmit(input);
+                            if (!context.mounted) return;
+                            if (success) {
+                              Navigator.pop(context);
+                            }
+                          }
+                        : null,
                   );
-
-                  final success = await widget.onSubmit(input);
-                  if (!context.mounted) return;
-                  if (success) {
-                    Navigator.pop(context);
-                  }
                 },
               ),
 

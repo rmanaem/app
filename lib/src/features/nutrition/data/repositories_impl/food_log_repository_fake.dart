@@ -47,6 +47,10 @@ class FoodLogRepositoryFake implements FoodLogRepository {
   }
 
   final Map<DateTime, DayFoodLog> _logs = {};
+  final _controller = StreamController<DateTime>.broadcast();
+
+  @override
+  Stream<DateTime> get logUpdates => _controller.stream;
 
   @override
   Future<DayFoodLog> getLogForDate(DateTime date) async {
@@ -64,6 +68,7 @@ class FoodLogRepositoryFake implements FoodLogRepository {
       date: key,
       entries: [...existing, entry],
     );
+    _controller.add(key);
   }
 
   DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);

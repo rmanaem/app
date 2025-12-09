@@ -8,4 +8,7 @@ abstract class FoodLogRepository {
 
   /// Adds a quick entry to the given day's log.
   Future<void> addQuickEntry(DateTime date, FoodEntry entry);
+
+  /// Stream of dates that have had their logs updated.
+  Stream<DateTime> get logUpdates;
 }

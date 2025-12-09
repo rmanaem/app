@@ -12,7 +12,8 @@ class PlanRepositoryFake implements PlanRepository {
   const PlanRepositoryFake();
 
   // A static "Perfect Plan" for UI testing
-  static final _mockPlan = UserPlan(
+  // CHANGED: Removed 'final' so we can update it at runtime
+  static UserPlan _mockPlan = UserPlan(
     goal: Goal.lose,
     currentWeightKg: 90,
     targetWeightKg: 85,
@@ -31,7 +32,7 @@ class PlanRepositoryFake implements PlanRepository {
   @override
   Future<UserPlan?> getCurrentPlan() async {
     // Simulate network delay for testing loading states
-    await Future<void>.delayed(const Duration(milliseconds: 800));
+    await Future<void>.delayed(const Duration(milliseconds: 400));
     return _mockPlan;
   }
 
@@ -39,6 +40,10 @@ class PlanRepositoryFake implements PlanRepository {
   Future<String> save(UserPlan plan) async {
     // Simulate network delay
     await Future<void>.delayed(const Duration(milliseconds: 500));
+
+    // CHANGED: Update the in-memory store
+    _mockPlan = plan;
+
     return 'plan_fake_${DateTime.now().millisecondsSinceEpoch}';
   }
 }

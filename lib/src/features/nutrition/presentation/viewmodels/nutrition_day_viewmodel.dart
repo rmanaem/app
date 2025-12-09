@@ -18,10 +18,18 @@ class NutritionDayViewModel extends ChangeNotifier {
   }) : _foodLogRepository = foodLogRepository,
        _planRepository = planRepository {
     unawaited(_loadForDate(DateTime.now()));
+    _logSubscription = _foodLogRepository.logUpdates.listen(_onLogUpdated);
   }
 
   final FoodLogRepository _foodLogRepository;
   final PlanRepository _planRepository;
+  late final StreamSubscription<DateTime> _logSubscription;
+
+  @override
+  void dispose() {
+    unawaited(_logSubscription.cancel());
+    super.dispose();
+  }
 
   late NutritionDayViewState _state = NutritionDayViewState(
     selectedDate: _dateOnly(DateTime.now()),
@@ -198,6 +206,12 @@ class NutritionDayViewModel extends ChangeNotifier {
   void _updateState(NutritionDayViewState newState) {
     _state = newState;
     notifyListeners();
+  }
+
+  void _onLogUpdated(DateTime date) {
+    if (_dateOnly(date) == _dateOnly(_selectedDate)) {
+      unawaited(_loadForDate(_selectedDate));
+    }
   }
 }
 

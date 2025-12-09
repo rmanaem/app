@@ -16,7 +16,6 @@ import 'package:starter_app/src/core/services/scaffold_notification_service.dart
 import 'package:starter_app/src/features/nutrition/nutrition.dart';
 import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
 import 'package:starter_app/src/features/onboarding/domain/value_objects/goal.dart';
-import 'package:starter_app/src/features/onboarding/infrastructure/memory_plan_repository.dart';
 import 'package:starter_app/src/features/onboarding/presentation/navigation/navigation.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/goal_configuration_page.dart';
 import 'package:starter_app/src/features/onboarding/presentation/pages/onboarding_goal_page.dart';
@@ -517,7 +516,7 @@ class App extends StatelessWidget {
           create: (_) => ScaffoldNotificationService(),
         ),
         Provider<PlanRepository>(
-          create: (_) => const MemoryPlanRepository(),
+          create: (_) => const PlanRepositoryFake(),
         ),
         Provider<FoodLogRepository>(
           create: (_) => FoodLogRepositoryFake(),

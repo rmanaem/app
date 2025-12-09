@@ -54,7 +54,10 @@ class _NutritionPageState extends State<NutritionPage> {
     }
   }
 
-  Future<void> _showQuickAddSheet(NutritionDayViewModel vm) async {
+  Future<void> _showQuickAddSheet(
+    NutritionDayViewModel vm, {
+    String? initialSlot,
+  }) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -67,6 +70,7 @@ class _NutritionPageState extends State<NutritionPage> {
             builder: (context, notifier, _) {
               final sheetState = notifier.state;
               return QuickAddFoodSheet(
+                initialSlot: initialSlot ?? 'Snacks',
                 isSubmitting: sheetState.isAddingEntry,
                 errorText: sheetState.addEntryErrorMessage,
                 onErrorDismissed: notifier.clearQuickAddError,
@@ -96,9 +100,9 @@ class _NutritionPageState extends State<NutritionPage> {
                 state: state,
                 onDateSelected: vm.onDateSelected,
                 onAddMeal: (slotName) {
-                  // Trigger Quick Add with pre-filled slot?
-                  // For now, just open the sheet.
-                  unawaited(_showQuickAddSheet(vm));
+                  unawaited(
+                    _showQuickAddSheet(vm, initialSlot: slotName),
+                  );
                 },
               ),
       ),
@@ -160,7 +164,10 @@ class _NutritionDashboard extends StatelessWidget {
                       label: meal.title,
                       onTap: () => onAddMeal(meal.title),
                     )
-                  : _MealLogTile(meal: meal),
+                  : _MealLogTile(
+                      meal: meal,
+                      onAdd: () => onAddMeal(meal.title),
+                    ),
             );
           }),
         ],
@@ -211,35 +218,41 @@ class _NutritionHeader extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: IconButton(
-            onPressed: () {
-              unawaited(
-                Navigator.of(context, rootNavigator: true).push(
-                  PageRouteBuilder<void>(
-                    fullscreenDialog: true,
-                    pageBuilder: (context, animation, secondaryAnimation) =>
-                        const NutritionTargetPage(),
-                    transitionsBuilder:
-                        (
-                          context,
-                          animation,
-                          secondaryAnimation,
-                          child,
-                        ) {
-                          const begin = Offset(0, 1);
-                          const end = Offset.zero;
-                          const curve = Curves.easeOutQuint;
-                          final tween = Tween(
-                            begin: begin,
-                            end: end,
-                          ).chain(CurveTween(curve: curve));
-                          return SlideTransition(
-                            position: animation.drive(tween),
-                            child: child,
-                          );
-                        },
-                  ),
+            onPressed: () async {
+              // CHANGED: Await the return from the Tuner
+              await Navigator.of(context, rootNavigator: true).push(
+                PageRouteBuilder<void>(
+                  fullscreenDialog: true,
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const NutritionTargetPage(),
+                  transitionsBuilder:
+                      (
+                        context,
+                        animation,
+                        secondaryAnimation,
+                        child,
+                      ) {
+                        const begin = Offset(0, 1);
+                        const end = Offset.zero;
+                        const curve = Curves.easeOutQuint;
+                        final tween = Tween(
+                          begin: begin,
+                          end: end,
+                        ).chain(CurveTween(curve: curve));
+                        return SlideTransition(
+                          position: animation.drive(tween),
+                          child: child,
+                        );
+                      },
                 ),
               );
+
+              // CHANGED: Trigger a reload on the ViewModel to fetch new targets
+              if (context.mounted) {
+                final vm = context.read<NutritionDayViewModel>();
+                // Re-selecting the current date forces a refresh of Plan + Logs
+                unawaited(vm.onDateSelected(vm.state.selectedDate));
+              }
             },
             icon: Icon(Icons.tune, color: colors.ink),
             tooltip: 'Adjust Targets',
@@ -600,9 +613,13 @@ class _GhostMealSlot extends StatelessWidget {
 }
 
 class _MealLogTile extends StatefulWidget {
-  const _MealLogTile({required this.meal});
+  const _MealLogTile({
+    required this.meal,
+    required this.onAdd,
+  });
 
   final MealSummaryVm meal;
+  final VoidCallback onAdd;
 
   @override
   State<_MealLogTile> createState() => _MealLogTileState();
@@ -620,15 +637,13 @@ class _MealLogTileState extends State<_MealLogTile> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       decoration: BoxDecoration(
-        color: colors.surface, // Solid Matte Grey
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          // THE FIX: High Contrast White Border for Filled Items
           color: colors.ink.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
-          // Subtle drop shadow for lift
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
             offset: const Offset(0, 4),
@@ -639,6 +654,7 @@ class _MealLogTileState extends State<_MealLogTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 1. Header (Click to Expand)
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
             borderRadius: BorderRadius.circular(16),
@@ -650,11 +666,10 @@ class _MealLogTileState extends State<_MealLogTile> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header is brighter now
                       Text(
                         widget.meal.title.toUpperCase(),
                         style: typography.caption.copyWith(
-                          color: colors.ink.withValues(alpha: 0.8), // Brighter
+                          color: colors.ink.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
                           fontSize: 11,
@@ -671,7 +686,6 @@ class _MealLogTileState extends State<_MealLogTile> {
                       ),
                     ],
                   ),
-                  // Chevron indicates interaction
                   Icon(
                     _isExpanded ? Icons.expand_less : Icons.expand_more,
                     color: colors.ink,
@@ -681,7 +695,7 @@ class _MealLogTileState extends State<_MealLogTile> {
             ),
           ),
 
-          // ... (AnimatedCrossFade content remains the same)
+          // 2. Expanded Body
           AnimatedCrossFade(
             firstChild: const SizedBox(height: 0, width: double.infinity),
             secondChild: Column(
@@ -693,52 +707,80 @@ class _MealLogTileState extends State<_MealLogTile> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Column(
-                    children: widget.meal.entries.map((entry) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20, // Match header padding
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: colors.ink, // White bullet
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                entry.title,
-                                style: typography.body.copyWith(
-                                  fontSize: 15,
-                                  color: colors.ink, // Bright text
+                    children: [
+                      // List Items
+                      ...widget.meal.entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: colors.ink,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
-                            ),
-                            Text(
-                              '${entry.calories}',
-                              style: typography.caption.copyWith(
-                                fontFamily: 'monospace',
-                                fontWeight: FontWeight.bold,
-                                color: colors.ink,
-                                fontSize: 14,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  entry.title,
+                                  style: typography.body.copyWith(
+                                    fontSize: 15,
+                                    color: colors.ink,
+                                  ),
+                                ),
                               ),
-                            ),
-                            Text(
-                              ' kcal',
-                              style: typography.caption.copyWith(
-                                fontSize: 10,
-                                color: colors.inkSubtle,
+                              Text(
+                                '${entry.calories}',
+                                style: typography.caption.copyWith(
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.ink,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          ],
+                              Text(
+                                ' kcal',
+                                style: typography.caption.copyWith(
+                                  fontSize: 10,
+                                  color: colors.inkSubtle,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+
+                      // NEW: "Add Item" Shortcut Footer
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: widget.onAdd,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add, size: 16, color: colors.accent),
+                              const SizedBox(width: 8),
+                              Text(
+                                'ADD ITEM',
+                                style: typography.button.copyWith(
+                                  color: colors.accent,
+                                  fontSize: 12,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
               ],
