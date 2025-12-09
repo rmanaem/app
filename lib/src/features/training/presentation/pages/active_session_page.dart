@@ -11,7 +11,7 @@ import 'package:starter_app/src/features/training/presentation/widgets/active_ex
 import 'package:starter_app/src/features/training/presentation/widgets/exercise_context_sheet.dart';
 import 'package:starter_app/src/features/training/presentation/widgets/micro_tuner_sheet.dart';
 import 'package:starter_app/src/features/training/presentation/widgets/set_log_row.dart';
-import 'package:starter_app/src/features/training/program_builder/presentation/widgets/exercise_tuner_sheet.dart';
+import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_tuner_page.dart';
 
 /// Active session page driven by [ActiveSessionViewModel].
 class ActiveSessionPage extends StatelessWidget {
@@ -435,7 +435,7 @@ Future<void> _openTunerForConfig(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     useSafeArea: true,
-    builder: (ctx) => ExerciseTunerSheet(
+    builder: (ctx) => ExerciseTunerPage(
       exerciseName: exerciseBase['name'] as String,
       muscleGroup: exerciseBase['muscle'] as String? ?? 'MUSCLE',
       initialWeight: 20,

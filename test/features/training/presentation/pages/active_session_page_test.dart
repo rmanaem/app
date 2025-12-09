@@ -8,7 +8,7 @@ import 'package:starter_app/src/app/design_system/app_theme.dart';
 import 'package:starter_app/src/features/training/presentation/pages/active_session_page.dart';
 import 'package:starter_app/src/features/training/presentation/viewmodels/active_session_view_model.dart';
 import 'package:starter_app/src/features/training/presentation/widgets/micro_tuner_sheet.dart';
-import 'package:starter_app/src/features/training/program_builder/presentation/widgets/exercise_tuner_sheet.dart';
+import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_tuner_page.dart';
 
 class MockActiveSessionViewModel extends Mock
     implements ActiveSessionViewModel {}
@@ -85,7 +85,7 @@ void main() {
       await tester.pumpAndSettle(); // Allow navigation to selection and back
 
       // 3. Verify Tuner Sheet is Open
-      expect(find.byType(ExerciseTunerSheet), findsOneWidget);
+      expect(find.byType(ExerciseTunerPage), findsOneWidget);
 
       // 4. Tap "SAVE CONFIGURATION" on Tuner
       final saveBtn = find.text('SAVE CONFIGURATION');

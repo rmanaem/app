@@ -6,9 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
+import 'package:starter_app/src/features/training/program_builder/presentation/pages/exercise_tuner_page.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/viewmodels/workout_editor_view_model.dart';
 import 'package:starter_app/src/features/training/program_builder/presentation/widgets/exercise_module_card.dart';
-import 'package:starter_app/src/features/training/program_builder/presentation/widgets/exercise_tuner_sheet.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
 
 /// Editor for a single workout's exercise list.
@@ -221,7 +221,7 @@ Future<void> _openTuner(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     useSafeArea: true,
-    builder: (ctx) => ExerciseTunerSheet(
+    builder: (ctx) => ExerciseTunerPage(
       exerciseName: ex['name'] as String,
       muscleGroup: ex['muscle'] as String,
       initialSets: ex['sets'] as int? ?? 3,

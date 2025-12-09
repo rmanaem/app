@@ -11,9 +11,9 @@ import 'package:starter_app/src/presentation/atoms/app_text_field.dart';
 import 'package:starter_app/src/presentation/atoms/tactile_ruler_picker.dart';
 
 /// The "Calibration Station" modal for tuning an exercise configuration.
-class ExerciseTunerSheet extends StatefulWidget {
-  /// Creates a tuning sheet for a single exercise.
-  const ExerciseTunerSheet({
+class ExerciseTunerPage extends StatefulWidget {
+  /// Creates a tuning page for a single exercise.
+  const ExerciseTunerPage({
     required this.exerciseName,
     required this.muscleGroup,
     this.initialSets = 3,
@@ -54,10 +54,10 @@ class ExerciseTunerSheet extends StatefulWidget {
   final bool allowRippleUpdate;
 
   @override
-  State<ExerciseTunerSheet> createState() => _ExerciseTunerSheetState();
+  State<ExerciseTunerPage> createState() => _ExerciseTunerPageState();
 }
 
-class _ExerciseTunerSheetState extends State<ExerciseTunerSheet> {
+class _ExerciseTunerPageState extends State<ExerciseTunerPage> {
   late int _sets;
   late double _weight;
   late double _reps;
