@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/features/settings/domain/entities/user_preferences.dart';
+import 'package:starter_app/src/features/settings/presentation/pages/nutrition_target_page.dart';
 import 'package:starter_app/src/features/settings/presentation/viewmodels/settings_view_model.dart';
 import 'package:starter_app/src/features/settings/presentation/widgets/settings_card.dart';
 import 'package:starter_app/src/features/settings/presentation/widgets/settings_section_header.dart';
@@ -74,6 +75,44 @@ class SettingsPage extends StatelessWidget {
                     const SettingsSectionHeader(title: 'Preferences'),
                     SettingsCard(
                       children: [
+                        SettingsTile(
+                          label: 'Nutrition Strategy',
+                          valueLabel: 'Targets & Macros',
+                          onTap: () {
+                            unawaited(
+                              Navigator.of(context, rootNavigator: true).push(
+                                PageRouteBuilder<void>(
+                                  fullscreenDialog: true,
+                                  pageBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                      ) => const NutritionTargetPage(),
+                                  transitionsBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                        child,
+                                      ) {
+                                        const begin = Offset(0, 1);
+                                        const end = Offset.zero;
+                                        const curve = Curves.easeOutQuint;
+                                        final tween = Tween(
+                                          begin: begin,
+                                          end: end,
+                                        ).chain(CurveTween(curve: curve));
+                                        return SlideTransition(
+                                          position: animation.drive(tween),
+                                          child: child,
+                                        );
+                                      },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         _SettingsSegmentedRow<WeightUnit>(
                           label: 'Weight Unit',
                           value: state.weightUnit,

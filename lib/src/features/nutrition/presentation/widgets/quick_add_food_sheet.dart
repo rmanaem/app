@@ -346,7 +346,7 @@ class _QuickAddFoodSheetState extends State<QuickAddFoodSheet> {
               ),
 
               // 7. Spacer for FAB
-              const SizedBox(height: 100),
+              const SizedBox(height: 16),
             ],
           ),
         ),

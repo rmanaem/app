@@ -155,6 +155,7 @@ class AppShellPage extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (sheetContext) {
         return ChangeNotifierProvider(
           create: (_) => NutritionDayViewModel(

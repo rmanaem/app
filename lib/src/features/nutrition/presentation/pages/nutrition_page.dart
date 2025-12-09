@@ -10,6 +10,7 @@ import 'package:starter_app/src/app/design_system/app_typography.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewstate/nutrition_day_view_state.dart';
 import 'package:starter_app/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart';
+import 'package:starter_app/src/features/settings/presentation/pages/nutrition_target_page.dart';
 
 /// Primary page for the Nutrition feature.
 class NutritionPage extends StatefulWidget {
@@ -58,6 +59,7 @@ class _NutritionPageState extends State<NutritionPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useRootNavigator: true,
       builder: (sheetContext) {
         return ChangeNotifierProvider<NutritionDayViewModel>.value(
           value: vm,
@@ -180,24 +182,67 @@ class _NutritionHeader extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'FOOD LOG', // Context-specific label
-          style: typography.caption.copyWith(
-            color: colors.inkSubtle,
-            letterSpacing: 2,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'FOOD LOG', // Context-specific label
+              style: typography.caption.copyWith(
+                color: colors.inkSubtle,
+                letterSpacing: 2,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              dateLabel.toUpperCase(),
+              style: typography.display.copyWith(
+                fontSize: 24,
+                color: colors.ink,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          dateLabel,
-          style: typography.display.copyWith(
-            fontSize: 24,
-            color: colors.ink,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: IconButton(
+            onPressed: () {
+              unawaited(
+                Navigator.of(context, rootNavigator: true).push(
+                  PageRouteBuilder<void>(
+                    fullscreenDialog: true,
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const NutritionTargetPage(),
+                    transitionsBuilder:
+                        (
+                          context,
+                          animation,
+                          secondaryAnimation,
+                          child,
+                        ) {
+                          const begin = Offset(0, 1);
+                          const end = Offset.zero;
+                          const curve = Curves.easeOutQuint;
+                          final tween = Tween(
+                            begin: begin,
+                            end: end,
+                          ).chain(CurveTween(curve: curve));
+                          return SlideTransition(
+                            position: animation.drive(tween),
+                            child: child,
+                          );
+                        },
+                  ),
+                ),
+              );
+            },
+            icon: Icon(Icons.tune, color: colors.ink),
+            tooltip: 'Adjust Targets',
           ),
         ),
       ],

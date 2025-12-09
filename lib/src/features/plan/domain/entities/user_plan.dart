@@ -59,5 +59,39 @@ class UserPlan {
   final ActivityLevel activity;
 
   /// When the plan was saved.
+  /// When the plan was saved.
   final DateTime createdAt;
+
+  /// Creates a copy of this plan with the given fields replaced.
+  UserPlan copyWith({
+    Goal? goal,
+    double? targetWeightKg,
+    double? weeklyRateKg,
+    double? dailyCalories,
+    int? proteinGrams,
+    int? fatGrams,
+    int? carbGrams,
+    DateTime? projectedEndDate,
+    double? currentWeightKg,
+    double? heightCm,
+    DateTime? dob,
+    ActivityLevel? activity,
+    DateTime? createdAt,
+  }) {
+    return UserPlan(
+      goal: goal ?? this.goal,
+      targetWeightKg: targetWeightKg ?? this.targetWeightKg,
+      weeklyRateKg: weeklyRateKg ?? this.weeklyRateKg,
+      dailyCalories: dailyCalories ?? this.dailyCalories,
+      proteinGrams: proteinGrams ?? this.proteinGrams,
+      fatGrams: fatGrams ?? this.fatGrams,
+      carbGrams: carbGrams ?? this.carbGrams,
+      projectedEndDate: projectedEndDate ?? this.projectedEndDate,
+      currentWeightKg: currentWeightKg ?? this.currentWeightKg,
+      heightCm: heightCm ?? this.heightCm,
+      dob: dob ?? this.dob,
+      activity: activity ?? this.activity,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
