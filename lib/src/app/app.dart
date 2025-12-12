@@ -121,6 +121,9 @@ class App extends StatelessWidget {
                     return ChangeNotifierProvider(
                       create: (context) => TodayViewModel(
                         getCurrentPlan: context.read<GetCurrentPlan>(),
+                        foodLogRepository: context.read<FoodLogRepository>(),
+                        trainingRepository: context
+                            .read<TrainingOverviewRepository>(),
                       ),
                       child: const TodayPage(),
                     );

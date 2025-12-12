@@ -1,17 +1,18 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
-import 'package:starter_app/src/features/nutrition/presentation/navigation/nutrition_page_arguments.dart';
+import 'package:starter_app/src/app/design_system/app_spacing.dart';
+import 'package:starter_app/src/app/design_system/app_typography.dart';
+
 import 'package:starter_app/src/features/today/presentation/viewmodels/today_viewmodel.dart';
 import 'package:starter_app/src/features/today/presentation/widgets/log_weight_sheet.dart';
+import 'package:starter_app/src/presentation/atoms/app_button.dart';
 
-/// Daily dashboard showing nutrition, actions, and progress.
+/// The main dashboard page for the app "Today" tab.
 class TodayPage extends StatelessWidget {
-  /// Builds the today dashboard page.
+  /// Creates a [TodayPage].
   const TodayPage({super.key});
 
   @override
@@ -24,242 +25,275 @@ class TodayPage extends StatelessWidget {
       backgroundColor: colors.bg,
       body: SafeArea(
         child: state.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : state.hasError
-            ? _ErrorState(message: state.errorMessage ?? 'System Error')
-            : _buildContent(context, vm),
+            ? Center(child: CircularProgressIndicator(color: colors.ink))
+            : _DailyVoidHUD(vm: vm),
       ),
     );
-  }
-
-  // ...
-  Widget _buildContent(BuildContext context, TodayViewModel vm) {
-    final state = vm.state;
-    final now = DateTime.now();
-    final formattedDate = DateFormat('EEEE, MMM d').format(now).toUpperCase();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. HEADER
-          _Header(
-            dateLabel: formattedDate,
-            statusLabel: state.planLabel?.toUpperCase() ?? 'CALIBRATING...',
-          ),
-
-          const SizedBox(height: 32),
-
-          // 2. CALORIE & MACRO DISPLAY
-          _DailyCaloriesSection(vm: vm, onTap: () => _onLogFoodTap(context)),
-
-          const SizedBox(height: 40),
-
-          // 3. QUICK ACTIONS
-          _QuickActions(
-            onLogFood: () => _onLogFoodTap(context),
-            onLogWeight: () => _onLogWeightTap(context, vm),
-          ),
-
-          const SizedBox(height: 32),
-
-          // 4. WORKOUT CARD
-          _WorkoutCard(
-            title: state.nextWorkoutTitle ?? 'REST DAY',
-            subtitle: state.nextWorkoutSubtitle ?? 'Recovery & Mobility',
-            onTap: () => context.go('/training'),
-          ),
-
-          const SizedBox(height: 24),
-
-          // 5. WEIGHT CARD
-          _WeightTrendCard(
-            currentWeight: state.lastWeightKg,
-            deltaLabel: state.weightDeltaLabel,
-            onTap: () => _onLogWeightTap(context, vm),
-          ),
-
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  void _onLogFoodTap(BuildContext context) {
-    context.go(
-      '/nutrition',
-      extra: const NutritionPageArguments(showQuickAddSheet: true),
-    );
-  }
-
-  Future<void> _onLogWeightTap(BuildContext context, TodayViewModel vm) async {
-    // Use last logged weight or default to 75
-    final initialWeight = vm.state.lastWeightKg ?? 75.0;
-
-    final result = await showModalBottomSheet<double>(
-      context: context,
-      backgroundColor: Colors.transparent, // Sheet handles its own bg/radius
-      isScrollControlled: true,
-      builder: (ctx) => LogWeightSheet(initialWeight: initialWeight),
-    );
-
-    if (result != null) {
-      // TODO(arman): Wire up save logic in VM, for now just log
-      // vm.updateWeight(result);
-    }
   }
 }
 
-// -----------------------------------------------------------------------------
-// 1. HEADER
-// -----------------------------------------------------------------------------
-class _Header extends StatelessWidget {
-  const _Header({required this.dateLabel, required this.statusLabel});
-  final String dateLabel;
-  final String statusLabel;
+class _DailyVoidHUD extends StatelessWidget {
+  const _DailyVoidHUD({required this.vm});
+
+  final TodayViewModel vm;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final state = vm.state;
 
+    return RefreshIndicator(
+      onRefresh: vm.refresh,
+      child: SingleChildScrollView(
+        padding: spacing.edgeAll(spacing.gutter),
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Header
+            _FadeInSlide(
+              delay: 0,
+              child: _HUDHeader(onSettings: () => context.push('/settings')),
+            ),
+
+            SizedBox(height: spacing.xl),
+
+            // 2. THE REACTOR (Hero)
+            _FadeInSlide(
+              delay: 100,
+              child: _ReactorHero(
+                vm: vm,
+                onTap: () => context.go('/nutrition'),
+              ),
+            ),
+
+            SizedBox(height: spacing.xxl),
+
+            // VISUAL DIVIDER (Subtle separation)
+            _FadeInSlide(
+              delay: 150,
+              child: Divider(color: colors.borderIdle.withValues(alpha: 0.3)),
+            ),
+
+            SizedBox(height: spacing.xl),
+
+            // 3. TRAINING (Void Integration)
+            _FadeInSlide(
+              delay: 200,
+              child: _TrainingVoidSection(
+                title: state.nextWorkoutTitle ?? 'REST DAY',
+                subtitle: state.nextWorkoutSubtitle ?? 'Active Recovery',
+                onTap: () => context.go('/training'),
+              ),
+            ),
+
+            SizedBox(height: spacing.xl),
+
+            // VISUAL DIVIDER
+            _FadeInSlide(
+              delay: 250,
+              child: Divider(color: colors.borderIdle.withValues(alpha: 0.3)),
+            ),
+
+            SizedBox(height: spacing.lg),
+
+            // 4. WEIGHT (Void Integration)
+            _FadeInSlide(
+              delay: 300,
+              child: _WeightVoidSection(
+                weight: state.lastWeightKg,
+                delta: state.weightDeltaLabel,
+                onLog: () async {
+                  final initial = state.lastWeightKg ?? 75.0;
+                  await showModalBottomSheet<double>(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    isScrollControlled: true,
+                    useRootNavigator: true,
+                    builder: (ctx) => LogWeightSheet(initialWeight: initial),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ... (FadeInSlide, HUDHeader, ReactorHero, MacroGauge - Same as before)
+// ... Copying them here for completeness
+
+class _FadeInSlide extends StatelessWidget {
+  const _FadeInSlide({required this.child, required this.delay});
+  final Widget child;
+  final int delay;
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutQuint,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: FutureBuilder(
+        future: Future<void>.delayed(Duration(milliseconds: delay)),
+        builder: (context, snapshot) {
+          return snapshot.connectionState == ConnectionState.done
+              ? child
+              : const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+}
+
+class _HUDHeader extends StatelessWidget {
+  const _HUDHeader({required this.onSettings});
+  final VoidCallback onSettings;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    final now = DateTime.now();
+    final dateString = DateFormat('EEEE, MMM d').format(now).toUpperCase();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'TODAY',
-              style: textTheme.labelSmall?.copyWith(
+              'COMMAND CENTER',
+              style: typography.caption.copyWith(
                 color: colors.inkSubtle,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
                 letterSpacing: 2,
-                fontWeight: FontWeight.bold,
-                fontSize: 10,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              dateLabel,
-              style: textTheme.titleLarge?.copyWith(
+              dateString,
+              style: typography.display.copyWith(
                 color: colors.ink,
+                fontSize: 24,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
               ),
             ),
           ],
+        ),
+        IconButton(
+          onPressed: onSettings,
+          icon: Icon(Icons.settings, color: colors.ink),
         ),
       ],
     );
   }
 }
 
-// -----------------------------------------------------------------------------
-// 2. DAILY CALORIES & MACROS
-// -----------------------------------------------------------------------------
-class _DailyCaloriesSection extends StatelessWidget {
-  const _DailyCaloriesSection({required this.vm, required this.onTap});
+class _ReactorHero extends StatelessWidget {
+  const _ReactorHero({required this.vm, required this.onTap});
   final TodayViewModel vm;
   final VoidCallback onTap;
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
+    final typography = Theme.of(context).extension<AppTypography>()!;
     final state = vm.state;
-
-    var gaugeColor = colors.accent;
-    if (vm.isOverBudget) gaugeColor = colors.danger;
-    if (vm.isTargetHit) gaugeColor = colors.ink;
-
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
-          // 1. GAUGE
           SizedBox(
-            height: 150,
             width: 220,
+            height: 220,
             child: Stack(
-              alignment: Alignment.center,
+              fit: StackFit.expand,
               children: [
-                CustomPaint(
-                  size: const Size(220, 150),
-                  painter: _GaugePainter(
-                    color: gaugeColor,
-                    trackColor: colors.surface,
-                    percent: vm.gaugePercent,
-                    strokeWidth: 10,
-                  ),
+                const CircularProgressIndicator(
+                  value: 1,
+                  color: Color(0xFF222222),
+                  strokeWidth: 14,
                 ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 20),
-                    Text(
-                      vm.heroValue,
-                      style: textTheme.displayLarge?.copyWith(
-                        color: colors.ink,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                        fontSize: 56,
-                        letterSpacing: -2,
+                CircularProgressIndicator(
+                  value: vm.gaugePercent,
+                  color: colors.ink,
+                  strokeWidth: 14,
+                  strokeCap: StrokeCap.round,
+                ),
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        vm.heroValue,
+                        style: typography.display.copyWith(
+                          fontSize: 56,
+                          color: colors.ink,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                          letterSpacing: -2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vm.heroLabel,
-                      style: textTheme.labelSmall?.copyWith(
-                        color: colors.inkSubtle,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                        fontSize: 9,
+                      const SizedBox(height: 4),
+                      Text(
+                        'KCAL LEFT',
+                        style: typography.caption.copyWith(
+                          color: colors.inkSubtle,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      vm.gaugeSubtitle,
-                      style: textTheme.labelSmall?.copyWith(
-                        color: colors.inkSubtle.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 9,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-
-          const SizedBox(height: 40),
-
-          // 2. MACROS
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _MacroRing(
-                label: 'Protein',
-                current: state.consumedProtein,
-                target: state.plan?.proteinGrams ?? 0,
-                color: colors.macroProtein,
-              ),
-              const SizedBox(width: 24),
-              _MacroRing(
-                label: 'Carbs',
-                current: state.consumedCarbs,
-                target: state.plan?.carbGrams ?? 0,
-                color: colors.macroCarbs,
-              ),
-              const SizedBox(width: 24),
-              _MacroRing(
-                label: 'Fat',
-                current: state.consumedFat,
-                target: state.plan?.fatGrams ?? 0,
-                color: colors.macroFat,
-              ),
-            ],
+          const SizedBox(height: 32),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _MacroGauge(
+                    label: 'PROTEIN',
+                    val: state.consumedProtein,
+                    target: state.plan?.proteinGrams ?? 0,
+                    color: const Color(0xFF9E9E9E),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MacroGauge(
+                    label: 'CARBS',
+                    val: state.consumedCarbs,
+                    target: state.plan?.carbGrams ?? 0,
+                    color: const Color(0xFF616161),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MacroGauge(
+                    label: 'FAT',
+                    val: state.consumedFat,
+                    target: state.plan?.fatGrams ?? 0,
+                    color: const Color(0xFF424242),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -267,53 +301,48 @@ class _DailyCaloriesSection extends StatelessWidget {
   }
 }
 
-class _MacroRing extends StatelessWidget {
-  const _MacroRing({
+class _MacroGauge extends StatelessWidget {
+  const _MacroGauge({
     required this.label,
-    required this.current,
+    required this.val,
     required this.target,
     required this.color,
   });
-
   final String label;
-  final int current;
+  final int val;
   final int target;
   final Color color;
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final progress = target == 0 ? 0.0 : (current / target).clamp(0.0, 1.0);
-
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    final progress = target > 0 ? (val / target).clamp(0.0, 1.0) : 0.0;
     return Column(
       children: [
-        SizedBox(
-          height: 44,
-          width: 44,
-          child: CircularProgressIndicator(
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: colors.surface,
+            backgroundColor: const Color(0xFF222222),
             color: color,
-            strokeWidth: 4,
-            strokeCap: StrokeCap.round,
+            minHeight: 4,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          '$current/$target',
-          style: TextStyle(
+          '$val/$target',
+          style: typography.caption.copyWith(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
             color: colors.ink,
-            fontWeight: FontWeight.w700,
-            fontSize: 11,
           ),
         ),
         Text(
-          label.toUpperCase(),
-          style: TextStyle(
+          label,
+          style: typography.caption.copyWith(
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
             color: colors.inkSubtle,
-            fontWeight: FontWeight.w700,
-            fontSize: 10,
-            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -321,152 +350,16 @@ class _MacroRing extends StatelessWidget {
   }
 }
 
-class _GaugePainter extends CustomPainter {
-  _GaugePainter({
-    required this.color,
-    required this.trackColor,
-    required this.percent,
-    this.strokeWidth = 12,
-  });
-  final Color color;
-  final Color trackColor;
-  final double percent;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height * 0.7);
-    final radius = size.width * 0.45;
-    const startAngle = 135 * (math.pi / 180);
-    const sweepAngle = 270 * (math.pi / 180);
-
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      sweepAngle,
-      false,
-      trackPaint,
-    );
-
-    final progressPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt
-      ..maskFilter = const MaskFilter.blur(
-        BlurStyle.solid,
-        2,
-      );
-
-    final progressSweep = sweepAngle * percent;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      progressSweep,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
 // -----------------------------------------------------------------------------
-// 3. QUICK ACTIONS
+// 3. TRAINING VOID SECTION (No Card - "Total Integration")
 // -----------------------------------------------------------------------------
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({
-    required this.onLogFood,
-    required this.onLogWeight,
-  });
-  final VoidCallback onLogFood;
-  final VoidCallback onLogWeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _ActionTile(
-            icon: Icons.add,
-            label: 'LOG FOOD',
-            onTap: onLogFood,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _ActionTile(
-            icon: Icons.monitor_weight_outlined,
-            label: 'WEIGH IN',
-            onTap: onLogWeight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            border: Border.all(color: colors.borderIdle),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: colors.accent),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: colors.ink,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 4. WORKOUT CARD
-// -----------------------------------------------------------------------------
-class _WorkoutCard extends StatelessWidget {
-  const _WorkoutCard({
+class _TrainingVoidSection extends StatelessWidget {
+  const _TrainingVoidSection({
     required this.title,
     required this.subtitle,
     required this.onTap,
   });
+
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -474,145 +367,206 @@ class _WorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    // Mock Data for "Weekly Consistency"
+    const completed = 3;
+    const target = 4;
+    const progress = completed / target;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          children: [
-            // Left Strip
-            Container(
-              width: 4,
-              height: 48,
-              decoration: BoxDecoration(
-                color: colors.accent,
-                borderRadius: BorderRadius.circular(2),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.accent.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                  ),
-                ],
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Left: Weekly Volume Ring (The Anchor)
+              SizedBox(
+                width: 64,
+                height: 64,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    const CircularProgressIndicator(
+                      value: 1,
+                      color: Color(0xFF222222),
+                      strokeWidth: 5,
+                    ),
+                    CircularProgressIndicator(
+                      value: progress,
+                      color: colors
+                          .accent, // Use accent to distinguish from Nutrition
+                      strokeWidth: 5,
+                      strokeCap: StrokeCap.round,
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$completed/$target',
+                            style: typography.title.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colors.ink,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'NEXT SESSION',
-                    style: TextStyle(
-                      color: colors.inkSubtle,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+
+              const SizedBox(width: 24),
+
+              // Right: Text Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'NEXT SESSION',
+                      style: typography.caption.copyWith(
+                        color: colors.accent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: colors.ink,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
+                    const SizedBox(height: 6),
+                    Text(
+                      title,
+                      style: typography.display.copyWith(
+                        fontSize: 32, // Huge text
+                        color: colors.ink,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: colors.inkSubtle,
-                      fontSize: 14,
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: typography.body.copyWith(
+                        color: colors.inkSubtle,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Icon(Icons.chevron_right, color: colors.accent),
-          ],
-        ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Action Button (The ONLY solid object)
+          AppButton(
+            label: 'START SESSION',
+            icon: Icons.play_arrow_rounded,
+            isPrimary: true,
+            onTap: onTap,
+          ),
+        ],
       ),
     );
   }
 }
 
 // -----------------------------------------------------------------------------
-// 5. WEIGHT CARD
+// 4. WEIGHT VOID SECTION (Ticker Style)
 // -----------------------------------------------------------------------------
-class _WeightTrendCard extends StatelessWidget {
-  const _WeightTrendCard({
-    required this.currentWeight,
-    required this.deltaLabel,
-    required this.onTap,
+class _WeightVoidSection extends StatelessWidget {
+  const _WeightVoidSection({
+    required this.weight,
+    required this.delta,
+    required this.onLog,
   });
 
-  final double? currentWeight;
-  final String? deltaLabel;
-  final VoidCallback onTap;
+  final double? weight;
+  final String? delta;
+  final VoidCallback onLog;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
 
     return InkWell(
-      onTap: onTap,
+      onTap: onLog,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            // Left Strip
-            Container(width: 4, height: 48, color: colors.accent),
-            const SizedBox(width: 20),
+            // Left: Value
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'LATEST WEIGHT',
-                    style: TextStyle(
+                    'BODY WEIGHT',
+                    style: typography.caption.copyWith(
                       color: colors.inkSubtle,
                       fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w900,
                       letterSpacing: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        currentWeight != null
-                            ? currentWeight!.toStringAsFixed(1)
-                            : '--',
-                        style: TextStyle(
+                        weight?.toStringAsFixed(1) ?? '--',
+                        style: typography.display.copyWith(
+                          fontSize: 32,
                           color: colors.ink,
-                          fontSize: 24,
                           fontWeight: FontWeight.w800,
+                          height: 1,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'kg',
-                        style: TextStyle(
-                          color: colors.inkSubtle,
+                        'KG',
+                        style: typography.caption.copyWith(
                           fontSize: 12,
+                          color: colors.inkSubtle,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                  if (deltaLabel != null)
-                    Text(
-                      deltaLabel!,
-                      style: TextStyle(color: colors.inkSubtle, fontSize: 12),
-                    ),
                 ],
               ),
             ),
-            Icon(Icons.show_chart_rounded, color: colors.accent, size: 32),
+
+            // Middle: Sparkline (Visual only for now)
+            SizedBox(
+              width: 80,
+              height: 30,
+              child: CustomPaint(
+                painter: _SimpleSparklinePainter(color: colors.accent),
+              ),
+            ),
+
+            const SizedBox(width: 24),
+
+            // Right: Log Button (Small Outline)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: colors.borderIdle),
+              ),
+              child: Icon(Icons.add, size: 16, color: colors.ink),
+            ),
           ],
         ),
       ),
@@ -620,16 +574,28 @@ class _WeightTrendCard extends StatelessWidget {
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
-  final String message;
+class _SimpleSparklinePainter extends CustomPainter {
+  _SimpleSparklinePainter({required this.color});
+  final Color color;
+
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        message,
-        style: const TextStyle(color: Colors.white),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path()
+      ..moveTo(0, size.height * 0.8)
+      ..lineTo(size.width * 0.25, size.height * 0.6)
+      ..lineTo(size.width * 0.5, size.height * 0.7)
+      ..lineTo(size.width * 0.75, size.height * 0.3)
+      ..lineTo(size.width, size.height * 0.1);
+
+    canvas.drawPath(path, paint);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
