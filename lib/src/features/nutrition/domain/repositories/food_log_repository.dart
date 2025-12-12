@@ -9,6 +9,12 @@ abstract class FoodLogRepository {
   /// Adds a quick entry to the given day's log.
   Future<void> addQuickEntry(DateTime date, FoodEntry entry);
 
+  /// Updates an existing entry on the given day.
+  Future<void> updateEntry(DateTime date, FoodEntry entry);
+
+  /// Deletes an entry by ID from the given day.
+  Future<void> deleteEntry(DateTime date, String entryId);
+
   /// Stream of dates that have had their logs updated.
   Stream<DateTime> get logUpdates;
 }

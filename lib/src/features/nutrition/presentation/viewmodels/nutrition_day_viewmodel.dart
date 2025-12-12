@@ -86,6 +86,67 @@ class NutritionDayViewModel extends ChangeNotifier {
     }
   }
 
+  /// Deletes an entry by ID.
+  Future<void> deleteEntry(String id) async {
+    _updateState(
+      _state.copyWith(isLoading: true),
+    ); // Or a specific isDeleting state
+    try {
+      await _foodLogRepository.deleteEntry(_selectedDate, id);
+      await _loadForDate(_selectedDate);
+    } on Exception catch (_) {
+      // Revert loading, show error toast in real app
+      _updateState(_state.copyWith(isLoading: false));
+    }
+  }
+
+  /// Updates an existing entry.
+  Future<bool> updateEntry(String id, QuickFoodEntryInput input) async {
+    _updateState(_state.copyWith(isAddingEntry: true)); // Reusing state
+
+    final entry = FoodEntry(
+      id: id,
+      title: (input.title ?? '').isEmpty ? input.mealLabel : input.title!,
+      calories: input.calories,
+      proteinGrams: input.proteinGrams ?? 0,
+      carbGrams: input.carbGrams ?? 0,
+      fatGrams: input.fatGrams ?? 0,
+      slot: input.mealLabel,
+    );
+
+    try {
+      await _foodLogRepository.updateEntry(_selectedDate, entry);
+      await _loadForDate(_selectedDate);
+      _updateState(_state.copyWith(isAddingEntry: false));
+      return true;
+    } on Exception catch (_) {
+      _updateState(
+        _state.copyWith(
+          isAddingEntry: false,
+          addEntryErrorMessage: 'Could not update entry.',
+        ),
+      );
+      return false;
+    }
+  }
+
+  /// Restores a previously deleted entry.
+  Future<void> restoreEntry(FoodEntry entry) async {
+    _updateState(_state.copyWith(isAddingEntry: true));
+    try {
+      await _foodLogRepository.addQuickEntry(_selectedDate, entry);
+      await _loadForDate(_selectedDate);
+      _updateState(_state.copyWith(isAddingEntry: false));
+    } on Exception catch (_) {
+      _updateState(
+        _state.copyWith(
+          isAddingEntry: false,
+          addEntryErrorMessage: 'Could not restore entry.',
+        ),
+      );
+    }
+  }
+
   /// Clears the quick-add error message once rendered.
   void clearQuickAddError() {
     if (!_state.hasQuickAddError) {

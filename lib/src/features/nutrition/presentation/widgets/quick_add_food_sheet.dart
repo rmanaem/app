@@ -18,6 +18,11 @@ class QuickAddFoodSheet extends StatefulWidget {
   const QuickAddFoodSheet({
     required this.onSubmit,
     this.initialSlot = 'Snacks',
+    this.initialName,
+    this.initialCalories,
+    this.initialProtein,
+    this.initialCarbs,
+    this.initialFat,
     this.isSubmitting = false,
     this.errorText,
     this.onErrorDismissed,
@@ -29,6 +34,21 @@ class QuickAddFoodSheet extends StatefulWidget {
 
   /// Initial slot name.
   final String initialSlot;
+
+  /// Initial food name for editing.
+  final String? initialName;
+
+  /// Initial calories for editing.
+  final double? initialCalories;
+
+  /// Initial protein for editing.
+  final double? initialProtein;
+
+  /// Initial carbs for editing.
+  final double? initialCarbs;
+
+  /// Initial fat for editing.
+  final double? initialFat;
 
   /// Whether submission is in progress.
   final bool isSubmitting;
@@ -60,6 +80,13 @@ class _QuickAddFoodSheetState extends State<QuickAddFoodSheet> {
   void initState() {
     super.initState();
     _selectedSlot = widget.initialSlot;
+    if (widget.initialName != null) {
+      _titleController.text = widget.initialName!;
+    }
+    _calories = widget.initialCalories ?? 0;
+    _protein = widget.initialProtein ?? 0;
+    _carbs = widget.initialCarbs ?? 0;
+    _fat = widget.initialFat ?? 0;
   }
 
   @override
@@ -327,7 +354,9 @@ class _QuickAddFoodSheetState extends State<QuickAddFoodSheet> {
                   final isValid = value.text.trim().isNotEmpty && _calories > 0;
 
                   return AppButton(
-                    label: 'LOG ENTRY',
+                    label: widget.initialName != null
+                        ? 'UPDATE ENTRY'
+                        : 'LOG ENTRY',
                     isPrimary: true,
                     isLoading: widget.isSubmitting,
                     onTap: isValid

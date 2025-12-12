@@ -71,5 +71,44 @@ class FoodLogRepositoryFake implements FoodLogRepository {
     _controller.add(key);
   }
 
+  @override
+  Future<void> updateEntry(DateTime date, FoodEntry entry) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    final key = _dateOnly(date);
+    final existingLog = _logs[key];
+    if (existingLog == null) return; // Or throw
+
+    final newEntries = existingLog.entries.map((e) {
+      if (e.id == entry.id) {
+        return entry;
+      }
+      return e;
+    }).toList();
+
+    _logs[key] = DayFoodLog(
+      date: key,
+      entries: newEntries,
+    );
+    _controller.add(key);
+  }
+
+  @override
+  Future<void> deleteEntry(DateTime date, String entryId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    final key = _dateOnly(date);
+    final existingLog = _logs[key];
+    if (existingLog == null) return;
+
+    final newEntries = existingLog.entries
+        .where((e) => e.id != entryId)
+        .toList();
+
+    _logs[key] = DayFoodLog(
+      date: key,
+      entries: newEntries,
+    );
+    _controller.add(key);
+  }
+
   DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 }

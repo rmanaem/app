@@ -7,8 +7,12 @@ import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_layout.dart';
 import 'package:starter_app/src/app/design_system/app_spacing.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
+import 'package:starter_app/src/core/services/scaffold_notification_service.dart';
+import 'package:starter_app/src/features/nutrition/domain/entities/food_entry.dart';
+
 import 'package:starter_app/src/features/nutrition/presentation/viewmodels/nutrition_day_viewmodel.dart';
 import 'package:starter_app/src/features/nutrition/presentation/viewstate/nutrition_day_view_state.dart';
+import 'package:starter_app/src/features/nutrition/presentation/widgets/food_entry_detail_sheet.dart';
 import 'package:starter_app/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart';
 import 'package:starter_app/src/features/settings/presentation/pages/nutrition_target_page.dart';
 
@@ -56,6 +60,7 @@ class _NutritionPageState extends State<NutritionPage> {
   Future<void> _showQuickAddSheet(
     NutritionDayViewModel vm, {
     String? initialSlot,
+    FoodEntry? entry,
   }) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -69,11 +74,21 @@ class _NutritionPageState extends State<NutritionPage> {
             builder: (context, notifier, _) {
               final sheetState = notifier.state;
               return QuickAddFoodSheet(
-                initialSlot: initialSlot ?? 'Snacks',
+                initialSlot: initialSlot ?? entry?.slot ?? 'Snacks',
+                initialName: entry?.title,
+                initialCalories: entry?.calories.toDouble(),
+                initialProtein: entry?.proteinGrams.toDouble(),
+                initialCarbs: entry?.carbGrams.toDouble(),
+                initialFat: entry?.fatGrams.toDouble(),
                 isSubmitting: sheetState.isAddingEntry,
                 errorText: sheetState.addEntryErrorMessage,
                 onErrorDismissed: notifier.clearQuickAddError,
-                onSubmit: notifier.addQuickEntry,
+                onSubmit: (input) {
+                  if (entry != null && entry.id != null) {
+                    return notifier.updateEntry(entry.id!, input);
+                  }
+                  return notifier.addQuickEntry(input);
+                },
               );
             },
           ),
@@ -103,6 +118,19 @@ class _NutritionPageState extends State<NutritionPage> {
                     _showQuickAddSheet(vm, initialSlot: slotName),
                   );
                 },
+                onEditEntry: (entry, slot) {
+                  unawaited(
+                    _showQuickAddSheet(vm, initialSlot: slot, entry: entry),
+                  );
+                },
+                onDeleteEntry: (entry) {
+                  unawaited(vm.deleteEntry(entry.id!));
+
+                  ScaffoldNotificationService().showUndo(
+                    '${entry.title} deleted',
+                    () => unawaited(vm.restoreEntry(entry)),
+                  );
+                },
               ),
       ),
     );
@@ -114,11 +142,15 @@ class _NutritionLogbook extends StatelessWidget {
     required this.state,
     required this.onDateSelected,
     required this.onAddMeal,
+    required this.onEditEntry,
+    required this.onDeleteEntry,
   });
 
   final NutritionDayViewState state;
   final ValueChanged<DateTime> onDateSelected;
   final void Function(String slot) onAddMeal;
+  final void Function(FoodEntry entry, String slot) onEditEntry;
+  final void Function(FoodEntry entry) onDeleteEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +198,8 @@ class _NutritionLogbook extends StatelessWidget {
                 meal: meal,
                 isLast: isLast,
                 onAdd: () => onAddMeal(meal.title),
+                onEditEntry: (entry) => onEditEntry(entry, meal.title),
+                onDeleteEntry: onDeleteEntry,
               );
             },
           ),
@@ -185,11 +219,15 @@ class _ThreadedMealGroup extends StatelessWidget {
     required this.meal,
     required this.isLast,
     required this.onAdd,
+    required this.onEditEntry,
+    required this.onDeleteEntry,
   });
 
   final MealSummaryVm meal;
   final bool isLast;
   final VoidCallback onAdd;
+  final ValueChanged<FoodEntry> onEditEntry;
+  final ValueChanged<FoodEntry> onDeleteEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -302,46 +340,87 @@ class _ThreadedMealGroup extends StatelessWidget {
                   )
                 else
                   ...meal.entries.map(
-                    (entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 7),
-                            child: Container(
-                              width: 4,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: colors.inkSubtle,
-                                shape: BoxShape.circle,
+                    (entry) {
+                      return Dismissible(
+                        key: Key(entry.id ?? entry.hashCode.toString()),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          color: colors.danger,
+                          padding: const EdgeInsets.only(right: 24),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        // No confirmDismiss -> Immediate delete
+                        onDismissed: (_) => onDeleteEntry(entry),
+                        child: InkWell(
+                          onTap: () {
+                            unawaited(
+                              showModalBottomSheet<void>(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                isScrollControlled: true,
+                                useRootNavigator: true,
+                                builder: (_) => FoodEntryDetailSheet(
+                                  entry: entry,
+                                  mealName: meal.title,
+                                  onEdit: () {
+                                    onEditEntry(entry);
+                                  },
+                                  onDelete: () {
+                                    // Close sheet, then delete
+                                    Navigator.of(
+                                      context,
+                                      rootNavigator: true,
+                                    ).pop();
+                                    onDeleteEntry(entry);
+                                  },
+                                ),
                               ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 7),
+                                  child: Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: colors.inkSubtle,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    entry.title,
+                                    style: typography.body.copyWith(
+                                      color: colors.ink,
+                                      fontSize: 15,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${entry.calories}',
+                                  style: typography.caption.copyWith(
+                                    color: colors.inkSubtle, // Numbers recede
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              entry.title,
-                              style: typography.body.copyWith(
-                                color: colors.ink,
-                                fontSize: 15,
-                                height: 1.2,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${entry.calories}',
-                            style: typography.caption.copyWith(
-                              color: colors.inkSubtle, // Numbers recede
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
 
                 const SizedBox(height: 24),
