@@ -12,14 +12,13 @@ import 'package:starter_app/src/features/nutrition/presentation/viewstate/nutrit
 import 'package:starter_app/src/features/nutrition/presentation/widgets/quick_add_food_sheet.dart';
 import 'package:starter_app/src/features/settings/presentation/pages/nutrition_target_page.dart';
 
-/// Primary page for the Nutrition feature.
+/// The main logbook page for the "Nutrition" tab.
 class NutritionPage extends StatefulWidget {
-  /// Creates the nutrition page.
+  /// Creates a [NutritionPage].
   const NutritionPage({super.key, this.showQuickAddSheet = false});
 
   /// Whether to automatically show the quick add sheet.
   final bool showQuickAddSheet;
-
   @override
   State<NutritionPage> createState() => _NutritionPageState();
 }
@@ -96,7 +95,7 @@ class _NutritionPageState extends State<NutritionPage> {
             ? Center(child: CircularProgressIndicator(color: colors.ink))
             : state.hasError
             ? Center(child: Text(state.errorMessage ?? 'Error'))
-            : _NutritionDashboard(
+            : _NutritionLogbook(
                 state: state,
                 onDateSelected: vm.onDateSelected,
                 onAddMeal: (slotName) {
@@ -110,8 +109,8 @@ class _NutritionPageState extends State<NutritionPage> {
   }
 }
 
-class _NutritionDashboard extends StatelessWidget {
-  const _NutritionDashboard({
+class _NutritionLogbook extends StatelessWidget {
+  const _NutritionLogbook({
     required this.state,
     required this.onDateSelected,
     required this.onAddMeal,
@@ -130,46 +129,48 @@ class _NutritionDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Header (Aligned with Training)
+          // 1. Header
           _NutritionHeader(dateLabel: state.dateLabel),
-          SizedBox(height: spacing.xl),
-          // 2. Week Strip (Aligned with Training)
+          SizedBox(height: spacing.lg),
+
+          // 2. Week Strip
           _WeekStrip(
             days: state.weekDays,
             selectedDate: state.selectedDate,
             onSelect: onDateSelected,
           ),
-          SizedBox(height: spacing.xxl),
+          SizedBox(height: spacing.xl),
 
-          // 3. Hero (Reactor)
-          _CalorieReactorCard(
+          // 3. Equalizer Summary
+          _NutritionEqualizerHeader(
             consumed: state.caloriesConsumed,
             target: state.caloriesTarget,
-            protein: state.proteinConsumed,
-            proteinTarget: state.proteinTarget,
-            carbs: state.carbsConsumed,
-            carbsTarget: state.carbsTarget,
-            fat: state.fatConsumed,
-            fatTarget: state.fatTarget,
+            p: state.proteinConsumed,
+            pTarget: state.proteinTarget,
+            c: state.carbsConsumed,
+            cTarget: state.carbsTarget,
+            f: state.fatConsumed,
+            fTarget: state.fatTarget,
           ),
-          SizedBox(height: spacing.xxl),
+          SizedBox(height: spacing.xl),
 
-          // 4. Meals List
-          ...state.meals.map((meal) {
-            final isGhost = meal.subtitle == 'Ghost';
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: isGhost
-                  ? _GhostMealSlot(
-                      label: meal.title,
-                      onTap: () => onAddMeal(meal.title),
-                    )
-                  : _MealLogTile(
-                      meal: meal,
-                      onAdd: () => onAddMeal(meal.title),
-                    ),
-            );
-          }),
+          // 4. THE THREADED STREAM
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: state.meals.length,
+            itemBuilder: (context, index) {
+              final meal = state.meals[index];
+              final isLast = index == state.meals.length - 1;
+              return _ThreadedMealGroup(
+                meal: meal,
+                isLast: isLast,
+                onAdd: () => onAddMeal(meal.title),
+              );
+            },
+          ),
+
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -177,18 +178,354 @@ class _NutritionDashboard extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 1. DAY SELECTOR STRIP (Match Training Tab)
+// UPDATED MEAL GROUP: BRIGHTER HEADER
 // -----------------------------------------------------------------------------
-class _NutritionHeader extends StatelessWidget {
-  const _NutritionHeader({required this.dateLabel});
+class _ThreadedMealGroup extends StatelessWidget {
+  const _ThreadedMealGroup({
+    required this.meal,
+    required this.isLast,
+    required this.onAdd,
+  });
 
-  final String dateLabel;
+  final MealSummaryVm meal;
+  final bool isLast;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
 
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. The Rail (Left)
+          Column(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: colors.bg,
+                  border: Border.all(
+                    color: colors.ink,
+                    width: 2,
+                  ), // Brighter Dot
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  width: 2,
+                  color: isLast
+                      ? Colors.transparent
+                      : colors.ink.withValues(alpha: 0.15),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 16),
+
+          // 2. The Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Meal Title (UPDATED: White & Heavy)
+                    Text(
+                      meal.title.toUpperCase(),
+                      style: typography.caption.copyWith(
+                        color: colors.ink, // Was inkSubtle
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                        fontSize: 12, // Slightly larger
+                      ),
+                    ),
+
+                    // Right Side: Calorie Summary + Add Button
+                    Row(
+                      children: [
+                        if (meal.entries.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Text(
+                              meal.subtitle
+                                  .replaceAll('•', '')
+                                  .trim(), // Extract just the kcal
+                              style: typography.caption.copyWith(
+                                color: colors.inkSubtle,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+
+                        InkWell(
+                          onTap: onAdd,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(
+                              6,
+                            ), // Smaller, tighter button
+                            decoration: BoxDecoration(
+                              border: Border.all(color: colors.borderIdle),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.add, size: 16, color: colors.ink),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Food List
+                if (meal.entries.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 32),
+                    child: Text(
+                      'No items logged',
+                      style: typography.caption.copyWith(
+                        color: colors.inkSubtle.withValues(alpha: 0.3),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  )
+                else
+                  ...meal.entries.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 7),
+                            child: Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: colors.inkSubtle,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              entry.title,
+                              style: typography.body.copyWith(
+                                color: colors.ink,
+                                fontSize: 15,
+                                height: 1.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${entry.calories}',
+                            style: typography.caption.copyWith(
+                              color: colors.inkSubtle, // Numbers recede
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ... (EqualizerHeader, EqualizerBar, Header, WeekStrip, DayKey...)
+class _NutritionEqualizerHeader extends StatelessWidget {
+  const _NutritionEqualizerHeader({
+    required this.consumed,
+    required this.target,
+    required this.p,
+    required this.pTarget,
+    required this.c,
+    required this.cTarget,
+    required this.f,
+    required this.fTarget,
+  });
+  final int consumed;
+  final int target;
+  final int p;
+  final int pTarget;
+  final int c;
+  final int cTarget;
+  final int f;
+  final int fTarget;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DAILY INTAKE',
+                  style: typography.caption.copyWith(
+                    color: colors.inkSubtle,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '$consumed',
+                      style: typography.display.copyWith(
+                        color: colors.ink,
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '/ $target kcal',
+                      style: typography.body.copyWith(
+                        color: colors.inkSubtle,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        _EqualizerBar(
+          label: 'PRO',
+          val: p,
+          target: pTarget,
+          color: const Color(0xFF9E9E9E),
+        ),
+        const SizedBox(height: 12),
+        _EqualizerBar(
+          label: 'CARB',
+          val: c,
+          target: cTarget,
+          color: const Color(0xFF616161),
+        ),
+        const SizedBox(height: 12),
+        _EqualizerBar(
+          label: 'FAT',
+          val: f,
+          target: fTarget,
+          color: const Color(0xFF424242),
+        ),
+      ],
+    );
+  }
+}
+
+class _EqualizerBar extends StatelessWidget {
+  const _EqualizerBar({
+    required this.label,
+    required this.val,
+    required this.target,
+    required this.color,
+  });
+  final String label;
+  final int val;
+  final int target;
+  final Color color;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    final progress = target > 0 ? (val / target).clamp(0.0, 1.0) : 0.0;
+    return Row(
+      children: [
+        SizedBox(
+          width: 40,
+          child: Text(
+            label,
+            style: typography.caption.copyWith(
+              color: colors.inkSubtle,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+        Expanded(
+          child: SizedBox(
+            height: 12,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Stack(
+                children: [
+                  Container(color: colors.surface),
+                  FractionallySizedBox(
+                    widthFactor: progress,
+                    child: Container(color: color),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 60,
+          child: Text(
+            '${val}g',
+            textAlign: TextAlign.right,
+            style: typography.caption.copyWith(
+              color: colors.ink,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NutritionHeader extends StatelessWidget {
+  const _NutritionHeader({required this.dateLabel});
+  final String dateLabel;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,7 +534,7 @@ class _NutritionHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'FOOD LOG', // Context-specific label
+              'FOOD LOG',
               style: typography.caption.copyWith(
                 color: colors.inkSubtle,
                 letterSpacing: 2,
@@ -219,19 +556,13 @@ class _NutritionHeader extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 4),
           child: IconButton(
             onPressed: () async {
-              // CHANGED: Await the return from the Tuner
               await Navigator.of(context, rootNavigator: true).push(
                 PageRouteBuilder<void>(
                   fullscreenDialog: true,
                   pageBuilder: (context, animation, secondaryAnimation) =>
                       const NutritionTargetPage(),
                   transitionsBuilder:
-                      (
-                        context,
-                        animation,
-                        secondaryAnimation,
-                        child,
-                      ) {
+                      (context, animation, secondaryAnimation, child) {
                         const begin = Offset(0, 1);
                         const end = Offset.zero;
                         const curve = Curves.easeOutQuint;
@@ -246,11 +577,8 @@ class _NutritionHeader extends StatelessWidget {
                       },
                 ),
               );
-
-              // CHANGED: Trigger a reload on the ViewModel to fetch new targets
               if (context.mounted) {
                 final vm = context.read<NutritionDayViewModel>();
-                // Re-selecting the current date forces a refresh of Plan + Logs
                 unawaited(vm.onDateSelected(vm.state.selectedDate));
               }
             },
@@ -269,11 +597,9 @@ class _WeekStrip extends StatelessWidget {
     required this.selectedDate,
     required this.onSelect,
   });
-
   final List<DateTime> days;
   final DateTime selectedDate;
   final ValueChanged<DateTime> onSelect;
-
   @override
   Widget build(BuildContext context) {
     const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -284,9 +610,7 @@ class _WeekStrip extends StatelessWidget {
             date.year == selectedDate.year &&
             date.month == selectedDate.month &&
             date.day == selectedDate.day;
-
         final label = dayLabels[date.weekday - 1];
-
         return Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -310,18 +634,15 @@ class _DayKey extends StatelessWidget {
     required this.isActive,
     required this.onTap,
   });
-
   final String label;
   final String date;
   final bool isActive;
   final VoidCallback onTap;
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
     final layout = Theme.of(context).extension<AppLayout>()!;
-
     return GestureDetector(
       onTap: () {
         unawaited(HapticFeedback.selectionClick());
@@ -370,427 +691,6 @@ class _DayKey extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 2. HERO: CALORIE REACTOR CARD
-// -----------------------------------------------------------------------------
-class _CalorieReactorCard extends StatelessWidget {
-  const _CalorieReactorCard({
-    required this.consumed,
-    required this.target,
-    required this.protein,
-    required this.proteinTarget,
-    required this.carbs,
-    required this.carbsTarget,
-    required this.fat,
-    required this.fatTarget,
-  });
-
-  final int consumed;
-  final int target;
-  final int protein;
-  final int proteinTarget;
-  final int carbs;
-  final int carbsTarget;
-  final int fat;
-  final int fatTarget;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-
-    final remaining = (target - consumed).clamp(0, 9999);
-    final progress = target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      // No decoration here to keep it integrated with the background
-      child: Column(
-        children: [
-          // The Reactor Ring
-          SizedBox(
-            width: 220, // Slightly larger for impact
-            height: 220,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Background Track: Visible Structure (Dark Steel)
-                const CircularProgressIndicator(
-                  value: 1,
-                  color: Color(
-                    0xFF333333,
-                  ), // Explicit Dark Grey (Visible)
-                  strokeWidth: 16,
-                  strokeCap: StrokeCap.butt, // Mechanical cut
-                ),
-                // Fill Track: The Fuel (Pure White)
-                CircularProgressIndicator(
-                  value: progress,
-                  color: colors.ink,
-                  strokeWidth: 16,
-                  strokeCap: StrokeCap.round,
-                ),
-                // Center Data
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$remaining',
-                        style: typography.display.copyWith(
-                          fontSize: 56, // Larger
-                          height: 1,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -2,
-                          color: colors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'KCAL LEFT',
-                        style: typography.caption.copyWith(
-                          color: colors.inkSubtle,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 2,
-                          fontSize: 10,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$consumed / $target',
-                        style: typography.caption.copyWith(
-                          color: colors.inkSubtle.withValues(alpha: 0.5),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Macro Gauges
-          Row(
-            children: [
-              // Using colors directly for pop
-              Expanded(
-                child: _MacroGauge(
-                  label: 'PROTEIN',
-                  val: protein,
-                  target: proteinTarget,
-                  color: const Color(0xFF9E9E9E),
-                ),
-              ), // Silver
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MacroGauge(
-                  label: 'CARBS',
-                  val: carbs,
-                  target: carbsTarget,
-                  color: const Color(0xFF616161),
-                ),
-              ), // Dark Grey
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MacroGauge(
-                  label: 'FAT',
-                  val: fat,
-                  target: fatTarget,
-                  color: const Color(0xFF424242),
-                ),
-              ), // Charcoal
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MacroGauge extends StatelessWidget {
-  const _MacroGauge({
-    required this.label,
-    required this.val,
-    required this.target,
-    required this.color,
-  });
-  final String label;
-  final int val;
-  final int target;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-    final progress = target > 0 ? (val / target).clamp(0.0, 1.0) : 0.0;
-
-    return Column(
-      children: [
-        SizedBox(
-          height: 4,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: colors.surfaceHighlight,
-              color: color,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '$val/$target',
-          style: typography.caption.copyWith(
-            color: colors.ink,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: typography.caption.copyWith(
-            color: colors.inkSubtle,
-            fontSize: 10,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 3. MEAL TILES (Ghost vs Filled)
-// -----------------------------------------------------------------------------
-class _GhostMealSlot extends StatelessWidget {
-  const _GhostMealSlot({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-    final layout = Theme.of(context).extension<AppLayout>()!;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 72,
-        decoration: BoxDecoration(
-          color: colors.bg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colors.borderIdle,
-            width: layout.strokeSm,
-
-            // Dashed is hard in Flutter without package.
-            // Solid thin is fine for "Ghost" if dim.
-          ),
-        ),
-        child: Center(
-          child: Text(
-            '+ LOG ${label.toUpperCase()}',
-            style: typography.caption.copyWith(
-              color: colors.inkSubtle,
-              letterSpacing: 1.5,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MealLogTile extends StatefulWidget {
-  const _MealLogTile({
-    required this.meal,
-    required this.onAdd,
-  });
-
-  final MealSummaryVm meal;
-  final VoidCallback onAdd;
-
-  @override
-  State<_MealLogTile> createState() => _MealLogTileState();
-}
-
-class _MealLogTileState extends State<_MealLogTile> {
-  bool _isExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colors.ink.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. Header (Click to Expand)
-          InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.meal.title.toUpperCase(),
-                        style: typography.caption.copyWith(
-                          color: colors.ink.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        widget.meal.subtitle,
-                        style: typography.body.copyWith(
-                          color: colors.ink,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: colors.ink,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 2. Expanded Body
-          AnimatedCrossFade(
-            firstChild: const SizedBox(height: 0, width: double.infinity),
-            secondChild: Column(
-              children: [
-                Divider(
-                  height: 1,
-                  color: colors.borderIdle.withValues(alpha: 0.3),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    children: [
-                      // List Items
-                      ...widget.meal.entries.map((entry) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: colors.ink,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  entry.title,
-                                  style: typography.body.copyWith(
-                                    fontSize: 15,
-                                    color: colors.ink,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '${entry.calories}',
-                                style: typography.caption.copyWith(
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.ink,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                ' kcal',
-                                style: typography.caption.copyWith(
-                                  fontSize: 10,
-                                  color: colors.inkSubtle,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-
-                      // NEW: "Add Item" Shortcut Footer
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: widget.onAdd,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add, size: 16, color: colors.accent),
-                              const SizedBox(width: 8),
-                              Text(
-                                'ADD ITEM',
-                                style: typography.button.copyWith(
-                                  color: colors.accent,
-                                  fontSize: 12,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            crossFadeState: _isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 300),
-          ),
-        ],
       ),
     );
   }
