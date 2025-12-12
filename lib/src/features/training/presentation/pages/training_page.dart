@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
@@ -14,9 +13,9 @@ import 'package:starter_app/src/features/training/presentation/viewmodels/traini
 import 'package:starter_app/src/features/training/presentation/viewstate/training_overview_view_state.dart';
 import 'package:starter_app/src/presentation/atoms/app_button.dart';
 
-/// The main page for the Training feature, showing weekly status and sessions.
+/// The main page for the Training feature.
 class TrainingPage extends StatelessWidget {
-  /// Creates the Training page.
+  /// Creates the training page.
   const TrainingPage({super.key});
 
   @override
@@ -25,50 +24,42 @@ class TrainingPage extends StatelessWidget {
     final vm = context.watch<TrainingOverviewViewModel>();
     final state = vm.state;
 
-    Widget child;
-    if (state.isLoading) {
-      child = Center(child: CircularProgressIndicator(color: colors.ink));
-    } else if (state.hasError) {
-      child = _TrainingError(
-        message: state.errorMessage ?? 'System Error.',
-      );
-    } else {
-      child = _TrainingContent(
-        state: state,
-        onSelectDate: vm.onSelectDate,
-        onStartNextWorkout: vm.onStartNextWorkout,
-        onOpenLastWorkout: vm.onOpenLastWorkout,
-        onViewProgram: () => context.push('/training/library'),
-        onCreateProgram: () {
-          final programId = state.activeProgramId;
-          if (programId != null) {
-            unawaited(context.push('/training/builder/structure/$programId'));
-          } else {
-            unawaited(context.push('/training/builder'));
-          }
-        },
-        onViewHistory: () => context.push('/training/history'),
-        onQuickStart: () {
-          // ignore: discarded_futures - fire and forget
-          vm.onStartFreestyle(context);
-        },
-      );
-    }
-
     return Scaffold(
       backgroundColor: colors.bg,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: child,
-        ),
+        child: state.isLoading
+            ? Center(child: CircularProgressIndicator(color: colors.ink))
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _TrainingVoidContent(
+                  state: state,
+                  onSelectDate: vm.onSelectDate,
+                  onStartNextWorkout: vm.onStartNextWorkout,
+                  onOpenLastWorkout: vm.onOpenLastWorkout,
+                  onViewProgram: () =>
+                      unawaited(context.push('/training/library')),
+                  onCreateProgram: () {
+                    final pid = state.activeProgramId;
+                    if (pid != null) {
+                      unawaited(
+                        context.push('/training/builder/structure/$pid'),
+                      );
+                    } else {
+                      unawaited(context.push('/training/builder'));
+                    }
+                  },
+                  onViewHistory: () =>
+                      unawaited(context.push('/training/history')),
+                  onQuickStart: () => vm.onStartFreestyle(context),
+                ),
+              ),
       ),
     );
   }
 }
 
-class _TrainingContent extends StatelessWidget {
-  const _TrainingContent({
+class _TrainingVoidContent extends StatelessWidget {
+  const _TrainingVoidContent({
     required this.state,
     required this.onSelectDate,
     required this.onStartNextWorkout,
@@ -91,78 +82,139 @@ class _TrainingContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = Theme.of(context).extension<AppSpacing>()!;
+    final colors = Theme.of(context).extension<AppColors>()!;
 
-    // Check if the next workout is marked as completed
     final isNextCompleted = state.nextWorkout?.isCompleted ?? false;
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 1. Header (Date + Volume Gauge)
           SizedBox(height: spacing.lg),
           _TrainingHeader(dateLabel: state.dateLabel),
+
           SizedBox(height: spacing.xl),
+
+          // 2. Weekly Volume (Void Style)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: _VolumeGauge(
+            child: _VolumeVoidGauge(
               completed: state.completedWorkouts,
               planned: state.plannedWorkouts,
             ),
           ),
+
           SizedBox(height: spacing.lg),
+
+          // 3. Week Strip
           _WeekStrip(
             days: state.weekDays,
             selectedDate: state.selectedDate,
             onSelect: onSelectDate,
           ),
+
           SizedBox(height: spacing.xxl),
+
+          // 4. THE RAIL: Program Context
+          // If a program is active, we show the timeline.
           if (state.hasProgram) ...[
-            if (state.nextWorkout != null)
-              if (isNextCompleted)
-                _CompletedSessionMainCard(
-                  workout: state.nextWorkout!,
-                  onView: () {
-                    // Navigate to history detail for this specific completed
-                    // session. Since it's 'next-1', we assume history handles
-                    // it. For this task, I'll direct it to history via push
-                    // directly.
-                    unawaited(
-                      context.push(
-                        '/training/history/${state.nextWorkout!.id}',
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // THE RAIL (Left)
+                  Column(
+                    children: [
+                      // Top Dot (Previous)
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: colors.inkSubtle.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    );
-                  },
-                )
-              else
-                _SmartWorkoutCard(
-                  workout: state.nextWorkout!,
-                  onStart: () => onStartNextWorkout(context),
-                )
-            else
-              const _RestDayCard(),
+                      // The Line
+                      Expanded(
+                        child: Container(
+                          width: 2,
+                          color: colors.ink.withValues(alpha: 0.1),
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                        ),
+                      ),
+                      // Bottom Dot (Active)
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: colors.bg,
+                          border: Border.all(color: colors.accent, width: 2),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(width: 20),
+
+                  // THE CONTENT (Right)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // A. Last Session (Context)
+                        if (state.lastWorkout != null)
+                          _LastSessionVoidTile(
+                            workout: state.lastWorkout!,
+                            onTap: () => onOpenLastWorkout(context),
+                          )
+                        else
+                          // Placeholder space if no history
+                          const SizedBox(height: 40),
+
+                        const SizedBox(height: 32),
+
+                        // B. Next Session (Hero)
+                        if (state.nextWorkout != null)
+                          if (isNextCompleted)
+                            _CompletedSessionVoidHero(
+                              workout: state.nextWorkout!,
+                              onView: () => context.push(
+                                '/training/history/${state.nextWorkout!.id}',
+                              ),
+                            )
+                          else
+                            _NextSessionVoidHero(
+                              workout: state.nextWorkout!,
+                              onStart: () => onStartNextWorkout(context),
+                            )
+                        else
+                          const _RestDayVoidHero(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ] else
+            // No Program State
             _GhostProgramCard(
               onCreate: onCreateProgram,
               onQuickStart: onQuickStart,
             ),
 
-          // Always show the "Previous Session" tile if it exists
-          if (state.hasProgram && state.lastWorkout != null) ...[
-            SizedBox(height: spacing.lg),
-            _LastSessionTile(
-              workout: state.lastWorkout!,
-              onTap: () => onOpenLastWorkout(context),
-            ),
-          ],
-          if (state.hasProgram) ...[
-            SizedBox(height: spacing.xxl),
-            _ProgramControls(
+          SizedBox(height: spacing.xxl),
+
+          // 5. Grid Controls (Library, History)
+          if (state.hasProgram)
+            _VoidProgramControls(
               onViewProgram: onViewProgram,
               onHistory: onViewHistory,
               onEdit: onCreateProgram,
               onQuickStart: onQuickStart,
             ),
-          ],
+
           SizedBox(height: spacing.xxl),
         ],
       ),
@@ -170,81 +222,9 @@ class _TrainingContent extends StatelessWidget {
   }
 }
 
-class _CompletedSessionMainCard extends StatelessWidget {
-  const _CompletedSessionMainCard({
-    required this.workout,
-    required this.onView,
-  });
-
-  final WorkoutSummary workout;
-  final VoidCallback onView;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.borderIdle),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "TODAY'S SESSION",
-                      style: typography.caption.copyWith(
-                        color: colors.accent,
-                        letterSpacing: 2,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      workout.name,
-                      style: typography.display.copyWith(fontSize: 28),
-                    ),
-                    Text(
-                      workout.meta,
-                      style: typography.body.copyWith(color: colors.inkSubtle),
-                    ),
-                  ],
-                ),
-                Icon(Icons.check_circle, color: colors.accent, size: 24),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: AppButton(
-              label: 'VIEW DETAILS',
-              isPrimary: true, // Matches "Start Session" style
-              onTap: onView,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// -----------------------------------------------------------------------------
+// VOID WIDGETS
+// -----------------------------------------------------------------------------
 
 class _TrainingHeader extends StatelessWidget {
   const _TrainingHeader({required this.dateLabel});
@@ -260,7 +240,7 @@ class _TrainingHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'TODAY',
+          'TRAINING',
           style: typography.caption.copyWith(
             color: colors.inkSubtle,
             letterSpacing: 2,
@@ -271,18 +251,15 @@ class _TrainingHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           dateLabel.toUpperCase(),
-          style: typography.display.copyWith(
-            fontSize: 24,
-            color: colors.ink,
-          ),
+          style: typography.display.copyWith(fontSize: 24, color: colors.ink),
         ),
       ],
     );
   }
 }
 
-class _VolumeGauge extends StatelessWidget {
-  const _VolumeGauge({required this.completed, required this.planned});
+class _VolumeVoidGauge extends StatelessWidget {
+  const _VolumeVoidGauge({required this.completed, required this.planned});
 
   final int completed;
   final int planned;
@@ -294,11 +271,16 @@ class _VolumeGauge extends StatelessWidget {
 
     return Row(
       children: [
-        Text(
-          'WEEKLY VOLUME',
-          style: typography.caption.copyWith(fontSize: 10),
+        Expanded(
+          child: Text(
+            'WEEKLY VOLUME',
+            style: typography.caption.copyWith(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: colors.inkSubtle,
+            ),
+          ),
         ),
-        const Spacer(),
         Text(
           '$completed / $planned',
           style: typography.caption.copyWith(
@@ -308,21 +290,348 @@ class _VolumeGauge extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: SizedBox(
-            height: 6,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: planned > 0 ? completed / planned : 0,
-                backgroundColor: colors.surfaceHighlight,
-                color: colors.accent,
-              ),
+        SizedBox(
+          width: 100,
+          height: 6,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: planned > 0 ? completed / planned : 0,
+              backgroundColor: colors.surfaceHighlight,
+              color: colors.accent,
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LastSessionVoidTile extends StatelessWidget {
+  const _LastSessionVoidTile({required this.workout, required this.onTap});
+  final WorkoutSummary workout;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    final isToday = workout.dayLabel == 'TODAY';
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  isToday ? 'COMPLETED TODAY' : 'PREVIOUS SESSION',
+                  style: typography.caption.copyWith(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: colors.inkSubtle,
+                  ),
+                ),
+                const Spacer(),
+                if (!isToday)
+                  Text(
+                    '48h ago',
+                    style: typography.caption.copyWith(
+                      fontSize: 9,
+                      color: colors.inkSubtle.withValues(alpha: 0.5),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 2),
+
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    workout.name,
+                    style: typography.body.copyWith(
+                      color: colors.inkSubtle,
+                      fontSize: 16,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: colors.inkSubtle.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NextSessionVoidHero extends StatelessWidget {
+  const _NextSessionVoidHero({required this.workout, required this.onStart});
+  final WorkoutSummary workout;
+  final VoidCallback onStart;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(width: 2, height: 14, color: colors.accent),
+            const SizedBox(width: 8),
+            Text(
+              'NEXT SESSION',
+              style: typography.caption.copyWith(
+                color: colors.accent,
+                letterSpacing: 1.5,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          workout.name,
+          style: typography.display.copyWith(
+            fontSize: 40,
+            color: colors.ink,
+            fontWeight: FontWeight.w800,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          workout.meta,
+          style: typography.body.copyWith(
+            color: colors.inkSubtle,
+            fontSize: 14,
+          ),
+        ), // "3 exercises · ~45 min"
+
+        const SizedBox(height: 32),
+
+        AppButton(
+          label: 'START SESSION',
+          icon: Icons.play_arrow_rounded,
+          isPrimary: true,
+          onTap: onStart,
+        ),
+      ],
+    );
+  }
+}
+
+class _CompletedSessionVoidHero extends StatelessWidget {
+  const _CompletedSessionVoidHero({
+    required this.workout,
+    required this.onView,
+  });
+  final WorkoutSummary workout;
+  final VoidCallback onView;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.check_circle, size: 16, color: colors.accent),
+            const SizedBox(width: 8),
+            Text(
+              'SESSION COMPLETE',
+              style: typography.caption.copyWith(
+                color: colors.accent,
+                letterSpacing: 1.5,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          workout.name,
+          style: typography.display.copyWith(
+            fontSize: 40,
+            color: colors.ink,
+            fontWeight: FontWeight.w800,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 32),
+        AppButton(
+          label: 'VIEW SUMMARY',
+          // Outline (isPrimary defaults to false)
+          onTap: onView,
+        ),
+      ],
+    );
+  }
+}
+
+class _RestDayVoidHero extends StatelessWidget {
+  const _RestDayVoidHero();
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.snooze, size: 16, color: colors.inkSubtle),
+            const SizedBox(width: 8),
+            Text(
+              'REST DAY',
+              style: typography.caption.copyWith(
+                color: colors.inkSubtle,
+                letterSpacing: 1.5,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Active Recovery',
+          style: typography.display.copyWith(
+            fontSize: 40,
+            color: colors.inkSubtle,
+            fontWeight: FontWeight.w800,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Growth happens when you sleep.',
+          style: typography.body.copyWith(
+            color: colors.inkSubtle.withValues(alpha: 0.5),
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VoidProgramControls extends StatelessWidget {
+  const _VoidProgramControls({
+    required this.onViewProgram,
+    required this.onHistory,
+    required this.onEdit,
+    required this.onQuickStart,
+  });
+
+  final VoidCallback onViewProgram;
+  final VoidCallback onHistory;
+  final VoidCallback onEdit;
+  final VoidCallback onQuickStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = Theme.of(context).extension<AppSpacing>()!;
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _VoidControlPill(
+                label: 'Library',
+                icon: Icons.grid_view,
+                onTap: onViewProgram,
+              ),
+            ),
+            SizedBox(width: spacing.sm),
+            Expanded(
+              child: _VoidControlPill(
+                label: 'History',
+                icon: Icons.history,
+                onTap: onHistory,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: spacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _VoidControlPill(
+                label: 'Freestyle',
+                icon: Icons.bolt,
+                onTap: onQuickStart,
+              ),
+            ),
+            SizedBox(width: spacing.sm),
+            Expanded(
+              child: _VoidControlPill(
+                label: 'Structure',
+                icon: Icons.tune,
+                onTap: onEdit,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _VoidControlPill extends StatelessWidget {
+  const _VoidControlPill({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final typography = Theme.of(context).extension<AppTypography>()!;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.borderIdle),
+          color: Colors.transparent, // Void
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: colors.ink),
+            const SizedBox(width: 8),
+            Text(
+              label.toUpperCase(),
+              style: typography.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colors.ink,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -333,11 +642,9 @@ class _WeekStrip extends StatelessWidget {
     required this.selectedDate,
     required this.onSelect,
   });
-
   final List<TrainingDayOverview> days;
   final DateTime selectedDate;
   final ValueChanged<DateTime> onSelect;
-
   @override
   Widget build(BuildContext context) {
     const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -346,7 +653,6 @@ class _WeekStrip extends StatelessWidget {
       children: days.map((day) {
         final isSelected = day.date.day == selectedDate.day;
         final label = dayLabels[day.date.weekday - 1];
-
         return Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -372,28 +678,21 @@ class _DayKey extends StatelessWidget {
     required this.isActive,
     required this.onTap,
   });
-
   final String label;
   final String date;
   final TrainingDayStatus status;
   final bool isActive;
   final VoidCallback onTap;
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
     final layout = Theme.of(context).extension<AppLayout>()!;
-
     var statusColor = Colors.transparent;
     if (status == TrainingDayStatus.completed) statusColor = colors.accent;
     if (status == TrainingDayStatus.planned) statusColor = colors.borderIdle;
-
     return GestureDetector(
-      onTap: () {
-        unawaited(HapticFeedback.selectionClick());
-        onTap();
-      },
+      onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         height: 64,
@@ -451,81 +750,6 @@ class _DayKey extends StatelessWidget {
   }
 }
 
-class _SmartWorkoutCard extends StatelessWidget {
-  const _SmartWorkoutCard({required this.workout, required this.onStart});
-
-  final WorkoutSummary workout;
-  final VoidCallback onStart;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-    final layout = Theme.of(context).extension<AppLayout>()!;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.borderIdle, width: layout.strokeLg),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'NEXT SESSION',
-                      style: typography.caption.copyWith(
-                        color: colors.accent,
-                        letterSpacing: 2,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      workout.name,
-                      style: typography.display.copyWith(fontSize: 28),
-                    ),
-                    Text(
-                      workout.meta,
-                      style: typography.body.copyWith(color: colors.inkSubtle),
-                    ),
-                  ],
-                ),
-                Icon(Icons.fitness_center, color: colors.accent, size: 24),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: AppButton(
-              label: 'START SESSION',
-              icon: Icons.play_arrow_rounded,
-              isPrimary: true,
-              onTap: onStart,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _GhostProgramCard extends StatelessWidget {
   const _GhostProgramCard({required this.onCreate, required this.onQuickStart});
 
@@ -538,18 +762,15 @@ class _GhostProgramCard extends StatelessWidget {
     final typography = Theme.of(context).extension<AppTypography>()!;
     final spacing = Theme.of(context).extension<AppSpacing>()!;
     final layout = Theme.of(context).extension<AppLayout>()!;
-
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       decoration: BoxDecoration(
         color: colors.bg,
         borderRadius: BorderRadius.circular(20),
-
         border: Border.all(color: colors.borderIdle, width: layout.strokeSm),
       ),
       child: Column(
         children: [
-          // 1. The Empty State Icon
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -559,8 +780,6 @@ class _GhostProgramCard extends StatelessWidget {
             child: Icon(Icons.grid_view, size: 32, color: colors.inkSubtle),
           ),
           SizedBox(height: spacing.md),
-
-          // 2. The Prompt
           Text(
             'NO ACTIVE PROTOCOL',
             style: typography.caption.copyWith(
@@ -578,20 +797,14 @@ class _GhostProgramCard extends StatelessWidget {
               fontSize: 13,
             ),
           ),
-
           SizedBox(height: spacing.xl),
-
-          // 3. Primary Action: Build
           AppButton(
             label: 'BUILD PROGRAM',
             icon: Icons.add,
-            isPrimary: true, // Prominent
+            isPrimary: true,
             onTap: onCreate,
           ),
-
           SizedBox(height: spacing.md),
-
-          // 4. Secondary Action: Freestyle
           InkWell(
             onTap: onQuickStart,
             borderRadius: BorderRadius.circular(8),
@@ -617,257 +830,5 @@ class _GhostProgramCard extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _LastSessionTile extends StatelessWidget {
-  const _LastSessionTile({required this.workout, required this.onTap});
-
-  final WorkoutSummary workout;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-    final layout = Theme.of(context).extension<AppLayout>()!;
-
-    // Check if the workout was completed today
-    // We can assume 'completedAt' or similar data is used to populate this
-    // summary. However, WorkoutSummary doesn't strictly have a DateTime field
-    // visible here yet found in the interface. Ideally, we'd check
-    // `workout.completedAt` if available, or rely on `dayLabel`.
-    // The fake repo populates dayLabel. Let's assume for now we can infer from
-    // `dayLabel` == 'TODAY'
-    // or if we need to check the ID/Metadata.
-    // But wait, the fake repo logic for "Implicit Rolling" said:
-    // "If a Freestyle workout was done Today: Shows COMPLETED TODAY".
-
-    // If [timeLabel] says "DONE" or [dayLabel] says "TODAY" and it's
-    // completed? Actually, let's look at what the Fake Repo provides for the
-    // Context Tile. The Fake Repo returns `lastWorkout`.
-    // If we want "COMPLETED TODAY", the Repo should probably set the label to
-    // "TODAY".
-
-    final isToday = workout.dayLabel == 'TODAY';
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          // Use a slightly more active background if it's today?
-          color: isToday
-              ? colors.surfaceHighlight.withValues(alpha: 0.8)
-              : colors.surfaceHighlight.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isToday
-                ? colors.accent.withValues(alpha: 0.3)
-                : colors.borderIdle.withValues(alpha: 0.5),
-            width: layout.strokeSm,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isToday ? Icons.check_circle : Icons.history,
-              color: isToday ? colors.accent : colors.inkSubtle,
-              size: 20,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isToday ? 'COMPLETED TODAY' : 'PREVIOUS SESSION',
-                    style: typography.caption.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: isToday ? colors.accent : colors.inkSubtle,
-                    ),
-                  ),
-                  Text(
-                    workout.name,
-                    style: typography.body.copyWith(
-                      color: colors.ink,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (!isToday)
-              Text(
-                '48h ago',
-                // TODO(app-team): Real relative time
-                style: typography.caption.copyWith(color: colors.inkSubtle),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RestDayCard extends StatelessWidget {
-  const _RestDayCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-    final layout = Theme.of(context).extension<AppLayout>()!;
-
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.borderIdle, width: layout.strokeSm),
-      ),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(Icons.snooze, size: 32, color: colors.accent),
-            const SizedBox(height: 16),
-            Text(
-              'REST & RECOVER',
-              style: typography.title.copyWith(color: colors.ink),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Growth happens when you sleep.',
-              style: typography.body.copyWith(color: colors.inkSubtle),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProgramControls extends StatelessWidget {
-  const _ProgramControls({
-    required this.onViewProgram,
-    required this.onHistory,
-    required this.onEdit,
-    required this.onQuickStart,
-  });
-
-  final VoidCallback onViewProgram;
-  final VoidCallback onHistory;
-  final VoidCallback onEdit;
-  final VoidCallback onQuickStart;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = Theme.of(context).extension<AppSpacing>()!;
-
-    // Using a Column of two Rows to create a 2x2 Grid
-    // Using Expanded ensures buttons are equal width
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _ControlPill(
-                label: 'Library', // "Program" -> Library (Clearer)
-                icon: Icons.grid_view,
-                onTap: onViewProgram,
-              ),
-            ),
-            SizedBox(width: spacing.sm),
-            Expanded(
-              child: _ControlPill(
-                label: 'History',
-                icon: Icons.history,
-                onTap: onHistory,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: _ControlPill(
-                label: 'Freestyle',
-                icon: Icons.bolt,
-                onTap: onQuickStart,
-              ),
-            ),
-            SizedBox(width: spacing.sm),
-            Expanded(
-              child: _ControlPill(
-                label: 'Structure', // "Edit" -> Structure (Clearer)
-                icon: Icons.tune,
-                onTap: onEdit,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ControlPill extends StatelessWidget {
-  const _ControlPill({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final typography = Theme.of(context).extension<AppTypography>()!;
-    final layout = Theme.of(context).extension<AppLayout>()!;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colors.borderIdle, width: layout.strokeMd),
-        ),
-        // Changed to MainAxisAlignment.center to handle Expanded width
-        // gracefully
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: colors.ink),
-            const SizedBox(width: 8),
-            Text(
-              label.toUpperCase(),
-              style: typography.caption.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.ink,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TrainingError extends StatelessWidget {
-  const _TrainingError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text(message));
   }
 }
