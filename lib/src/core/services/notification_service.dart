@@ -8,4 +8,7 @@ abstract class NotificationService {
 
   /// Show an informational notification with the given [message].
   void showInfo(String message);
+
+  /// Show a notification with an Undo action.
+  void showUndo(String message, void Function() onUndo);
 }

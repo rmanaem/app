@@ -1,76 +1,127 @@
-// For FontFeature
-
 import 'package:flutter/material.dart';
 import 'package:starter_app/src/app/design_system/app_colors.dart';
 import 'package:starter_app/src/app/design_system/app_typography.dart';
 
 /// Notification variants supported by the app snackbar.
 enum SnackbarType {
-  /// Successful outcome notification.
+  /// Success state.
   success,
 
-  /// Failure or validation notification.
+  /// Error state.
   error,
 
-  /// Informational notification.
+  /// Information state.
   info,
 }
 
 /// Molecule for rendering consistent snackbar content.
-class AppSnackbarContent extends StatelessWidget {
+class AppSnackbarContent extends StatefulWidget {
   /// Creates a snackbar content molecule.
   const AppSnackbarContent({
     required this.message,
     this.type = SnackbarType.info,
+    this.onUndo,
     super.key,
   });
 
-  /// Message to display.
+  /// The message to display.
   final String message;
 
-  /// Presentation style for the snackbar.
+  /// The type of snackbar (success, error, info).
   final SnackbarType type;
+
+  /// Optional callback for the Undo action.
+  final VoidCallback? onUndo;
+
+  @override
+  State<AppSnackbarContent> createState() => _AppSnackbarContentState();
+}
+
+class _AppSnackbarContentState extends State<AppSnackbarContent> {
+  bool _isUndoing = false;
+
+  void _handleUndo() {
+    if (_isUndoing) return;
+    setState(() => _isUndoing = true);
+
+    // 1. Hide the snackbar immediately
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    // 2. Trigger the undo action
+    widget.onUndo?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final typography = Theme.of(context).extension<AppTypography>()!;
 
-    final (icon, accentColor) = switch (type) {
-      SnackbarType.success => (Icons.check_circle_outline, colors.success),
-      SnackbarType.error => (Icons.error_outline, colors.danger),
-      SnackbarType.info => (Icons.info_outline, colors.accent),
+    // CORRECTED: Using Design Tokens
+    final backgroundColor = colors.surfaceNotification;
+    final contentColor = colors.inkNotification;
+
+    final icon = switch (widget.type) {
+      SnackbarType.success => Icons.check_circle,
+      SnackbarType.error => Icons.error,
+      SnackbarType.info => Icons.info,
     };
 
+    // Error still uses Danger token, but others use Onyx for the "System" feel
+    final iconColor = widget.type == SnackbarType.error
+        ? colors.danger
+        : contentColor;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.borderIdle),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
+        // Ensure the row takes up space relative to the snackbar constraints
+        // Ensure the row takes up space relative to the snackbar constraints
         children: [
-          Icon(icon, color: accentColor, size: 20),
+          Icon(icon, color: iconColor, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              message,
+              widget.message,
               style: typography.body.copyWith(
-                color: colors.ink,
-                fontWeight: FontWeight.w500,
-                // Force numbers to align by width for a monospaced feel.
+                color: contentColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
                 fontFeatures: [const FontFeature.tabularFigures()],
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (widget.onUndo != null) ...[
+            const SizedBox(width: 12),
+            // Divider REMOVED
+            GestureDetector(
+              onTap: _handleUndo,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'UNDO',
+                  style: typography.caption.copyWith(
+                    color: contentColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

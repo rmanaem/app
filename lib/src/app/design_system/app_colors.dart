@@ -36,6 +36,9 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.macroCarbs,
     required this.macroProtein,
     required this.macroFat,
+    // NEW TOKENS
+    required this.surfaceNotification,
+    required this.inkNotification,
   });
 
   /// Page background (Deep Onyx).
@@ -122,6 +125,14 @@ class AppColors extends ThemeExtension<AppColors> {
   /// Macro color representing fat.
   final Color macroFat;
 
+  /// High-visibility neutral surface (referenced as Silver).
+  /// Used for toasts/notifications to pop against dark backgrounds.
+  final Color surfaceNotification;
+
+  /// High-contrast text color (referenced as Onyx).
+  /// Used for content inside notification containers.
+  final Color inkNotification;
+
   // ---- LIGHT (Paper & Steel Palette)
   /// Light palette (matte white ceramics with steel accents).
   static const AppColors light = AppColors(
@@ -153,6 +164,8 @@ class AppColors extends ThemeExtension<AppColors> {
     macroProtein: Color(0xFFCD5C5C),
     macroCarbs: Color(0xFF7CA0C0),
     macroFat: Color(0xFFC8AA6E),
+    surfaceNotification: Color(0xFFE5E5EA), // System Grey 6
+    inkNotification: Color(0xFF1C1C1E), // System Grey 6 Dark
   );
 
   // ---- DARK (The "Obsidian & Steel" Palette)
@@ -203,6 +216,8 @@ class AppColors extends ThemeExtension<AppColors> {
     macroProtein: Color(0xFFCD5C5C),
     macroCarbs: Color(0xFF7CA0C0), // Blued Steel
     macroFat: Color(0xFFC8AA6E), // Pale Brass
+    surfaceNotification: Color(0xFFE5E5EA), // High Visibility against Dark BG
+    inkNotification: Color(0xFF1C1C1E), // High Contrast Text on Silver
   );
 
   @override
@@ -235,6 +250,8 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? macroCarbs,
     Color? macroProtein,
     Color? macroFat,
+    Color? surfaceNotification,
+    Color? inkNotification,
   }) {
     return AppColors(
       bg: bg ?? this.bg,
@@ -265,6 +282,8 @@ class AppColors extends ThemeExtension<AppColors> {
       macroCarbs: macroCarbs ?? this.macroCarbs,
       macroProtein: macroProtein ?? this.macroProtein,
       macroFat: macroFat ?? this.macroFat,
+      surfaceNotification: surfaceNotification ?? this.surfaceNotification,
+      inkNotification: inkNotification ?? this.inkNotification,
     );
   }
 
@@ -301,6 +320,12 @@ class AppColors extends ThemeExtension<AppColors> {
       macroCarbs: Color.lerp(macroCarbs, o.macroCarbs, t)!,
       macroProtein: Color.lerp(macroProtein, o.macroProtein, t)!,
       macroFat: Color.lerp(macroFat, o.macroFat, t)!,
+      surfaceNotification: Color.lerp(
+        surfaceNotification,
+        o.surfaceNotification,
+        t,
+      )!,
+      inkNotification: Color.lerp(inkNotification, o.inkNotification, t)!,
     );
   }
 }

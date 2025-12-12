@@ -14,23 +14,34 @@ class ScaffoldNotificationService implements NotificationService {
   @override
   void showInfo(String message) => _show(message, SnackbarType.info);
 
-  void _show(String message, SnackbarType type) {
+  @override
+  void showUndo(String message, VoidCallback onUndo) {
+    _show(
+      message,
+      SnackbarType.info,
+      onUndo: onUndo, // Pass callback to content
+    );
+  }
+
+  void _show(
+    String message,
+    SnackbarType type, {
+    VoidCallback? onUndo,
+  }) {
     final state = rootScaffoldMessengerKey.currentState;
     if (state == null) {
-      debugPrint(
-        'WARNING: Root ScaffoldMessenger state is null. '
-        'Notification skipped: $message',
-      );
+      debugPrint('WARNING: Root ScaffoldMessenger state is null.');
       return;
     }
 
-    final mediaQuery = MediaQuery.maybeOf(state.context);
+    final context = state.context;
+    final mediaQuery = MediaQuery.maybeOf(context);
     final size = mediaQuery?.size ?? Size.zero;
     final topPadding = mediaQuery?.padding.top ?? 0.0;
 
     final duration = type == SnackbarType.error
         ? const Duration(seconds: 4)
-        : const Duration(milliseconds: 2000);
+        : const Duration(milliseconds: 3500);
 
     // Position Calculation:
     // Calculate a bottom margin that pushes the SnackBar toward the top.
@@ -47,14 +58,20 @@ class ScaffoldNotificationService implements NotificationService {
           elevation: 0,
           behavior: SnackBarBehavior.floating,
           dismissDirection: DismissDirection.up,
+          // Push it to the top using bottom margin
           margin: EdgeInsets.only(
-            left: 16,
-            right: 16,
+            left: 24, // Tighter horizontal margins
+            right: 24,
             bottom: bottomMargin,
           ),
           padding: EdgeInsets.zero,
           duration: duration,
-          content: AppSnackbarContent(message: message, type: type),
+          // Content handles the UI + Undo button
+          content: AppSnackbarContent(
+            message: message,
+            type: type,
+            onUndo: onUndo,
+          ),
         ),
       );
   }
